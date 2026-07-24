@@ -170,8 +170,14 @@
         var host = document.getElementById(cfg.el);
         var columns = cfg.columns.slice();
 
+        // 그리드 본문 높이 = 뷰포트에서 (그리드 시작 위치 + 헤더 + 페이지네이션 +
+        // 하단 여백)을 뺀 값. 화면 스크롤 없이 페이지네이션까지 보이도록 맞춘다.
         function bodyHeight() {
-            return Math.max(240, window.innerHeight - (cfg.offset || 200));
+            var docTop = host.getBoundingClientRect().top + window.scrollY;
+            var reserve = 44   // 그리드 헤더
+                + 52           // 페이지네이션
+                + 52;          // 하단 여백(.screen padding-bottom 등)
+            return Math.max(200, Math.floor(window.innerHeight - docTop - reserve));
         }
 
         // 컬럼 폭 합이 컨테이너보다 좁으면 각 컬럼을 비율대로 늘려 표가 폭을 꽉
@@ -248,6 +254,9 @@
             }, 160);
         });
         bar.insertBefore(search, bar.firstChild);
+
+        // 툴바·검색창이 삽입되며 그리드가 아래로 밀렸으므로 본문 높이를 다시 맞춘다
+        grid.setBodyHeight(bodyHeight());
 
         // 컨텍스트 메뉴
         attachContextMenu(grid, host, [
