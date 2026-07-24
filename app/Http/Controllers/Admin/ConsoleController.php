@@ -110,7 +110,7 @@ class ConsoleController extends Controller
 
     private function candidates(Request $request): View
     {
-        $rows = Candidate::latest('id')->paginate(15)->withQueryString();
+        $rows = Candidate::latest('id')->limit(1000)->get();
 
         return view('admin.screens.candidates', ['rows' => $rows]);
     }
@@ -126,16 +126,14 @@ class ConsoleController extends Controller
 
     private function monitoring(Request $request): View
     {
-        $rows = MonthlyInterview::with('worker')
-            ->latest('id')->paginate(15)->withQueryString();
+        $rows = MonthlyInterview::with('worker')->latest('id')->limit(1000)->get();
 
         return view('admin.screens.monitoring', ['rows' => $rows]);
     }
 
     private function tickets(Request $request): View
     {
-        $rows = SupportTicket::with('worker')
-            ->latest('id')->paginate(15)->withQueryString();
+        $rows = SupportTicket::with('worker')->latest('id')->limit(1000)->get();
 
         return view('admin.screens.tickets', ['rows' => $rows]);
     }
@@ -181,10 +179,7 @@ class ConsoleController extends Controller
 
     private function demand(Request $request): View
     {
-        $rows = DemandRequest::with(['farm', 'city'])
-            ->latest('id')
-            ->paginate(15)
-            ->withQueryString();
+        $rows = DemandRequest::with(['farm', 'city'])->latest('id')->limit(1000)->get();
 
         return view('admin.screens.demand', ['rows' => $rows]);
     }
@@ -196,8 +191,8 @@ class ConsoleController extends Controller
         $rows = Worker::query()
             ->when($q !== '', fn ($query) => $query->where('name', 'like', "%{$q}%"))
             ->latest('id')
-            ->paginate(15)
-            ->withQueryString();
+            ->limit(1000)
+            ->get();
 
         return view('admin.screens.workers', ['rows' => $rows, 'q' => $q]);
     }
@@ -212,10 +207,7 @@ class ConsoleController extends Controller
 
     private function onboarding(Request $request): View
     {
-        $rows = OnboardingSubmission::with('worker')
-            ->latest('id')
-            ->paginate(15)
-            ->withQueryString();
+        $rows = OnboardingSubmission::with('worker')->latest('id')->limit(1000)->get();
 
         return view('admin.screens.onboarding', ['rows' => $rows]);
     }

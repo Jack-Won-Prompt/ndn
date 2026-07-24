@@ -2,14 +2,21 @@
 @section('title', '월별 점검')
 
 @php
-    $pill = fn (string $s) => match ($s) {
-        'high'   => 'mv2-pill--err',
-        'medium' => 'mv2-pill--warn',
-        default  => 'mv2-pill--ok',
-    };
-    $ox = fn (bool $b) => $b
-        ? '<span class="mv2-pill mv2-pill--ok">양호</span>'
-        : '<span class="mv2-pill mv2-pill--err">이상</span>';
+    $ox = fn (bool $b) => $b ? '양호|ok' : '이상|err';
+    $rk = fn (string $s) => match ($s) { 'high' => 'high|err', 'medium' => '주의|warn', default => '낮음|ok' };
+    $data = $rows->map(fn ($iv) => [
+        'id'         => $iv->id,
+        'worker'     => $iv->worker?->name ?? '—',
+        'date'       => $iv->interviewed_on?->format('Y-m-d'),
+        'pay'        => $ox($iv->pay_received),
+        'discrim'    => $ox($iv->no_discrimination),
+        'rules'      => $ox($iv->follows_rules),
+        'group'      => $ox($iv->adapts_group),
+        'health'     => $ox($iv->health_ok),
+        'flight'     => $ox($iv->no_flight_signs),
+        'risk'       => $iv->risk_level->value === 'high' ? '고위험|err'
+                        : ($iv->risk_level->value === 'medium' ? '주의|warn' : '낮음|ok'),
+    ])->values();
 @endphp
 
 @section('content')
@@ -20,49 +27,29 @@
         </div>
     </div>
 
-    <div class="mv2-card">
-        <div class="mv2-card__head">
-            <span class="mv2-card__title"><span class="mv2-card__title-bar"></span>인터뷰 기록</span>
-            <span class="mv2-paging__info">{{ number_format($rows->total()) }}건</span>
-        </div>
-        <div class="mv2-card__body--none">
-            <div class="mv2-grid-wrap">
-                <table class="mv2-table is-striped">
-                    <thead>
-                        <tr>
-                            <th style="width:60px">번호</th>
-                            <th>근로자</th>
-                            <th style="width:110px">점검일</th>
-                            <th style="width:80px">급여</th>
-                            <th style="width:80px">차별없음</th>
-                            <th style="width:80px">규칙</th>
-                            <th style="width:80px">단체생활</th>
-                            <th style="width:80px">건강</th>
-                            <th style="width:90px">이탈징후</th>
-                            <th style="width:90px">리스크</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($rows as $iv)
-                            <tr>
-                                <td class="muted">{{ $iv->id }}</td>
-                                <td>{{ $iv->worker?->name ?? '—' }}</td>
-                                <td class="muted">{{ $iv->interviewed_on?->format('Y-m-d') }}</td>
-                                <td>{!! $ox($iv->pay_received) !!}</td>
-                                <td>{!! $ox($iv->no_discrimination) !!}</td>
-                                <td>{!! $ox($iv->follows_rules) !!}</td>
-                                <td>{!! $ox($iv->adapts_group) !!}</td>
-                                <td>{!! $ox($iv->health_ok) !!}</td>
-                                <td>{!! $ox($iv->no_flight_signs) !!}</td>
-                                <td><span class="mv2-pill {{ $pill($iv->risk_level->value) }}">{{ $iv->risk_level->label() }}</span></td>
-                            </tr>
-                        @empty
-                            <tr><td colspan="10" class="mv2-table-empty">점검 기록이 없습니다.</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        @include('admin.screens._pager')
-    </div>
+    <div id="grid-monitoring"></div>
+@endsection
+
+@section('grid')
+<script>
+    var P = { type: window.NDN_PillRenderer };
+    ndnGrid({
+        el: 'grid-monitoring',
+        frozenCount: 2,
+        perPage: 20,
+        data: @json($data),
+        columns: [
+            { name: 'id', header: '번호', width: 60, align: 'center', sortable: true },
+            { name: 'worker', header: '근로자', width: 130, sortable: true },
+            { name: 'date', header: '점검일', width: 110, align: 'center', sortable: true },
+            { name: 'pay', header: '급여', width: 84, align: 'center', renderer: P },
+            { name: 'discrim', header: '차별없음', width: 90, align: 'center', renderer: P },
+            { name: 'rules', header: '규칙', width: 84, align: 'center', renderer: P },
+            { name: 'group', header: '단체생활', width: 90, align: 'center', renderer: P },
+            { name: 'health', header: '건강', width: 84, align: 'center', renderer: P },
+            { name: 'flight', header: '이탈징후', width: 90, align: 'center', renderer: P },
+            { name: 'risk', header: '리스크', width: 96, align: 'center', renderer: P, sortable: true },
+        ],
+    });
+</script>
 @endsection

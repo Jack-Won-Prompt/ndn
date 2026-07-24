@@ -104,7 +104,17 @@
       "Bash(/e/xampp/php/php.exe vendor/bin/pest tests/Feature/Console/PurgeExpiredWorkersTest.php --compact)",
       "Bash(export COMPOSER_MEMORY_LIMIT=-1)",
       "Bash(/e/xampp/php/php.exe -d memory_limit=-1 C:/ProgramData/ComposerSetup/bin/composer.phar require barryvdh/laravel-dompdf --no-interaction)",
-      "Bash(/e/xampp/php/php.exe vendor/bin/pest tests/Feature/Reporting --compact)"
+      "Bash(/e/xampp/php/php.exe vendor/bin/pest tests/Feature/Reporting --compact)",
+      "Bash(awk '{print $5}')",
+      "Bash(curl -sSL --max-time 60 -o /e/xampp/htdocs/ndn/public/admin-assets/vendor/tui-grid/tui-grid.css \"https://uicdn.toast.com/grid/v4.21.0/tui-grid.css\")",
+      "Bash(curl -s -o /dev/null -w \"tui-grid.js  %{http_code}\\\\n\" http://localhost/ndn/admin-assets/vendor/tui-grid/tui-grid.js)",
+      "Bash(curl -s -o /dev/null -w \"tui-grid.css %{http_code}\\\\n\" http://localhost/ndn/admin-assets/vendor/tui-grid/tui-grid.css)",
+      "Bash(curl -s -o /dev/null -w \"grid.js      %{http_code}\\\\n\" http://localhost/ndn/admin-assets/js/grid.js)",
+      "Bash(curl -sSL --max-time 60 -o tui-pagination.js \"https://uicdn.toast.com/tui.pagination/v3.4.0/tui-pagination.js\")",
+      "Bash(curl -sSL --max-time 60 -o tui-pagination.css \"https://uicdn.toast.com/tui.pagination/v3.4.0/tui-pagination.css\")",
+      "Bash(awk '{print $5,$9}')",
+      "Bash(curl -s -o /dev/null -w \"tui-pagination.js  %{http_code}\\\\n\" http://localhost/ndn/admin-assets/vendor/tui-grid/tui-pagination.js)",
+      "Bash(/e/xampp/php/php.exe vendor/bin/pint app/ resources/)"
     ]
   }
 }

@@ -2,12 +2,17 @@
 @section('title', '후보자·평가')
 
 @php
-    $pill = fn (string $s) => match ($s) {
-        'passed'   => 'mv2-pill--ok',
-        'held'     => 'mv2-pill--warn',
-        'rejected' => 'mv2-pill--err',
-        default    => '',
+    $kind = fn (string $s) => match ($s) {
+        'passed' => 'ok', 'held' => 'warn', 'rejected' => 'err', default => '',
     };
+    $data = $rows->map(fn ($c) => [
+        'id'          => $c->id,
+        'name'        => $c->name,
+        'nationality' => $c->nationality,
+        'age'         => $c->age ?? '—',
+        'status'      => $c->status->label().'|'.$kind($c->status->value),
+        'queue'       => $c->queue_position ?? '—',
+    ])->values();
 @endphp
 
 @section('content')
@@ -18,41 +23,24 @@
         </div>
     </div>
 
-    <div class="mv2-card">
-        <div class="mv2-card__head">
-            <span class="mv2-card__title"><span class="mv2-card__title-bar"></span>후보자 목록</span>
-            <span class="mv2-paging__info">{{ number_format($rows->total()) }}건</span>
-        </div>
-        <div class="mv2-card__body--none">
-            <div class="mv2-grid-wrap">
-                <table class="mv2-table is-striped">
-                    <thead>
-                        <tr>
-                            <th style="width:70px">번호</th>
-                            <th>이름</th>
-                            <th style="width:80px">국적</th>
-                            <th style="width:70px">나이</th>
-                            <th style="width:110px">상태</th>
-                            <th style="width:110px">대기 순번</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($rows as $c)
-                            <tr>
-                                <td class="muted">{{ $c->id }}</td>
-                                <td>{{ $c->name }}</td>
-                                <td><span class="mv2-pill">{{ $c->nationality }}</span></td>
-                                <td class="muted">{{ $c->age ?? '—' }}</td>
-                                <td><span class="mv2-pill {{ $pill($c->status->value) }}">{{ $c->status->label() }}</span></td>
-                                <td class="muted">{{ $c->queue_position ?? '—' }}</td>
-                            </tr>
-                        @empty
-                            <tr><td colspan="6" class="mv2-table-empty">후보자가 없습니다.</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        @include('admin.screens._pager')
-    </div>
+    <div id="grid-candidates"></div>
+@endsection
+
+@section('grid')
+<script>
+    ndnGrid({
+        el: 'grid-candidates',
+        frozenCount: 2,
+        perPage: 20,
+        data: @json($data),
+        columns: [
+            { name: 'id', header: '번호', width: 70, align: 'center', sortable: true },
+            { name: 'name', header: '이름', minWidth: 160, sortable: true },
+            { name: 'nationality', header: '국적', width: 80, align: 'center', sortable: true },
+            { name: 'age', header: '나이', width: 70, align: 'center', sortable: true },
+            { name: 'status', header: '상태', width: 110, align: 'center', renderer: { type: window.NDN_PillRenderer } },
+            { name: 'queue', header: '대기 순번', width: 110, align: 'center', sortable: true },
+        ],
+    });
+</script>
 @endsection

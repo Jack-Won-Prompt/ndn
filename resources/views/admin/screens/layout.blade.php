@@ -7,6 +7,8 @@
 <style>
     @font-face{font-family:"Pretendard Variable";src:url("{{ asset('site/assets/fonts/PretendardVariable.woff2') }}") format("woff2-variations");font-weight:45 920;font-display:swap;}
 </style>
+<link rel="stylesheet" href="{{ asset('admin-assets/vendor/tui-grid/tui-pagination.css') }}">
+<link rel="stylesheet" href="{{ asset('admin-assets/vendor/tui-grid/tui-grid.css') }}">
 <link rel="stylesheet" href="{{ asset('admin-assets/css/embed.css') }}">
 </head>
 <body>
@@ -22,6 +24,12 @@
         }
     }
 </script>
+@hasSection('grid')
+    <script src="{{ asset('admin-assets/vendor/tui-grid/tui-pagination.js') }}"></script>
+    <script src="{{ asset('admin-assets/vendor/tui-grid/tui-grid.js') }}"></script>
+    <script src="{{ asset('admin-assets/js/grid.js') }}"></script>
+    @yield('grid')
+@endif
 @yield('script')
 </body>
 </html>
