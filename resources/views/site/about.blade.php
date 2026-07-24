@@ -138,11 +138,11 @@
                     <caption class="sr-only">N.D.N Korea 사업자 정보</caption>
                     <tbody>
                         <tr><td>법인명</td><td>주식회사 앤디앤 (N.D.N Co., Ltd.)</td></tr>
-                        <tr><td>대표이사</td><td>○○○</td></tr>
-                        <tr><td>사업자등록번호</td><td>○○○-○○-○○○○○</td></tr>
-                        <tr><td>주소</td><td>○○도 ○○시 ○○로 ○○</td></tr>
-                        <tr><td>대표전화</td><td>○○-○○○○-○○○○</td></tr>
-                        <tr><td>이메일</td><td>○○○@○○○.co.kr</td></tr>
+                        <tr><td>대표이사</td><td>{{ $S['company.ceo'] ?? '○○○' }}</td></tr>
+                        <tr><td>사업자등록번호</td><td>{{ $S['company.biz_no'] ?? '○○○-○○-○○○○○' }}</td></tr>
+                        <tr><td>주소</td><td>{{ $S['company.address'] ?? '○○도 ○○시 ○○로 ○○' }}</td></tr>
+                        <tr><td>대표전화</td><td>{{ $S['company.phone'] ?? '○○-○○○○-○○○○' }}</td></tr>
+                        <tr><td>이메일</td><td>{{ $S['company.email'] ?? '○○○@○○○.co.kr' }}</td></tr>
                     </tbody>
                 </table>
             </div>

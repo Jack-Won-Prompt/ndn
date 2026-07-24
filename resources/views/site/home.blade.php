@@ -28,27 +28,33 @@
     <!-- ============ 통계 ============ -->
     <section class="section section--tight section--dark">
         <div class="wrap">
+            @php
+                $hasStats = ($S['stats.countries'] ?? '') !== '' || ($S['stats.workers'] ?? '') !== ''
+                    || ($S['stats.cities'] ?? '') !== '' || ($S['stats.return_rate'] ?? '') !== '';
+            @endphp
             <div class="stats">
                 <div class="stat">
-                    <span class="stat__num">○○<small>개국</small></span>
+                    <span class="stat__num">{{ $S['stats.countries'] ?? '○○' }}<small>개국</small></span>
                     <span class="stat__label">송출 협력국</span>
                 </div>
                 <div class="stat">
-                    <span class="stat__num">○○○<small>명</small></span>
+                    <span class="stat__num">{{ $S['stats.workers'] ?? '○○○' }}<small>명</small></span>
                     <span class="stat__label">누적 입국 근로자</span>
                 </div>
                 <div class="stat">
-                    <span class="stat__num">○○<small>개</small></span>
+                    <span class="stat__num">{{ $S['stats.cities'] ?? '○○' }}<small>개</small></span>
                     <span class="stat__label">협약 지자체</span>
                 </div>
                 <div class="stat">
-                    <span class="stat__num">○○<small>%</small></span>
+                    <span class="stat__num">{{ $S['stats.return_rate'] ?? '○○' }}<small>%</small></span>
                     <span class="stat__label">계약 만료 귀국률</span>
                 </div>
             </div>
-            <p style="margin:18px 0 0;font-size:13px;color:rgba(255,255,255,.45)">
-                ⚠ 수치는 모두 자리표시자입니다. 실제 실적으로 교체하기 전까지 공개하지 마십시오.
-            </p>
+            @unless ($hasStats)
+                <p style="margin:18px 0 0;font-size:13px;color:rgba(255,255,255,.45)">
+                    ⚠ 수치는 자리표시자입니다. 운영 콘솔 › 사이트 설정에서 실제 실적을 입력하세요.
+                </p>
+            @endunless
         </div>
     </section>
 

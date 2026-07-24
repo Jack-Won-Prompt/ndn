@@ -11,7 +11,9 @@ use App\Domains\Onboarding\Models\OnboardingSubmission;
 use App\Domains\Recruitment\Models\Worker;
 use App\Domains\Support\Models\SosAlert;
 use App\Http\Controllers\Controller;
+use App\Models\Setting;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -50,6 +52,12 @@ class ConsoleController extends Controller
                     ['key' => 'onboarding', 'label' => '온보딩 검수', 'icon' => 'inbox'],
                 ],
             ],
+            [
+                'group' => '설정',
+                'items' => [
+                    ['key' => 'settings', 'label' => '사이트 설정', 'icon' => 'cog'],
+                ],
+            ],
         ];
     }
 
@@ -70,8 +78,33 @@ class ConsoleController extends Controller
             'demand' => $this->demand($request),
             'workers' => $this->workers($request),
             'onboarding' => $this->onboarding($request),
+            'settings' => $this->settingsForm(),
             default => abort(404),
         };
+    }
+
+    /** 사이트 설정 편집 폼 */
+    private function settingsForm(): View
+    {
+        return view('admin.screens.settings', [
+            'groups' => Setting::fields(),
+            'values' => Setting::allKeyed(),
+            'saved' => session('settings_saved', false),
+        ]);
+    }
+
+    /** 사이트 설정 저장 */
+    public function saveSettings(Request $request): RedirectResponse
+    {
+        foreach (Setting::allKeys() as $key) {
+            // 폼 필드명은 점(.)을 언더스코어로 치환해 전송한다
+            $field = str_replace('.', '__', $key);
+            Setting::put($key, $request->input($field));
+        }
+
+        return redirect()
+            ->to(url('admin/screen/settings'))
+            ->with('settings_saved', true);
     }
 
     private function dashboard(): View

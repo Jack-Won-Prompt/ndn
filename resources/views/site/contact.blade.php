@@ -102,19 +102,19 @@
                         </div>
                         <div>
                             <dt>주소</dt>
-                            <dd>⚠ 미확정 — ○○도 ○○시 ○○로 ○○</dd>
+                            <dd>{{ $S['contact.address'] ?? '⚠ 미확정 — ○○도 ○○시 ○○로 ○○' }}</dd>
                         </div>
                         <div>
                             <dt>대표전화</dt>
-                            <dd>⚠ 미확정 — ○○-○○○○-○○○○</dd>
+                            <dd>{{ $S['contact.phone'] ?? '⚠ 미확정 — ○○-○○○○-○○○○' }}</dd>
                         </div>
                         <div>
                             <dt>이메일</dt>
-                            <dd>⚠ 미확정 — ○○○@○○○.co.kr</dd>
+                            <dd>{{ $S['contact.email'] ?? '⚠ 미확정 — ○○○@○○○.co.kr' }}</dd>
                         </div>
                         <div>
                             <dt>운영 시간</dt>
-                            <dd>⚠ 미확정 — 평일 ○○:○○ – ○○:○○</dd>
+                            <dd>{{ $S['contact.hours'] ?? '⚠ 미확정 — 평일 ○○:○○ – ○○:○○' }}</dd>
                         </div>
                     </dl>
 

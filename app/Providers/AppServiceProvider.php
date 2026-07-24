@@ -8,10 +8,12 @@ use App\Domains\Demand\Models\DemandRequest;
 use App\Domains\Demand\Policies\DemandRequestPolicy;
 use App\Domains\Onboarding\Models\OnboardingSubmission;
 use App\Domains\Onboarding\Policies\OnboardingSubmissionPolicy;
+use App\Models\Setting;
 use App\Support\Livewire\BasePathHandleRequests;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Livewire\Mechanisms\HandleRequests\HandleRequests;
@@ -53,6 +55,10 @@ class AppServiceProvider extends ServiceProvider
         // N+1 조기 발견 (CLAUDE.md §11: preventLazyLoading 활성 유지).
         // 운영에서는 예외를 던지지 않고 로깅만 하도록 두는 편이 안전하므로 로컬에서만 엄격.
         Model::preventLazyLoading(! app()->isProduction());
+
+        // 회사소개 사이트 편집 콘텐츠(통계·사업자정보·연락처)를 전역 공유.
+        // 블레이드에서 $S['key'] 로 접근. (캐시되므로 요청당 쿼리 1회 이하)
+        View::share('S', Setting::allKeyed());
 
         // 서브폴더(/ndn) 배포 보정 (Filament·Livewire 관리 콘솔이 정상 동작하게 함):
         //  1) Livewire 스크립트 src 는 라우트 URI 를 그대로 써서 base(/ndn)가 빠진 채

@@ -1,0 +1,103 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
+
+/**
+ * 사이트 설정 키-값. 회사소개 사이트의 편집 가능한 내용을 담는다.
+ *
+ * 편집 가능한 필드는 fields() 에 그룹·라벨과 함께 정의한다. 사이트 블레이드는
+ * 전역 공유되는 $S 배열(AppServiceProvider)로 값을 읽는다.
+ */
+class Setting extends Model
+{
+    protected $primaryKey = 'key';
+
+    public $incrementing = false;
+
+    protected $keyType = 'string';
+
+    protected $fillable = ['key', 'value'];
+
+    private const CACHE_KEY = 'site_settings.all';
+
+    /**
+     * 편집 폼 정의 — 그룹별 필드(키·라벨·타입·플레이스홀더).
+     *
+     * @return array<int, array{group: string, fields: array<int, array{key:string,label:string,type?:string,ph?:string}>}>
+     */
+    public static function fields(): array
+    {
+        return [
+            [
+                'group' => '홈 통계',
+                'fields' => [
+                    ['key' => 'stats.countries',   'label' => '송출 협력국 (개국)', 'ph' => '예: 4'],
+                    ['key' => 'stats.workers',     'label' => '누적 입국 근로자 (명)', 'ph' => '예: 320'],
+                    ['key' => 'stats.cities',      'label' => '협약 지자체 (개)', 'ph' => '예: 6'],
+                    ['key' => 'stats.return_rate', 'label' => '계약 만료 귀국률 (%)', 'ph' => '예: 98'],
+                ],
+            ],
+            [
+                'group' => '사업자 정보',
+                'fields' => [
+                    ['key' => 'company.ceo',     'label' => '대표이사'],
+                    ['key' => 'company.biz_no',  'label' => '사업자등록번호', 'ph' => '000-00-00000'],
+                    ['key' => 'company.address', 'label' => '주소'],
+                    ['key' => 'company.phone',   'label' => '대표전화', 'ph' => '00-0000-0000'],
+                    ['key' => 'company.email',   'label' => '이메일', 'type' => 'email'],
+                ],
+            ],
+            [
+                'group' => '연락처 (문의 페이지)',
+                'fields' => [
+                    ['key' => 'contact.address', 'label' => '주소'],
+                    ['key' => 'contact.phone',   'label' => '대표전화'],
+                    ['key' => 'contact.email',   'label' => '이메일', 'type' => 'email'],
+                    ['key' => 'contact.hours',   'label' => '운영 시간', 'ph' => '평일 09:00–18:00'],
+                ],
+            ],
+        ];
+    }
+
+    /** @return array<string, string> 전체 설정 (캐시) */
+    public static function allKeyed(): array
+    {
+        try {
+            return Cache::rememberForever(self::CACHE_KEY, fn () => self::query()->pluck('value', 'key')->all());
+        } catch (\Throwable) {
+            // 마이그레이션 이전 등 테이블 부재 시 안전하게 빈 배열
+            return [];
+        }
+    }
+
+    public static function get(string $key, ?string $default = null): ?string
+    {
+        $v = self::allKeyed()[$key] ?? null;
+
+        return ($v === null || $v === '') ? $default : $v;
+    }
+
+    public static function put(string $key, ?string $value): void
+    {
+        self::updateOrCreate(['key' => $key], ['value' => $value]);
+        Cache::forget(self::CACHE_KEY);
+    }
+
+    /** @return list<string> 정의된 모든 편집 키 */
+    public static function allKeys(): array
+    {
+        $keys = [];
+        foreach (self::fields() as $group) {
+            foreach ($group['fields'] as $f) {
+                $keys[] = $f['key'];
+            }
+        }
+
+        return $keys;
+    }
+}
