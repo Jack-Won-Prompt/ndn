@@ -93,7 +93,18 @@
       "Bash(git commit *)",
       "Bash(rm -f /tmp/ndn_commit_msg.txt)",
       "Bash(xargs grep -lE \"\\\\.mv2-\")",
-      "Bash(curl -s -o /dev/null -w \"workers 화면 %{http_code}\\\\n\" \"http://localhost/ndn/admin/screen/workers\")"
+      "Bash(curl -s -o /dev/null -w \"workers 화면 %{http_code}\\\\n\" \"http://localhost/ndn/admin/screen/workers\")",
+      "Bash(/e/xampp/php/php.exe vendor/bin/pest --filter=\"Monthly|위치 컬럼이 없다\" --compact)",
+      "Bash(/e/xampp/php/php.exe vendor/bin/pest --filter=\"민원|API 로 민원\" --compact)",
+      "Bash(/e/xampp/php/php.exe vendor/bin/pest tests/Feature/Support/SupportTicketTest.php --compact)",
+      "Bash(/e/xampp/php/php.exe vendor/bin/pest tests/Feature/Recruitment/CandidateTest.php --compact)",
+      "Bash(/e/xampp/php/php.exe vendor/bin/pest tests/Feature/Settlement --compact)",
+      "Bash(/e/xampp/php/php.exe vendor/bin/pest tests/Feature/Settlement/SettlementBoardTest.php --filter=\"동의가 있으면\")",
+      "Bash(DB_CONNECTION=sqlite DB_DATABASE=:memory: /e/xampp/php/php.exe artisan tinker '--execute= *)",
+      "Bash(/e/xampp/php/php.exe vendor/bin/pest tests/Feature/Console/PurgeExpiredWorkersTest.php --compact)",
+      "Bash(export COMPOSER_MEMORY_LIMIT=-1)",
+      "Bash(/e/xampp/php/php.exe -d memory_limit=-1 C:/ProgramData/ComposerSetup/bin/composer.phar require barryvdh/laravel-dompdf --no-interaction)",
+      "Bash(/e/xampp/php/php.exe vendor/bin/pest tests/Feature/Reporting --compact)"
     ]
   }
 }

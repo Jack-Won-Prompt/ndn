@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Domains\Onboarding\Http\Controllers\Api\OnboardingController;
 use App\Domains\Recruitment\Http\Controllers\Api\WorkerProfileController;
 use App\Domains\Support\Http\Controllers\Api\SosController;
+use App\Domains\Support\Http\Controllers\Api\TicketController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -25,4 +26,8 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'worker'])->group(function () {
 
     // 긴급 SOS — rate limit 완화(긴급 상황). 좌표는 이 요청 본문으로만 수신.
     Route::post('/sos', [SosController::class, 'store'])->middleware('throttle:60,1');
+
+    // 민원 (문제신고/문의/연장/조기귀국)
+    Route::get('/tickets', [TicketController::class, 'index']);
+    Route::post('/tickets', [TicketController::class, 'store']);
 });

@@ -7,7 +7,15 @@
             <h1 class="screen__title">대시보드</h1>
             <p class="screen__sub">N.D.N Korea 계절근로자 통합관리 현황</p>
         </div>
+        <a class="report-btn" href="{{ route('admin.reports.monthly', ['year' => now()->year, 'month' => now()->month]) }}" target="_blank" rel="noopener">
+            이번 달 지자체 보고서 PDF
+        </a>
     </div>
+    <style>
+        .report-btn { padding: 9px 16px; font-size: 13px; font-weight: 600; color: #fff;
+            background: var(--mv2-primary-500); border-radius: var(--mv2-r-sm); text-decoration: none; }
+        .report-btn:hover { background: var(--mv2-primary-600); }
+    </style>
 
     <div class="stats">
         <div class="stat">

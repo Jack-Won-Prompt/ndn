@@ -6,15 +6,22 @@ namespace App\Http\Controllers\Admin;
 
 use App\Domains\Demand\Enums\DemandStatus;
 use App\Domains\Demand\Models\DemandRequest;
+use App\Domains\Monitoring\Models\MonthlyInterview;
 use App\Domains\Onboarding\Enums\OnboardingStatus;
 use App\Domains\Onboarding\Models\OnboardingSubmission;
+use App\Domains\Recruitment\Models\Candidate;
 use App\Domains\Recruitment\Models\Worker;
+use App\Domains\Reporting\Actions\GenerateMonthlyReportAction;
+use App\Domains\Settlement\Enums\SettlementStatus;
+use App\Domains\Settlement\Models\SettlementRequest;
 use App\Domains\Support\Models\SosAlert;
+use App\Domains\Support\Models\SupportTicket;
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 
 /**
@@ -46,10 +53,24 @@ class ConsoleController extends Controller
                 ],
             ],
             [
+                'group' => '모집·선발',
+                'items' => [
+                    ['key' => 'candidates', 'label' => '후보자·평가', 'icon' => 'clipboard'],
+                ],
+            ],
+            [
                 'group' => '근로자',
                 'items' => [
                     ['key' => 'workers', 'label' => '근로자', 'icon' => 'users'],
                     ['key' => 'onboarding', 'label' => '온보딩 검수', 'icon' => 'inbox'],
+                ],
+            ],
+            [
+                'group' => '정착·사후관리',
+                'items' => [
+                    ['key' => 'settlement', 'label' => '정착 처리보드', 'icon' => 'grid'],
+                    ['key' => 'monitoring', 'label' => '월별 점검', 'icon' => 'clipboard'],
+                    ['key' => 'tickets', 'label' => '민원', 'icon' => 'inbox'],
                 ],
             ],
             [
@@ -76,11 +97,47 @@ class ConsoleController extends Controller
         return match ($key) {
             'dashboard' => $this->dashboard(),
             'demand' => $this->demand($request),
+            'candidates' => $this->candidates($request),
             'workers' => $this->workers($request),
             'onboarding' => $this->onboarding($request),
+            'settlement' => $this->settlement($request),
+            'monitoring' => $this->monitoring($request),
+            'tickets' => $this->tickets($request),
             'settings' => $this->settingsForm(),
             default => abort(404),
         };
+    }
+
+    private function candidates(Request $request): View
+    {
+        $rows = Candidate::latest('id')->paginate(15)->withQueryString();
+
+        return view('admin.screens.candidates', ['rows' => $rows]);
+    }
+
+    private function settlement(Request $request): View
+    {
+        // 칸반 단계별 그룹
+        $all = SettlementRequest::with('worker')->latest('id')->get();
+        $stages = SettlementStatus::cases();
+
+        return view('admin.screens.settlement', ['all' => $all, 'stages' => $stages]);
+    }
+
+    private function monitoring(Request $request): View
+    {
+        $rows = MonthlyInterview::with('worker')
+            ->latest('id')->paginate(15)->withQueryString();
+
+        return view('admin.screens.monitoring', ['rows' => $rows]);
+    }
+
+    private function tickets(Request $request): View
+    {
+        $rows = SupportTicket::with('worker')
+            ->latest('id')->paginate(15)->withQueryString();
+
+        return view('admin.screens.tickets', ['rows' => $rows]);
     }
 
     /** 사이트 설정 편집 폼 */
@@ -161,5 +218,16 @@ class ConsoleController extends Controller
             ->withQueryString();
 
         return view('admin.screens.onboarding', ['rows' => $rows]);
+    }
+
+    /** 지자체 월간 보고서 PDF 다운로드 (업무흐름 §10) */
+    public function monthlyReport(Request $request, GenerateMonthlyReportAction $action): Response
+    {
+        $year = (int) $request->integer('year', (int) now()->year);
+        $month = (int) $request->integer('month', (int) now()->month);
+
+        $pdf = $action->pdf($year, $month);
+
+        return $pdf->download("ndn-monthly-{$year}-{$month}.pdf");
     }
 }

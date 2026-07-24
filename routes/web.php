@@ -50,6 +50,7 @@ Route::prefix('admin')->group(function () {
     Route::middleware('ndn_admin')->group(function () {
         Route::get('/', [ConsoleController::class, 'shell'])->name('admin.shell');
         Route::post('/settings', [ConsoleController::class, 'saveSettings'])->name('admin.settings.save');
+        Route::get('/reports/monthly', [ConsoleController::class, 'monthlyReport'])->name('admin.reports.monthly');
         Route::get('/screen/workers/{worker}', [ConsoleController::class, 'worker'])
             ->whereNumber('worker')->name('admin.screen.worker');
         Route::get('/screen/{key}', [ConsoleController::class, 'screen'])

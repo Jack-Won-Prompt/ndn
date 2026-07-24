@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Domains\Recruitment\Models\Worker;
+use App\Domains\Settlement\Enums\SettlementStatus;
 use App\Domains\Settlement\Enums\SettlementType;
 use App\Domains\Settlement\Models\SettlementRequest;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -18,10 +20,10 @@ class SettlementRequestFactory extends Factory
     public function definition(): array
     {
         return [
-            'worker_id' => null,
+            'worker_id' => Worker::factory(),
             'type' => fake()->randomElement(SettlementType::cases()),
             'assigned_agency_id' => null,
-            'status' => 'pending',
+            'status' => SettlementStatus::Received,
         ];
     }
 

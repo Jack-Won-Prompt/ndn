@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Domains\Settlement\Models;
 
+use App\Domains\Recruitment\Models\Worker;
+use App\Domains\Settlement\Enums\SettlementStatus;
 use App\Domains\Settlement\Enums\SettlementType;
 use App\Domains\Settlement\Models\Scopes\PartnerAgencyScope;
 use Database\Factories\SettlementRequestFactory;
 use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -27,13 +30,34 @@ class SettlementRequest extends Model
         'worker_id',
         'type',
         'assigned_agency_id',
+        'assigned_at',
         'status',
+        'sla_due_at',
+        'completed_at',
     ];
 
     protected function casts(): array
     {
         return [
             'type' => SettlementType::class,
+            'status' => SettlementStatus::class,
+            'assigned_at' => 'datetime',
+            'sla_due_at' => 'datetime',
+            'completed_at' => 'datetime',
         ];
+    }
+
+    /** @return BelongsTo<Worker, $this> */
+    public function worker(): BelongsTo
+    {
+        return $this->belongsTo(Worker::class);
+    }
+
+    /** SLA 기한을 넘긴 미완료 건인지 */
+    public function isOverdue(): bool
+    {
+        return $this->sla_due_at !== null
+            && $this->status !== SettlementStatus::Done
+            && $this->sla_due_at->isPast();
     }
 }
