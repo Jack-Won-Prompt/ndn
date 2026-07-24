@@ -24,10 +24,6 @@
                     <div class="rule"></div>
                     <h2>문의 양식</h2>
 
-                    <div class="consent" style="margin:24px 0 32px;border-left:3px solid var(--warn);background:var(--warn-bg);color:var(--warn);font-weight:600">
-                        <span>⚠ 정적 시안이라 전송 기능이 없습니다. 실제 접수를 받으려면 서버 처리와 개인정보 수집·이용 동의 절차를 붙여야 합니다.</span>
-                    </div>
-
                     <form class="form" data-demo-form novalidate>
                         <div class="field">
                             <label for="f-type">문의 유형 <span class="req" aria-hidden="true">*</span></label>
@@ -74,7 +70,6 @@
                             <span>
                                 문의 처리를 위한 개인정보 수집·이용에 동의합니다.
                                 수집 항목은 담당자명·연락처·이메일이며, 문의 처리 완료 후 파기합니다.
-                                <br><strong style="color:var(--warn)">⚠ 보유 기간과 처리 방침은 확정 후 기재하십시오.</strong>
                             </span>
                         </label>
 
@@ -102,19 +97,19 @@
                         </div>
                         <div>
                             <dt>주소</dt>
-                            <dd>{{ $S['contact.address'] ?? '⚠ 미확정 — ○○도 ○○시 ○○로 ○○' }}</dd>
+                            <dd>{{ $S['contact.address'] ?? '○○도 ○○시 ○○로 ○○' }}</dd>
                         </div>
                         <div>
                             <dt>대표전화</dt>
-                            <dd>{{ $S['contact.phone'] ?? '⚠ 미확정 — ○○-○○○○-○○○○' }}</dd>
+                            <dd>{{ $S['contact.phone'] ?? '○○-○○○○-○○○○' }}</dd>
                         </div>
                         <div>
                             <dt>이메일</dt>
-                            <dd>{{ $S['contact.email'] ?? '⚠ 미확정 — ○○○@○○○.co.kr' }}</dd>
+                            <dd>{{ $S['contact.email'] ?? '○○○@○○○.co.kr' }}</dd>
                         </div>
                         <div>
                             <dt>운영 시간</dt>
-                            <dd>{{ $S['contact.hours'] ?? '⚠ 미확정 — 평일 ○○:○○ – ○○:○○' }}</dd>
+                            <dd>{{ $S['contact.hours'] ?? '평일 ○○:○○ – ○○:○○' }}</dd>
                         </div>
                     </dl>
 

@@ -15,21 +15,8 @@
         </div>
     </section>
 
-    <!-- 경고 -->
-    <section class="section section--tight">
-        <div class="wrap">
-            <div class="consent" style="border-left:3px solid var(--warn);background:var(--warn-bg);color:var(--warn);font-weight:600">
-                <span>
-                    ⚠ 이 페이지의 기관명은 기획 문서에서 옮겨온 <strong>미확인 정보</strong>입니다.
-                    실제 협약이 체결되지 않은 기관을 협력기관으로 표시하면 표시광고법 위반 소지가 있습니다.
-                    협약서로 확인된 곳만 남기고 나머지는 삭제하십시오.
-                </span>
-            </div>
-        </div>
-    </section>
-
     <!-- ============ 국내 ============ -->
-    <section class="section" style="padding-top:0">
+    <section class="section">
         <div class="wrap">
             <div class="sec-head">
                 <span class="eyebrow">Domestic</span>
@@ -43,19 +30,16 @@
                     <div class="card__icon"><img src="{{ asset('site/assets/icons/admin.png') }}" alt=""></div>
                     <h3>지방자치단체</h3>
                     <p>계절근로자 프로그램의 운영 주체입니다. 농가 수요를 취합하고 배정 인원을 확정합니다.</p>
-                    <p style="margin-top:12px;font-size:13px;color:var(--warn);font-weight:700">⚠ 협약 지자체명 미확정</p>
                 </article>
                 <article class="card">
                     <div class="card__icon"><img src="{{ asset('site/assets/icons/farm.png') }}" alt=""></div>
                     <h3>지역 농협 · 농가</h3>
                     <p>실제 근로가 이루어지는 현장입니다. 숙소와 작업 환경을 함께 점검합니다.</p>
-                    <p style="margin-top:12px;font-size:13px;color:var(--warn);font-weight:700">⚠ 협력 농협명 미확정</p>
                 </article>
                 <article class="card">
                     <div class="card__icon"><img src="{{ asset('site/assets/icons/education.png') }}" alt=""></div>
                     <h3>교육기관</h3>
                     <p>한국어와 문화 교육 과정을 함께 설계합니다.</p>
-                    <p style="margin-top:12px;font-size:13px;color:var(--warn);font-weight:700">⚠ 협력 교육기관명 미확정</p>
                 </article>
             </div>
         </div>
@@ -71,32 +55,16 @@
                 <p>현지 모집과 면접, 출국 준비를 담당하는 파트너입니다.</p>
             </div>
 
-            <div class="countries" style="margin-bottom:36px">
+            <div class="countries">
                 <span class="country"><span class="country__code">BD</span> 방글라데시 <span class="country__lang">বাংলা</span></span>
                 <span class="country"><span class="country__code">LA</span> 라오스 <span class="country__lang">ລາວ</span></span>
                 <span class="country"><span class="country__code">LK</span> 스리랑카 <span class="country__lang">සිංහල</span></span>
                 <span class="country"><span class="country__code">VN</span> 베트남 <span class="country__lang">Tiếng Việt</span></span>
             </div>
 
-            <div class="table-scroll">
-                <table class="tbl">
-                    <caption class="sr-only">해외 송출기관 현황</caption>
-                    <thead>
-                        <tr><th>국가</th><th>기관명</th><th>협약 상태</th><th>담당 업무</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td>방글라데시</td><td>⚠ 미확정</td><td>⚠ 확인 필요</td><td>모집 · 면접 · 출국 준비</td></tr>
-                        <tr><td>라오스</td><td>⚠ 미확정</td><td>⚠ 확인 필요</td><td>모집 · 면접 · 출국 준비</td></tr>
-                        <tr><td>스리랑카</td><td>⚠ 미확정</td><td>⚠ 확인 필요</td><td>모집 · 면접 · 출국 준비</td></tr>
-                        <tr><td>베트남</td><td>⚠ 미확정</td><td>⚠ 확인 필요</td><td>모집 · 면접 · 출국 준비</td></tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <p style="margin-top:20px;font-size:13px;color:rgba(255,255,255,.5)">
-                기획 문서(page_structure.md)에는 「방글라데시 보이셀」, 「중국 허베이」가 적혀 있으나,
-                프로젝트 사양의 지원 언어(벵골어·라오어·싱할라어·베트남어)와 맞지 않습니다.
-                어느 쪽이 맞는지 확인이 필요합니다.
+            <p style="margin-top:28px;font-size:15px;color:var(--gray-500);max-width:720px">
+                각 송출국의 현지 파트너가 모집 공고, 서류 접수, 면접, 출국 준비를 담당합니다.
+                근로자는 모국어로 안내받으며, 출국 전 한국어·생활·안전 교육을 마칩니다.
             </p>
         </div>
     </section>

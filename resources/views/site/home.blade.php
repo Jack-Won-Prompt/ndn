@@ -50,11 +50,6 @@
                     <span class="stat__label">계약 만료 귀국률</span>
                 </div>
             </div>
-            @unless ($hasStats)
-                <p style="margin:18px 0 0;font-size:13px;color:rgba(255,255,255,.45)">
-                    ⚠ 수치는 자리표시자입니다. 운영 콘솔 › 사이트 설정에서 실제 실적을 입력하세요.
-                </p>
-            @endunless
         </div>
     </section>
 
@@ -206,11 +201,6 @@
                         <span class="country"><span class="country__code">LK</span> 스리랑카 <span class="country__lang">සිංහල</span></span>
                         <span class="country"><span class="country__code">VN</span> 베트남 <span class="country__lang">Tiếng Việt</span></span>
                     </div>
-
-                    <p style="margin-top:22px;font-size:13px;color:var(--gray-500)">
-                        ⚠ 협력국 목록은 프로젝트 사양(지원 언어 5종)에서 유추한 것입니다.
-                        실제 협약 체결국으로 확인 후 확정하십시오.
-                    </p>
                 </div>
             </div>
         </div>

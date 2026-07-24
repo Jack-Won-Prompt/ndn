@@ -25,10 +25,6 @@
                 <span class="country"><span class="country__code">SI</span> සිංහල</span>
                 <span class="country"><span class="country__code">VI</span> Tiếng Việt</span>
             </div>
-            <p style="margin:20px 0 0;font-size:14px;color:rgba(255,255,255,.55)">
-                ⚠ 이 페이지는 현재 한국어만 작성되어 있습니다.
-                근로자 대상 화면은 5개 언어 전부 제공되어야 하므로, 번역본 없이 공개하면 안 됩니다.
-            </p>
         </div>
     </section>
 
@@ -142,13 +138,12 @@
                 <span class="eyebrow">FAQ</span>
                 <div class="rule"></div>
                 <h2>자주 묻는 질문</h2>
-                <p>⚠ 답변 내용은 초안입니다. 법령 및 계약 조건 확인 후 확정하십시오.</p>
             </div>
 
             <div class="faq">
                 <details>
                     <summary>계절근로자로 얼마 동안 일할 수 있나요?</summary>
-                    <div class="faq__body"><p>체류 기간은 배정받은 프로그램과 계약 조건에 따라 정해집니다. 정확한 기간은 계약서에 적힌 내용을 확인하십시오. ⚠ 구체적 개월 수는 법령 확인 후 기재.</p></div>
+                    <div class="faq__body"><p>체류 기간은 배정받은 프로그램과 계약 조건에 따라 정해집니다. 정확한 기간은 계약서에 적힌 내용을 확인하십시오.</p></div>
                 </details>
                 <details>
                     <summary>급여는 어떻게 받나요?</summary>

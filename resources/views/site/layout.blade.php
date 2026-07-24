@@ -26,10 +26,6 @@
 
 <a class="skip-link" href="#main">본문 바로가기</a>
 
-<div class="draft-bar">
-    내부 검토용 시안입니다. 통계·연혁·사업자정보·협력기관명은 자리표시자이며 확정 전까지 외부 공개 금지.
-</div>
-
 <header class="header">
     <div class="wrap header__inner">
         <a class="logo" href="{{ route('site.home') }}">
@@ -87,7 +83,7 @@
             </div>
         </div>
         <div class="footer__bottom">
-            <span>&copy; {{ date('Y') }} 주식회사 앤디앤 (N.D.N Korea). 사업자 정보 ⚠ 미확정</span>
+            <span>&copy; {{ date('Y') }} 주식회사 앤디앤 (N.D.N Korea)</span>
             <nav aria-label="약관">
                 <a href="#">개인정보처리방침</a>
                 <a href="#">이용약관</a>

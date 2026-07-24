@@ -43,9 +43,6 @@
                         근로자에게는 자기 모국어로 된 안내를 드리는 것.
                         그것이 저희가 하는 일의 전부입니다.
                     </p>
-                    <p style="margin-top:26px;font-size:13px;color:var(--gray-500)">
-                        ⚠ 인사말 문안은 초안입니다. 대표이사 확인 후 확정하십시오.
-                    </p>
                 </div>
             </div>
         </div>
@@ -87,10 +84,6 @@
                     <span class="eyebrow">History</span>
                     <div class="rule"></div>
                     <h2>연혁</h2>
-                    <p style="margin-bottom:34px">
-                        ⚠ 아래 항목은 전부 자리표시자입니다.
-                        실제 설립일·협약일·사업 개시일로 교체하기 전까지 공개하지 마십시오.
-                    </p>
 
                     <div class="timeline">
                         <div class="tl-item">
@@ -131,7 +124,6 @@
                 <span class="eyebrow">Company</span>
                 <div class="rule"></div>
                 <h2>사업자 정보</h2>
-                <p>⚠ 전 항목 미확정입니다. 등기부·사업자등록증 기준으로 채우십시오.</p>
             </div>
             <div class="table-scroll">
                 <table class="tbl">
