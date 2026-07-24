@@ -18,10 +18,6 @@
             <h1 class="screen__title">근로자</h1>
             <p class="screen__sub">행을 더블클릭하면 상세를 새 탭으로 엽니다 · 열 머리글로 정렬, 경계 드래그로 너비 조절</p>
         </div>
-        <form class="toolbar" method="GET" action="{{ url('admin/screen/workers') }}">
-            <input type="text" name="q" value="{{ $q }}" placeholder="이름 검색">
-            <button type="submit">검색</button>
-        </form>
     </div>
 
     <div id="grid-workers"></div>

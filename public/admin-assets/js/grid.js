@@ -216,11 +216,36 @@
         window.addEventListener('resize', function () { grid.setBodyHeight(bodyHeight()); });
 
         // 툴바: 엑셀(CSV) 내보내기 + 열 초기화 + 필터 초기화
-        buildToolbar(host, [
+        var bar = buildToolbar(host, [
             { label: '엑셀(CSV) 내보내기', onClick: function () { exportCsv(grid, columns, cfg.title || 'ndn'); } },
             { label: '열 초기화', onClick: function () { grid.setColumns(cfg.columns.slice()); columns = cfg.columns.slice(); } },
-            { label: '필터 초기화', onClick: function () { grid.unfilter(); } },
+            { label: '필터 초기화', onClick: function () { grid.unfilter(); search.value = ''; grid.resetData(fullData); } },
         ]);
+
+        // 전역 검색: 모든 열을 대상으로 즉시 필터 (클라이언트 데이터 기준)
+        var fullData = cfg.data.slice();
+        var search = document.createElement('input');
+        search.type = 'search';
+        search.className = 'ndn-gridbar__search';
+        search.placeholder = cfg.searchPlaceholder || '전체 검색';
+        var searchTimer;
+        search.addEventListener('input', function () {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(function () {
+                var q = search.value.trim().toLowerCase();
+                if (!q) { grid.resetData(fullData); return; }
+                grid.resetData(fullData.filter(function (row) {
+                    return Object.keys(row).some(function (k) {
+                        var v = row[k];
+                        if (v == null) return false;
+                        v = String(v);
+                        if (v.indexOf('|') > -1) v = v.split('|')[0]; // pill "라벨|kind"
+                        return v.toLowerCase().indexOf(q) > -1;
+                    });
+                }));
+            }, 160);
+        });
+        bar.insertBefore(search, bar.firstChild);
 
         // 컨텍스트 메뉴
         attachContextMenu(grid, host, [

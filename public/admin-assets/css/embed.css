@@ -268,3 +268,19 @@ body {
 }
 .ndn-gridbar__btn:hover { background: var(--mv2-slate-25); }
 .ndn-gridbar__btn:active { transform: translateY(1px); }
+
+/* 전역 검색 입력 */
+.ndn-gridbar__search {
+    flex: 0 0 auto; width: 240px; max-width: 42vw;
+    margin-right: 4px; padding: 7px 12px 7px 32px;
+    font-family: inherit; font-size: var(--mv2-fz-sm); color: var(--mv2-text-strong);
+    background: #fff url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='%238A95A4' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cline x1='21' y1='21' x2='16.5' y2='16.5'/%3E%3C/svg%3E") no-repeat 10px center;
+    border: 1px solid var(--mv2-border-default); border-radius: var(--mv2-r-sm);
+    box-shadow: var(--mv2-shadow-xs);
+    transition: border-color var(--mv2-dur-fast) var(--mv2-ease), box-shadow var(--mv2-dur-fast) var(--mv2-ease);
+}
+.ndn-gridbar__search::placeholder { color: var(--mv2-text-faint); }
+.ndn-gridbar__search:focus {
+    outline: none; border-color: var(--mv2-primary-500);
+    box-shadow: 0 0 0 3px rgba(30,156,146,.15);
+}
