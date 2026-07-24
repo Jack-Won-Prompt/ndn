@@ -46,7 +46,21 @@ class GenerateMonthlyReportAction
 
     public function pdf(int $year, int $month): PdfInstance
     {
+        // dompdf 폰트 메트릭 캐시 디렉터리 (쓰기 가능해야 함)
+        $fontCache = storage_path('fonts');
+        if (! is_dir($fontCache)) {
+            mkdir($fontCache, 0775, true);
+        }
+
         return Pdf::loadView('reports.monthly', ['r' => $this->data($year, $month)])
-            ->setPaper('a4');
+            ->setPaper('a4')
+            ->setOptions([
+                'isRemoteEnabled' => true,          // @font-face 로컬 TTF 로드 허용
+                'isFontSubsettingEnabled' => true,  // 사용 글리프만 임베드(용량 절감)
+                'chroot' => base_path(),            // resources/fonts 접근 허용
+                'fontDir' => $fontCache,
+                'fontCache' => $fontCache,
+                'defaultFont' => 'NanumGothic',
+            ]);
     }
 }

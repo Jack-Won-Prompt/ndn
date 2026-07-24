@@ -3,7 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <style>
-    * { font-family: DejaVu Sans, sans-serif; }
+    /* 한글 임베드 폰트 (dompdf 는 기본 폰트에 한글 글리프가 없어 깨짐) */
+    @font-face {
+        font-family: 'NanumGothic';
+        font-style: normal;
+        font-weight: normal;
+        src: url('{{ str_replace('\\', '/', resource_path('fonts/NanumGothic.ttf')) }}') format('truetype');
+    }
+    @font-face {
+        font-family: 'NanumGothic';
+        font-style: normal;
+        font-weight: bold;
+        src: url('{{ str_replace('\\', '/', resource_path('fonts/NanumGothic-Bold.ttf')) }}') format('truetype');
+    }
+    * { font-family: 'NanumGothic', sans-serif; }
     body { color: #1b1e24; font-size: 12px; }
     h1 { font-size: 20px; margin: 0 0 2px; }
     .sub { color: #6b7280; font-size: 11px; margin-bottom: 18px; }
