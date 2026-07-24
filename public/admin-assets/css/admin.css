@@ -1,0 +1,181 @@
+/* ==========================================================================
+   NDN 운영 콘솔 — MDI 탭 워크스페이스 셸
+   무채색(잉크) 기반. 골드 미사용.
+   ========================================================================== */
+:root {
+    --ink:      #16181D;   /* 사이드바 */
+    --ink-2:    #1E2127;   /* 사이드바 강조 */
+    --ink-line: #2A2E36;
+    --panel:    #F4F5F7;   /* 작업영역 배경 */
+    --white:    #FFFFFF;
+    --line:     #E3E6EA;
+    --text:     #1B1E24;
+    --muted:    #6B7280;
+    --muted-2:  #9AA1AC;
+    --accent:   #2F3238;   /* 활성 강조(무채색) */
+    --on-ink:   rgba(255,255,255,.82);
+    --on-ink-2: rgba(255,255,255,.52);
+    --tabbar:   #EAECEF;
+
+    --font: "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont,
+            "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+    font-family: var(--font);
+    color: var(--text);
+    background: var(--panel);
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+}
+
+.app { display: grid; grid-template-columns: 248px 1fr; height: 100vh; }
+
+/* ---------- 사이드바 ---------- */
+.sidebar {
+    background: var(--ink);
+    color: var(--on-ink);
+    display: flex; flex-direction: column;
+    border-right: 1px solid var(--ink-line);
+    min-width: 0;
+}
+.sidebar__brand {
+    display: flex; align-items: baseline; gap: 8px;
+    padding: 20px 22px 18px;
+    border-bottom: 1px solid var(--ink-line);
+}
+.sidebar__brand b { font-size: 18px; font-weight: 800; letter-spacing: .04em; color: #fff; }
+.sidebar__brand span { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--on-ink-2); }
+
+.sidebar__nav { flex: 1; overflow-y: auto; padding: 12px 12px 20px; }
+.nav-group { margin-top: 16px; }
+.nav-group__label {
+    font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--on-ink-2); padding: 0 12px 8px;
+}
+.nav-item {
+    display: flex; align-items: center; gap: 11px;
+    width: 100%;
+    padding: 10px 12px;
+    border: 0; background: none;
+    color: var(--on-ink);
+    font-family: inherit; font-size: 14.5px; font-weight: 500;
+    border-radius: 8px; cursor: pointer;
+    text-align: left;
+    transition: background .15s, color .15s;
+}
+.nav-item:hover { background: var(--ink-2); color: #fff; }
+.nav-item.is-active { background: var(--ink-2); color: #fff; box-shadow: inset 2px 0 0 #fff; }
+.nav-item svg { width: 18px; height: 18px; flex-shrink: 0; opacity: .8; }
+.nav-item.is-active svg { opacity: 1; }
+
+/* ---------- 워크스페이스 ---------- */
+.workspace { display: flex; flex-direction: column; min-width: 0; height: 100vh; }
+
+.topbar {
+    height: 52px; flex-shrink: 0;
+    background: var(--white);
+    border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 18px;
+}
+.topbar__crumbs { font-size: 13px; color: var(--muted); }
+.topbar__user { display: flex; align-items: center; gap: 12px; font-size: 13px; }
+.topbar__avatar {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: var(--ink); color: #fff;
+    display: grid; place-items: center; font-size: 12px; font-weight: 700;
+}
+.btn-logout {
+    font-family: inherit; font-size: 13px; color: var(--muted);
+    background: none; border: 1px solid var(--line); border-radius: 6px;
+    padding: 6px 12px; cursor: pointer;
+}
+.btn-logout:hover { color: var(--text); border-color: var(--muted-2); }
+
+/* ---------- 탭바 ---------- */
+.tabbar {
+    display: flex; align-items: stretch; gap: 2px;
+    background: var(--tabbar);
+    border-bottom: 1px solid var(--line);
+    padding: 6px 8px 0;
+    overflow-x: auto; flex-shrink: 0;
+    min-height: 40px;
+}
+.tabbar::-webkit-scrollbar { height: 0; }
+.tab {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 12px 9px 14px;
+    background: #DFE2E6;
+    border: 1px solid transparent; border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    font-size: 13px; color: var(--muted);
+    cursor: pointer; white-space: nowrap;
+    max-width: 220px;
+    transition: background .12s, color .12s;
+}
+.tab:hover { background: #E7E9EC; color: var(--text); }
+.tab.is-active {
+    background: var(--white); color: var(--text); font-weight: 600;
+    border-color: var(--line);
+    position: relative;
+}
+.tab.is-active::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px; background: var(--white);
+}
+.tab__label { overflow: hidden; text-overflow: ellipsis; }
+.tab__close {
+    display: grid; place-items: center;
+    width: 16px; height: 16px; border-radius: 4px;
+    color: var(--muted-2); font-size: 14px; line-height: 1;
+}
+.tab__close:hover { background: rgba(0,0,0,.09); color: var(--text); }
+.tab--home .tab__close { display: none; }
+
+/* ---------- 탭 콘텐츠(iframe) ---------- */
+.tabpanes { flex: 1; position: relative; background: var(--white); min-height: 0; }
+.tabpane { position: absolute; inset: 0; border: 0; width: 100%; height: 100%; display: none; }
+.tabpane.is-active { display: block; }
+
+.empty {
+    position: absolute; inset: 0; display: grid; place-items: center;
+    color: var(--muted-2); font-size: 14px;
+}
+
+/* ---------- 로그인 ---------- */
+.login-wrap {
+    min-height: 100vh; display: grid; place-items: center;
+    background: var(--ink); padding: 20px;
+    overflow: auto;
+}
+.login-card {
+    width: 100%; max-width: 380px;
+    background: var(--white); border-radius: 14px;
+    padding: 40px 34px;
+    box-shadow: 0 24px 60px rgba(0,0,0,.35);
+}
+.login-card__brand { text-align: center; margin-bottom: 28px; }
+.login-card__brand b { font-size: 22px; font-weight: 800; letter-spacing: .04em; }
+.login-card__brand div { font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
+.login-field { margin-bottom: 16px; }
+.login-field label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 7px; }
+.login-field input {
+    width: 100%; padding: 12px 14px;
+    font-family: inherit; font-size: 15px;
+    border: 1px solid var(--line); border-radius: 8px;
+}
+.login-field input:focus { outline: none; border-color: var(--ink); box-shadow: 0 0 0 3px rgba(0,0,0,.08); }
+.login-btn {
+    width: 100%; padding: 13px; margin-top: 6px;
+    background: var(--ink); color: #fff;
+    border: 0; border-radius: 8px;
+    font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer;
+}
+.login-btn:hover { background: #000; }
+.login-error {
+    background: #FEecec; color: #B42318; border: 1px solid #Fbcfcf;
+    font-size: 13px; padding: 10px 12px; border-radius: 8px; margin-bottom: 18px;
+}
+.login-hint { text-align: center; font-size: 12px; color: var(--muted-2); margin-top: 18px; }

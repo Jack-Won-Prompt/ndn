@@ -1,0 +1,142 @@
+@extends('site.layout')
+
+@section('title', '협력기관 — N.D.N Korea')
+@section('description', '국내 지자체·농협·대학, 해외 송출기관과의 협력 네트워크.')
+
+@section('content')
+
+
+    <section class="page-head">
+        <img class="page-head__bg" src="{{ asset('site/assets/img/partnership_meeting.jpg') }}" alt="">
+        <div class="wrap page-head__inner">
+            <p class="crumb"><a href="{{ route('site.home') }}">홈</a><span>›</span>협력기관</p>
+            <h1>협력기관</h1>
+            <p>혼자 할 수 있는 일이 아닙니다. 국내외 기관과 함께 움직입니다.</p>
+        </div>
+    </section>
+
+    <!-- 경고 -->
+    <section class="section section--tight">
+        <div class="wrap">
+            <div class="consent" style="border-left:3px solid var(--warn);background:var(--warn-bg);color:var(--warn);font-weight:600">
+                <span>
+                    ⚠ 이 페이지의 기관명은 기획 문서에서 옮겨온 <strong>미확인 정보</strong>입니다.
+                    실제 협약이 체결되지 않은 기관을 협력기관으로 표시하면 표시광고법 위반 소지가 있습니다.
+                    협약서로 확인된 곳만 남기고 나머지는 삭제하십시오.
+                </span>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ 국내 ============ -->
+    <section class="section" style="padding-top:0">
+        <div class="wrap">
+            <div class="sec-head">
+                <span class="eyebrow">Domestic</span>
+                <div class="rule"></div>
+                <h2>국내 협력기관</h2>
+                <p>수요를 취합하고 배치를 확정하는 주체들입니다.</p>
+            </div>
+
+            <div class="grid grid--3">
+                <article class="card">
+                    <div class="card__icon"><img src="{{ asset('site/assets/icons/admin.png') }}" alt=""></div>
+                    <h3>지방자치단체</h3>
+                    <p>계절근로자 프로그램의 운영 주체입니다. 농가 수요를 취합하고 배정 인원을 확정합니다.</p>
+                    <p style="margin-top:12px;font-size:13px;color:var(--warn);font-weight:700">⚠ 협약 지자체명 미확정</p>
+                </article>
+                <article class="card">
+                    <div class="card__icon"><img src="{{ asset('site/assets/icons/farm.png') }}" alt=""></div>
+                    <h3>지역 농협 · 농가</h3>
+                    <p>실제 근로가 이루어지는 현장입니다. 숙소와 작업 환경을 함께 점검합니다.</p>
+                    <p style="margin-top:12px;font-size:13px;color:var(--warn);font-weight:700">⚠ 협력 농협명 미확정</p>
+                </article>
+                <article class="card">
+                    <div class="card__icon"><img src="{{ asset('site/assets/icons/education.png') }}" alt=""></div>
+                    <h3>교육기관</h3>
+                    <p>한국어와 문화 교육 과정을 함께 설계합니다.</p>
+                    <p style="margin-top:12px;font-size:13px;color:var(--warn);font-weight:700">⚠ 협력 교육기관명 미확정</p>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ 해외 ============ -->
+    <section class="section section--dark">
+        <div class="wrap">
+            <div class="sec-head">
+                <span class="eyebrow">Overseas</span>
+                <div class="rule"></div>
+                <h2>해외 송출기관</h2>
+                <p>현지 모집과 면접, 출국 준비를 담당하는 파트너입니다.</p>
+            </div>
+
+            <div class="countries" style="margin-bottom:36px">
+                <span class="country"><span class="country__code">BD</span> 방글라데시 <span class="country__lang">বাংলা</span></span>
+                <span class="country"><span class="country__code">LA</span> 라오스 <span class="country__lang">ລາວ</span></span>
+                <span class="country"><span class="country__code">LK</span> 스리랑카 <span class="country__lang">සිංහල</span></span>
+                <span class="country"><span class="country__code">VN</span> 베트남 <span class="country__lang">Tiếng Việt</span></span>
+            </div>
+
+            <div class="table-scroll">
+                <table class="tbl">
+                    <caption class="sr-only">해외 송출기관 현황</caption>
+                    <thead>
+                        <tr><th>국가</th><th>기관명</th><th>협약 상태</th><th>담당 업무</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>방글라데시</td><td>⚠ 미확정</td><td>⚠ 확인 필요</td><td>모집 · 면접 · 출국 준비</td></tr>
+                        <tr><td>라오스</td><td>⚠ 미확정</td><td>⚠ 확인 필요</td><td>모집 · 면접 · 출국 준비</td></tr>
+                        <tr><td>스리랑카</td><td>⚠ 미확정</td><td>⚠ 확인 필요</td><td>모집 · 면접 · 출국 준비</td></tr>
+                        <tr><td>베트남</td><td>⚠ 미확정</td><td>⚠ 확인 필요</td><td>모집 · 면접 · 출국 준비</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p style="margin-top:20px;font-size:13px;color:rgba(255,255,255,.5)">
+                기획 문서(page_structure.md)에는 「방글라데시 보이셀」, 「중국 허베이」가 적혀 있으나,
+                프로젝트 사양의 지원 언어(벵골어·라오어·싱할라어·베트남어)와 맞지 않습니다.
+                어느 쪽이 맞는지 확인이 필요합니다.
+            </p>
+        </div>
+    </section>
+
+    <!-- ============ 제휴 대리점 ============ -->
+    <section class="section section--gray">
+        <div class="wrap">
+            <div class="split">
+                <div>
+                    <span class="eyebrow">Partner Agency</span>
+                    <div class="rule"></div>
+                    <h2>정착 서비스 제휴사</h2>
+                    <p>
+                        통장, 보험, 통신, 유심. 입국 첫 주에 몰리는 일들을 지역 대리점과 나눠 처리합니다.
+                    </p>
+                    <ul class="checks">
+                        <li>대리점은 자신에게 배정된 건만 조회할 수 있습니다</li>
+                        <li>근로자 동의가 없는 정보는 대리점 화면에 나타나지 않습니다</li>
+                        <li>내려받는 문서에는 대리점명 워터마크가 들어갑니다</li>
+                    </ul>
+                    <p style="margin-top:22px;font-size:14px;color:var(--gray-500)">
+                        제3자 제공은 동의 범위 안에서만 이루어지며, 동의 이력은 목적별로 따로 보관됩니다.
+                    </p>
+                </div>
+                <div class="split__media">
+                    <div class="photo photo--wide">
+                        <img src="{{ asset('site/assets/img/partnership_mou.jpg') }}" alt="해외 협력기관 업무협약 장면">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta">
+        <div class="wrap">
+            <h2>협력 제안을 기다립니다</h2>
+            <p>지자체, 농협, 송출기관, 정착 서비스 대리점 모두 문의하실 수 있습니다.</p>
+            <div class="btn-row">
+                <a class="btn btn--light" href="{{ route('site.contact') }}">제휴 문의</a>
+            </div>
+        </div>
+    </section>
+@endsection
