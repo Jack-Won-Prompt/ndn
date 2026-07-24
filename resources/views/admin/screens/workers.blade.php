@@ -13,41 +13,44 @@
         </form>
     </div>
 
-    <div class="table_type01_wrap">
-        <div class="table_type01">
-            <table>
-                <thead>
-                    <tr>
-                        <th style="width:70px"><em>번호</em></th>
-                        <th class="cell-left"><em>이름</em></th>
-                        <th style="width:90px"><em>국적</em></th>
-                        <th style="width:90px"><em>언어</em></th>
-                        <th style="width:110px"><em>상태</em></th>
-                        <th style="width:130px"><em>등록일</em></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($rows as $w)
-                        <tr>
-                            <td class="muted">{{ $w->id }}</td>
-                            <td class="cell-left">
-                                <a class="rowlink" href="javascript:void(0)"
-                                   onclick="ndnOpenTab('workers/{{ $w->id }}', '근로자 #{{ $w->id }}')">{{ $w->name }}</a>
-                            </td>
-                            <td><span class="badge badge--gray">{{ $w->nationality }}</span></td>
-                            <td class="muted">{{ $w->locale }}</td>
-                            <td>
-                                <span class="badge {{ $w->status === 'active' ? 'badge--green' : 'badge--gray' }}">{{ $w->status }}</span>
-                            </td>
-                            <td class="muted">{{ $w->created_at?->format('Y-m-d') }}</td>
-                        </tr>
-                    @empty
-                        <tr><td colspan="6" class="empty-row">등록된 근로자가 없습니다.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
+    <div class="mv2-card">
+        <div class="mv2-card__head">
+            <span class="mv2-card__title"><span class="mv2-card__title-bar"></span>근로자 목록</span>
+            <span class="mv2-paging__info">{{ number_format($rows->total()) }}건</span>
         </div>
+        <div class="mv2-card__body--none">
+            <div class="mv2-grid-wrap">
+                <table class="mv2-table is-striped">
+                    <thead>
+                        <tr>
+                            <th style="width:70px">번호</th>
+                            <th>이름</th>
+                            <th style="width:90px">국적</th>
+                            <th style="width:90px">언어</th>
+                            <th style="width:110px">상태</th>
+                            <th style="width:130px">등록일</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($rows as $w)
+                            <tr>
+                                <td class="muted">{{ $w->id }}</td>
+                                <td>
+                                    <a class="link" href="javascript:void(0)"
+                                       onclick="ndnOpenTab('workers/{{ $w->id }}', '근로자 #{{ $w->id }}')">{{ $w->name }}</a>
+                                </td>
+                                <td><span class="mv2-pill">{{ $w->nationality }}</span></td>
+                                <td class="muted">{{ $w->locale }}</td>
+                                <td><span class="mv2-pill {{ $w->status === 'active' ? 'mv2-pill--ok' : '' }}">{{ $w->status }}</span></td>
+                                <td class="muted">{{ $w->created_at?->format('Y-m-d') }}</td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="6" class="mv2-table-empty">등록된 근로자가 없습니다.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        @include('admin.screens._pager')
     </div>
-
-    @include('admin.screens._pager')
 @endsection

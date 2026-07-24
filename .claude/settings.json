@@ -87,7 +87,13 @@
       "Bash(curl -s -o /dev/null -w \"/admin\\(비인증\\) %{http_code}\\\\n\" http://localhost/ndn/admin)",
       "Bash(/e/xampp/mysql/bin/mysql.exe -u root ndn -e \"SELECT description, subject_id, causer_id, created_at FROM activity_log WHERE log_name='personal-data-access' ORDER BY id DESC LIMIT 3;\")",
       "Bash(/e/xampp/php/php.exe vendor/bin/pint app/ routes/)",
-      "Bash(git check-ignore *)"
+      "Bash(git check-ignore *)",
+      "Bash(git commit --quiet -m '@ *)",
+      "Bash(cat)",
+      "Bash(git commit *)",
+      "Bash(rm -f /tmp/ndn_commit_msg.txt)",
+      "Bash(xargs grep -lE \"\\\\.mv2-\")",
+      "Bash(curl -s -o /dev/null -w \"workers 화면 %{http_code}\\\\n\" \"http://localhost/ndn/admin/screen/workers\")"
     ]
   }
 }

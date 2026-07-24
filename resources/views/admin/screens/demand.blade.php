@@ -2,13 +2,12 @@
 @section('title', '수요 신청')
 
 @php
-    $badge = fn (string $status) => match ($status) {
-        'draft'         => 'badge--gray',
-        'submitted'     => 'badge--amber',
-        'aggregated'    => 'badge--blue',
-        'letter_issued' => 'badge--green',
-        'rejected'      => 'badge--red',
-        default         => 'badge--gray',
+    $pill = fn (string $status) => match ($status) {
+        'submitted'     => 'mv2-pill--warn',
+        'aggregated'    => 'mv2-pill--info',
+        'letter_issued' => 'mv2-pill--ok',
+        'rejected'      => 'mv2-pill--err',
+        default         => '',
     };
 @endphp
 
@@ -20,40 +19,45 @@
         </div>
     </div>
 
-    <div class="table_type01_wrap">
-        <div class="table_type01">
-            <table>
-                <thead>
-                    <tr>
-                        <th style="width:70px"><em>번호</em></th>
-                        <th class="cell-left"><em>농가</em></th>
-                        <th style="width:80px"><em>국적</em></th>
-                        <th style="width:80px"><em>인원</em></th>
-                        <th class="cell-left"><em>품목</em></th>
-                        <th style="width:120px"><em>상태</em></th>
-                        <th style="width:120px"><em>시작일</em></th>
-                        <th style="width:120px"><em>등록일</em></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($rows as $d)
-                        <tr>
-                            <td class="muted">{{ $d->id }}</td>
-                            <td class="cell-left">{{ $d->farm?->name ?? '—' }}</td>
-                            <td><span class="badge badge--gray">{{ $d->nationality }}</span></td>
-                            <td class="cell-num">{{ $d->headcount }}명</td>
-                            <td class="cell-left muted">{{ $d->crop }}</td>
-                            <td><span class="badge {{ $badge($d->status->value) }}">{{ $d->status->label() }}</span></td>
-                            <td class="muted">{{ $d->period_start?->format('Y-m-d') }}</td>
-                            <td class="muted">{{ $d->created_at?->format('Y-m-d') }}</td>
-                        </tr>
-                    @empty
-                        <tr><td colspan="8" class="empty-row">등록된 수요 신청이 없습니다.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
+    <div class="mv2-card">
+        <div class="mv2-card__head">
+            <span class="mv2-card__title"><span class="mv2-card__title-bar"></span>수요 신청 목록</span>
+            <span class="mv2-paging__info">{{ number_format($rows->total()) }}건</span>
         </div>
+        <div class="mv2-card__body--none">
+            <div class="mv2-grid-wrap">
+                <table class="mv2-table is-striped">
+                    <thead>
+                        <tr>
+                            <th style="width:70px">번호</th>
+                            <th>농가</th>
+                            <th style="width:80px">국적</th>
+                            <th style="width:80px">인원</th>
+                            <th>품목</th>
+                            <th style="width:120px">상태</th>
+                            <th style="width:120px">시작일</th>
+                            <th style="width:120px">등록일</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($rows as $d)
+                            <tr>
+                                <td class="muted">{{ $d->id }}</td>
+                                <td>{{ $d->farm?->name ?? '—' }}</td>
+                                <td><span class="mv2-pill">{{ $d->nationality }}</span></td>
+                                <td class="num">{{ $d->headcount }}명</td>
+                                <td class="muted">{{ $d->crop }}</td>
+                                <td><span class="mv2-pill {{ $pill($d->status->value) }}">{{ $d->status->label() }}</span></td>
+                                <td class="muted">{{ $d->period_start?->format('Y-m-d') }}</td>
+                                <td class="muted">{{ $d->created_at?->format('Y-m-d') }}</td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="8" class="mv2-table-empty">등록된 수요 신청이 없습니다.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        @include('admin.screens._pager')
     </div>
-
-    @include('admin.screens._pager')
 @endsection
