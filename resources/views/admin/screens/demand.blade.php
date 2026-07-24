@@ -37,10 +37,10 @@
         data: @json($data),
         columns: [
             { name: 'id', header: '번호', width: 70, align: 'center', sortable: true },
-            { name: 'farm', header: '농가', minWidth: 180, sortable: true },
-            { name: 'nationality', header: '국적', width: 80, align: 'center', sortable: true },
+            { name: 'farm', header: '농가', minWidth: 180, sortable: true, filter: 'text' },
+            { name: 'nationality', header: '국적', width: 80, align: 'center', sortable: true, filter: 'select' },
             { name: 'headcount', header: '인원', width: 80, align: 'right', sortable: true },
-            { name: 'crop', header: '품목', minWidth: 120 },
+            { name: 'crop', header: '품목', minWidth: 120, filter: 'select' },
             { name: 'status', header: '상태', width: 120, align: 'center', renderer: { type: window.NDN_PillRenderer } },
             { name: 'period', header: '시작일', width: 120, align: 'center', sortable: true },
             { name: 'created', header: '등록일', width: 120, align: 'center', sortable: true },

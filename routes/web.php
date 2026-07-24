@@ -51,6 +51,8 @@ Route::prefix('admin')->group(function () {
         Route::get('/', [ConsoleController::class, 'shell'])->name('admin.shell');
         Route::post('/settings', [ConsoleController::class, 'saveSettings'])->name('admin.settings.save');
         Route::get('/reports/monthly', [ConsoleController::class, 'monthlyReport'])->name('admin.reports.monthly');
+        Route::post('/tickets/{ticket}/status', [ConsoleController::class, 'updateTicketStatus'])
+            ->whereNumber('ticket')->name('admin.tickets.status');
         Route::get('/screen/workers/{worker}', [ConsoleController::class, 'worker'])
             ->whereNumber('worker')->name('admin.screen.worker');
         Route::get('/screen/{key}', [ConsoleController::class, 'screen'])

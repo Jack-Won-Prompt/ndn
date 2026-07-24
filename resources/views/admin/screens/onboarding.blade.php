@@ -34,7 +34,7 @@
         data: @json($data),
         columns: [
             { name: 'id', header: '번호', width: 70, align: 'center', sortable: true },
-            { name: 'worker', header: '근로자', width: 160, sortable: true },
+            { name: 'worker', header: '근로자', width: 160, sortable: true, filter: 'text' },
             { name: 'status', header: '상태', width: 130, align: 'center', renderer: { type: window.NDN_PillRenderer } },
             { name: 'submitted', header: '제출일시', width: 160, align: 'center', sortable: true },
             { name: 'note', header: '검수 메모', minWidth: 200 },

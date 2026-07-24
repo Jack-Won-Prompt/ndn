@@ -170,3 +170,22 @@ body {
 .detail dt:last-of-type, .detail dd:last-of-type { border-bottom: 0; }
 
 .notice { background: #FFF8E6; border: 1px solid #F5E4B8; color: #8A6D1E; font-size: var(--mv2-fz-sm); padding: 11px 14px; border-radius: var(--mv2-r-sm); margin-bottom: var(--mv2-sp-4); }
+
+/* ---------------- 그리드 툴바 / 컨텍스트 메뉴 ---------------- */
+.ndn-gridbar { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+.ndn-gridbar__btn {
+    font-family: inherit; font-size: var(--mv2-fz-xs); font-weight: 600;
+    color: var(--mv2-text-default); background: var(--mv2-bg-surface);
+    border: 1px solid var(--mv2-border-default); border-radius: var(--mv2-r-sm);
+    padding: 6px 12px; cursor: pointer; transition: all var(--mv2-dur-fast) var(--mv2-ease);
+}
+.ndn-gridbar__btn:hover { border-color: var(--mv2-primary-400); color: var(--mv2-primary-600); }
+
+.ndn-ctxmenu {
+    display: none; position: absolute; z-index: 9999; min-width: 168px;
+    margin: 0; padding: 6px; list-style: none;
+    background: #fff; border: 1px solid var(--mv2-border-default);
+    border-radius: var(--mv2-r-md); box-shadow: var(--mv2-shadow-md); font-size: var(--mv2-fz-sm);
+}
+.ndn-ctxmenu li { padding: 8px 12px; border-radius: var(--mv2-r-sm); cursor: pointer; color: var(--mv2-text-default); }
+.ndn-ctxmenu li:hover { background: var(--mv2-slate-50); color: var(--mv2-text-strong); }

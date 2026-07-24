@@ -40,7 +40,7 @@
         data: @json($data),
         columns: [
             { name: 'id', header: '번호', width: 60, align: 'center', sortable: true },
-            { name: 'worker', header: '근로자', width: 130, sortable: true },
+            { name: 'worker', header: '근로자', width: 130, sortable: true, filter: 'text' },
             { name: 'date', header: '점검일', width: 110, align: 'center', sortable: true },
             { name: 'pay', header: '급여', width: 84, align: 'center', renderer: P },
             { name: 'discrim', header: '차별없음', width: 90, align: 'center', renderer: P },

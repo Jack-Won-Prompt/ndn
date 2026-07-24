@@ -35,8 +35,8 @@
         data: @json($data),
         columns: [
             { name: 'id', header: '번호', width: 70, align: 'center', sortable: true },
-            { name: 'name', header: '이름', minWidth: 160, sortable: true },
-            { name: 'nationality', header: '국적', width: 80, align: 'center', sortable: true },
+            { name: 'name', header: '이름', minWidth: 160, sortable: true, filter: 'text' },
+            { name: 'nationality', header: '국적', width: 80, align: 'center', sortable: true, filter: 'select' },
             { name: 'age', header: '나이', width: 70, align: 'center', sortable: true },
             { name: 'status', header: '상태', width: 110, align: 'center', renderer: { type: window.NDN_PillRenderer } },
             { name: 'queue', header: '대기 순번', width: 110, align: 'center', sortable: true },

@@ -14,15 +14,19 @@ use App\Domains\Recruitment\Models\Worker;
 use App\Domains\Reporting\Actions\GenerateMonthlyReportAction;
 use App\Domains\Settlement\Enums\SettlementStatus;
 use App\Domains\Settlement\Models\SettlementRequest;
+use App\Domains\Support\Actions\UpdateTicketStatusAction;
+use App\Domains\Support\Enums\TicketStatus;
 use App\Domains\Support\Models\SosAlert;
 use App\Domains\Support\Models\SupportTicket;
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 /**
  * NDN 운영 콘솔 — MDI 탭 워크스페이스 셸 + 임베디드 업무 화면.
@@ -136,6 +140,29 @@ class ConsoleController extends Controller
         $rows = SupportTicket::with('worker')->latest('id')->limit(1000)->get();
 
         return view('admin.screens.tickets', ['rows' => $rows]);
+    }
+
+    /** 민원 상태 인라인 편집 저장 (그리드 셀 편집) */
+    public function updateTicketStatus(
+        Request $request,
+        SupportTicket $ticket,
+        UpdateTicketStatusAction $action,
+    ): JsonResponse {
+        $data = $request->validate([
+            'status' => ['required', Rule::enum(TicketStatus::class)],
+        ]);
+
+        try {
+            $action->execute(
+                $ticket,
+                TicketStatus::from($data['status']),
+                $request->user(),
+            );
+        } catch (\RuntimeException $e) {
+            return response()->json(['ok' => false, 'message' => $e->getMessage()], 422);
+        }
+
+        return response()->json(['ok' => true, 'status' => $ticket->fresh()->status->value]);
     }
 
     /** 사이트 설정 편집 폼 */

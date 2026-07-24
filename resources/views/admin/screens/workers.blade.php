@@ -36,9 +36,9 @@
         data: @json($data),
         columns: [
             { name: 'id', header: '번호', width: 80, align: 'center', sortable: true },
-            { name: 'name', header: '이름', minWidth: 180, sortable: true },
-            { name: 'nationality', header: '국적', width: 90, align: 'center', sortable: true },
-            { name: 'locale', header: '언어', width: 90, align: 'center' },
+            { name: 'name', header: '이름', minWidth: 180, sortable: true, filter: 'text' },
+            { name: 'nationality', header: '국적', width: 90, align: 'center', sortable: true, filter: 'select' },
+            { name: 'locale', header: '언어', width: 90, align: 'center', filter: 'select' },
             { name: 'status', header: '상태', width: 120, align: 'center', renderer: { type: window.NDN_PillRenderer } },
             { name: 'created', header: '등록일', width: 130, align: 'center', sortable: true },
         ],
