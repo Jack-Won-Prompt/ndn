@@ -225,9 +225,22 @@ class ConsoleController extends Controller
     }
 
     /** 근로자 상세 — 개인정보 열람 감사 로그 (CLAUDE.md §7-6) */
-    public function worker(Worker $worker): View
+    public function worker(Request $request, Worker $worker): View|JsonResponse
     {
+        // 팝업(모달) 조회도 개인정보 열람이므로 동일하게 감사 로그를 남긴다.
         $worker->recordAccessBy(Auth::user(), 'console-detail');
+
+        // 상세 팝업용 JSON (민감 필드 여권번호·생년월일·전화번호는 §7 에 따라 제외)
+        if ($request->query('format') === 'json' || $request->wantsJson()) {
+            return response()->json([
+                'id' => $worker->id,
+                'name' => $worker->name,
+                'nationality' => $worker->nationality,
+                'locale' => $worker->locale,
+                'status' => $worker->status,
+                'created' => $worker->created_at?->format('Y-m-d H:i'),
+            ]);
+        }
 
         return view('admin.screens.worker_detail', ['worker' => $worker]);
     }

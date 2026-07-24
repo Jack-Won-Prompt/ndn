@@ -9,6 +9,7 @@
         'subject' => $t->subject,
         'status'  => $t->status->value,   // 편집 가능 셀: 원값(라벨은 에디터/포맷터가 처리)
         'created' => $t->created_at?->format('Y-m-d H:i'),
+        'body'    => $t->body,            // 상세 팝업용(그리드 미표시)
     ])->values();
 @endphp
 
@@ -16,7 +17,7 @@
     <div class="screen__head">
         <div>
             <h1 class="screen__title">민원</h1>
-            <p class="screen__sub">근로자 발신 민원 · <strong>상태 셀을 더블클릭하면 인라인 편집·저장</strong> · 열 머리글 드래그로 재정렬</p>
+            <p class="screen__sub">행을 더블클릭하면 상세를 팝업으로 확인 · <strong>상태 셀 더블클릭은 인라인 편집·저장</strong> · 열 머리글 드래그로 재정렬</p>
         </div>
     </div>
 
@@ -51,7 +52,23 @@
                 },
             },
             { name: 'created', header: '접수일시', width: 150, align: 'center', sortable: true },
+            { name: 'body', header: '내용', hidden: true },
         ],
+        // 행 더블클릭(상태 셀 제외) → 상세 팝업
+        onRowDblClick: function (row) {
+            ndnDetailModal({
+                title: '민원 #' + row.id,
+                subtitle: row.worker,
+                rows: [
+                    ['근로자', row.worker],
+                    ['유형', row.type],
+                    ['제목', row.subject],
+                    ['내용', row.body],
+                    ['상태', STATUS_LABEL[row.status] || row.status],
+                    ['접수일시', row.created],
+                ],
+            });
+        },
         // 셀 편집 저장: 상태 변경 시 서버에 반영
         onEdit: function (row, columnName, value, prevValue, grid) {
             if (columnName !== 'status' || value === prevValue) return;

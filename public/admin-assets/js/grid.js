@@ -22,8 +22,9 @@
 
     /* ---------------- CSV(엑셀) 내보내기 — 의존성 없음 ---------------- */
     function exportCsv(grid, columns, filename) {
-        var headers = columns.map(function (c) { return c.header; });
-        var names = columns.map(function (c) { return c.name; });
+        var cols = columns.filter(function (c) { return !c.hidden; });
+        var headers = cols.map(function (c) { return c.header; });
+        var names = cols.map(function (c) { return c.name; });
         var rows = grid.getData();
         var lines = [headers.map(csvCell).join(',')];
         rows.forEach(function (row) {
@@ -179,14 +180,15 @@
         function fitColumns() {
             var avail = host.getBoundingClientRect().width;
             if (!avail) return;
-            var base = columns.map(function (c) { return c.width || c.minWidth || 100; });
+            var vis = columns.filter(function (c) { return !c.hidden; });
+            var base = vis.map(function (c) { return c.width || c.minWidth || 100; });
             var dataSum = base.reduce(function (a, b) { return a + b; }, 0);
             var target = avail - ROWNUM_W - 2;   // 테두리 여유
             if (target <= dataSum) return;       // 넘치면 가로 스크롤(그대로 둠)
             var factor = target / dataSum;
             var used = 0;
-            columns.forEach(function (c, i) {
-                if (i === columns.length - 1) {
+            vis.forEach(function (c, i) {
+                if (i === vis.length - 1) {
                     c.width = target - used;     // 반올림 잔여는 마지막 컬럼에
                 } else {
                     c.width = Math.floor(base[i] * factor);
@@ -263,6 +265,20 @@
                     var row = grid.getRow(ch.rowKey);
                     cfg.onEdit(row, ch.columnName, ch.value, ch.prevValue, grid);
                 });
+            });
+        }
+
+        // 행 더블클릭 훅 (상세 팝업 등). 편집 가능한 셀에서는 에디터에 양보한다.
+        if (typeof cfg.onRowDblClick === 'function') {
+            grid.on('dblclick', function (ev) {
+                if (ev.rowKey == null) return;
+                var col = null;
+                for (var i = 0; i < columns.length; i++) {
+                    if (columns[i].name === ev.columnName) { col = columns[i]; break; }
+                }
+                if (col && col.editor) return;   // 편집 셀 더블클릭은 편집으로
+                var row = grid.getRow(ev.rowKey);
+                if (row) cfg.onRowDblClick(row, grid, ev);
             });
         }
 

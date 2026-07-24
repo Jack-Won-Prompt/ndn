@@ -19,7 +19,7 @@
     <div class="screen__head">
         <div>
             <h1 class="screen__title">후보자·평가</h1>
-            <p class="screen__sub">모집 명단 및 면접 결과 (합격/보류/불합격 · 보류자 대기열 순번)</p>
+            <p class="screen__sub">행을 더블클릭하면 상세를 팝업으로 확인 · 합격/보류/불합격 · 보류자 대기열 순번</p>
         </div>
     </div>
 
@@ -41,6 +41,19 @@
             { name: 'status', header: '상태', width: 110, align: 'center', renderer: { type: window.NDN_PillRenderer } },
             { name: 'queue', header: '대기 순번', width: 110, align: 'center', sortable: true },
         ],
+        onRowDblClick: function (row) {
+            ndnDetailModal({
+                title: '후보자 #' + row.id,
+                subtitle: row.name,
+                rows: [
+                    ['이름', row.name],
+                    ['국적', row.nationality],
+                    ['나이', row.age],
+                    ['상태', row.status, true],
+                    ['대기 순번', row.queue],
+                ],
+            });
+        },
     });
 </script>
 @endsection

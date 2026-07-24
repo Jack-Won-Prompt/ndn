@@ -192,7 +192,78 @@
         });
     }
 
+    /* ---------------- 읽기 전용 상세 모달 ---------------- */
+    // opts: { title, subtitle, note, rows: [[label, value, isPill?], ...], okText }
+    // 값에 isPill(true)를 주면 "라벨|kind" 형식을 배지로 렌더한다.
+    function ndnDetailModal(opts) {
+        opts = opts || {};
+        var m = buildModal({ title: opts.title || '상세', message: '' });
+        m.overlay.querySelector('.ndn-modal__card').classList.add('ndn-modal__card--detail');
+
+        var msgEl = m.overlay.querySelector('.ndn-modal__msg');
+        if (msgEl) msgEl.remove();
+
+        if (opts.subtitle) {
+            var sub = document.createElement('p');
+            sub.className = 'ndn-modal__sub';
+            sub.textContent = opts.subtitle;
+            m.overlay.querySelector('.ndn-modal__title').insertAdjacentElement('afterend', sub);
+        }
+
+        var dl = document.createElement('dl');
+        dl.className = 'ndn-detail';
+        (opts.rows || []).forEach(function (r) {
+            var dt = document.createElement('dt');
+            dt.textContent = r[0];
+            var dd = document.createElement('dd');
+            var val = r[1];
+            if (r[2] && val != null && String(val).indexOf('|') > -1) {
+                var parts = String(val).split('|');
+                var pill = document.createElement('span');
+                pill.className = 'ndn-dpill' + (parts[1] ? ' ndn-dpill--' + parts[1] : '');
+                pill.textContent = parts[0];
+                dd.appendChild(pill);
+            } else {
+                dd.textContent = (val == null || val === '') ? '—' : String(val);
+            }
+            dl.appendChild(dt);
+            dl.appendChild(dd);
+        });
+        m.actions.parentNode.insertBefore(dl, m.actions);
+
+        if (opts.note) {
+            var note = document.createElement('p');
+            note.className = 'ndn-modal__note';
+            note.textContent = opts.note;
+            m.actions.parentNode.insertBefore(note, m.actions);
+        }
+
+        var close = document.createElement('button');
+        close.type = 'button';
+        close.className = 'ndn-btn ndn-btn--primary';
+        close.textContent = opts.okText || '닫기';
+        m.actions.appendChild(close);
+
+        function done() {
+            document.removeEventListener('keydown', onKey);
+            closeModal(m.overlay);
+        }
+        function onKey(e) {
+            if (e.key === 'Escape' || e.key === 'Enter') done();
+        }
+        close.addEventListener('click', done);
+        m.overlay.addEventListener('mousedown', function (e) {
+            if (e.target === m.overlay) done();
+        });
+        document.addEventListener('keydown', onKey);
+
+        openModal(m.overlay);
+        requestAnimationFrame(function () { close.focus(); });
+        return { close: done };
+    }
+
     window.ndnToast = ndnToast;
     window.ndnConfirm = ndnConfirm;
     window.ndnAlert = ndnAlert;
+    window.ndnDetailModal = ndnDetailModal;
 })();

@@ -99,3 +99,31 @@
 .ndn-btn--danger { background: var(--ui-danger); color: #fff; }
 .ndn-btn--danger:hover { background: var(--ui-danger-600); }
 .ndn-btn:focus-visible { outline: 3px solid rgba(30, 156, 146, .4); outline-offset: 2px; }
+
+/* ---------------- 읽기 전용 상세 모달 ---------------- */
+.ndn-modal__card--detail { max-width: 480px; }
+.ndn-modal__sub { margin: 3px 0 0; font-size: 13px; color: var(--ui-muted); }
+.ndn-modal__note { margin: 14px 0 0; font-size: 12px; line-height: 1.5; color: #9AA1AC; }
+.ndn-detail {
+    display: grid; grid-template-columns: 116px 1fr; gap: 0;
+    margin: 20px 0 2px; border: 1px solid var(--ui-line); border-radius: 10px; overflow: hidden;
+}
+.ndn-detail dt {
+    padding: 10px 14px; background: #F7F9FB;
+    font-size: 13px; font-weight: 600; color: var(--ui-muted);
+    border-bottom: 1px solid var(--ui-line);
+}
+.ndn-detail dd {
+    padding: 10px 14px; margin: 0;
+    font-size: 14px; color: var(--ui-text); border-bottom: 1px solid var(--ui-line);
+    word-break: break-word; white-space: pre-line;
+}
+.ndn-detail dt:last-of-type, .ndn-detail dd:last-of-type { border-bottom: 0; }
+.ndn-dpill {
+    display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 100px;
+    font-size: 12px; font-weight: 600; background: #EAEDF1; color: #424C5C;
+}
+.ndn-dpill--ok { background: #DFF6EA; color: #0F5132; }
+.ndn-dpill--warn { background: #FFF1D6; color: #7A4A0B; }
+.ndn-dpill--err { background: #FBE0E0; color: #8A1212; }
+.ndn-dpill--info { background: #DDEBFB; color: #0B3D7A; }
