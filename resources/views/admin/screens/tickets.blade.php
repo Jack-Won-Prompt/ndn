@@ -62,13 +62,18 @@
                 body: JSON.stringify({ status: value }),
             }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
               .then(function (res) {
-                  if (!res.ok) {
+                  if (res.ok) {
+                      ndnToast('#' + row.id + ' 상태를 “' + (STATUS_LABEL[value] || value) + '”(으)로 변경했습니다.', { type: 'success' });
+                  } else {
                       // 전이 불가 등 → 되돌림
                       grid.setValue(row.rowKey, 'status', prevValue);
-                      alert(res.j.message || '변경할 수 없습니다.');
+                      ndnToast(res.j.message || '변경할 수 없습니다.', { type: 'error', title: '변경 실패' });
                   }
               })
-              .catch(function () { grid.setValue(row.rowKey, 'status', prevValue); });
+              .catch(function () {
+                  grid.setValue(row.rowKey, 'status', prevValue);
+                  ndnToast('네트워크 오류로 변경하지 못했습니다.', { type: 'error', title: '변경 실패' });
+              });
         },
     });
 </script>

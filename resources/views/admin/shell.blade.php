@@ -20,7 +20,8 @@
 <style>
     @font-face{font-family:"Pretendard Variable";src:url("{{ asset('site/assets/fonts/PretendardVariable.woff2') }}") format("woff2-variations");font-weight:45 920;font-display:swap;}
 </style>
-<link rel="stylesheet" href="{{ asset('admin-assets/css/admin.css') }}">
+<link rel="stylesheet" href="{{ asset('admin-assets/css/ui.css') }}?v={{ @filemtime(public_path('admin-assets/css/ui.css')) }}">
+<link rel="stylesheet" href="{{ asset('admin-assets/css/admin.css') }}?v={{ @filemtime(public_path('admin-assets/css/admin.css')) }}">
 </head>
 <body>
 <div class="app">
@@ -54,7 +55,7 @@
             <div class="topbar__user">
                 <span class="topbar__avatar">{{ mb_substr($user->name, 0, 1) }}</span>
                 <span>{{ $user->name }}</span>
-                <form method="POST" action="{{ route('admin.logout') }}" style="margin:0">
+                <form method="POST" action="{{ route('admin.logout') }}" style="margin:0" id="logout-form">
                     @csrf
                     <button type="submit" class="btn-logout">로그아웃</button>
                 </form>
@@ -73,6 +74,26 @@
         titles: @json($titles),
     };
 </script>
-<script src="{{ asset('admin-assets/js/admin.js') }}"></script>
+<script src="{{ asset('admin-assets/js/ui.js') }}?v={{ @filemtime(public_path('admin-assets/js/ui.js')) }}"></script>
+<script src="{{ asset('admin-assets/js/admin.js') }}?v={{ @filemtime(public_path('admin-assets/js/admin.js')) }}"></script>
+<script>
+    // 로그아웃 확인 — 커스텀 모달
+    (function () {
+        var form = document.getElementById('logout-form');
+        if (!form) return;
+        form.addEventListener('submit', function (e) {
+            if (form.dataset.confirmed) return;   // 확인 후 실제 제출
+            e.preventDefault();
+            ndnConfirm('운영 콘솔에서 로그아웃하시겠습니까?', {
+                title: '로그아웃',
+                okText: '로그아웃',
+                cancelText: '취소',
+                danger: true,
+            }).then(function (ok) {
+                if (ok) { form.dataset.confirmed = '1'; form.submit(); }
+            });
+        });
+    })();
+</script>
 </body>
 </html>

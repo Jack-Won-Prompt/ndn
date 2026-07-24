@@ -1,0 +1,101 @@
+/* ==========================================================================
+   NDN 운영 콘솔 — 공용 UI (토스트 알림 + 확인/알림 모달)
+   셸(admin.css)과 임베디드 화면(embed.css) 양쪽에서 공용으로 로드한다.
+   네이티브 alert()/confirm() 대체.
+   ========================================================================== */
+:root {
+    --ui-ink: #0E131B;
+    --ui-text: #2D3543;
+    --ui-muted: #5C6878;
+    --ui-line: #E2E5E9;
+    --ui-primary: #1E9C92;
+    --ui-primary-600: #14807A;
+    --ui-danger: #C6362F;
+    --ui-danger-600: #A22823;
+    --ui-font: "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont,
+               "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+}
+
+/* ---------------- 토스트 ---------------- */
+.ndn-toasts {
+    position: fixed; top: 18px; right: 18px; z-index: 100000;
+    display: flex; flex-direction: column; gap: 10px;
+    pointer-events: none;
+}
+.ndn-toast {
+    pointer-events: auto;
+    display: flex; align-items: flex-start; gap: 11px;
+    min-width: 260px; max-width: 380px;
+    padding: 13px 15px;
+    font-family: var(--ui-font); font-size: 14px; line-height: 1.5; color: var(--ui-text);
+    background: #fff;
+    border: 1px solid var(--ui-line);
+    border-left: 4px solid var(--ui-muted);
+    border-radius: 10px;
+    box-shadow: 0 8px 28px rgba(15, 23, 42, .16);
+    transform: translateX(120%);
+    opacity: 0;
+    transition: transform .28s cubic-bezier(.2, .8, .25, 1), opacity .28s;
+}
+.ndn-toast.is-in { transform: translateX(0); opacity: 1; }
+.ndn-toast.is-out { transform: translateX(120%); opacity: 0; }
+.ndn-toast__icon {
+    flex: 0 0 20px; width: 20px; height: 20px; margin-top: 1px;
+    border-radius: 50%; display: grid; place-items: center;
+    font-size: 12px; font-weight: 800; color: #fff;
+    background: var(--ui-muted);
+}
+.ndn-toast__body { flex: 1; min-width: 0; }
+.ndn-toast__title { font-weight: 700; margin: 0 0 2px; }
+.ndn-toast__msg { margin: 0; color: var(--ui-muted); }
+.ndn-toast__title + .ndn-toast__msg { font-size: 13px; }
+.ndn-toast__close {
+    flex: 0 0 auto; margin: -2px -4px 0 0;
+    background: none; border: 0; cursor: pointer;
+    color: #9AA1AC; font-size: 17px; line-height: 1; padding: 2px 4px; border-radius: 5px;
+}
+.ndn-toast__close:hover { background: #F0F2F5; color: var(--ui-text); }
+
+.ndn-toast--success { border-left-color: var(--ui-primary); }
+.ndn-toast--success .ndn-toast__icon { background: var(--ui-primary); }
+.ndn-toast--error { border-left-color: var(--ui-danger); }
+.ndn-toast--error .ndn-toast__icon { background: var(--ui-danger); }
+.ndn-toast--info { border-left-color: #2F6FB5; }
+.ndn-toast--info .ndn-toast__icon { background: #2F6FB5; }
+
+/* ---------------- 확인/알림 모달 ---------------- */
+.ndn-modal {
+    position: fixed; inset: 0; z-index: 100001;
+    display: grid; place-items: center; padding: 20px;
+    background: rgba(14, 19, 27, .46);
+    opacity: 0; transition: opacity .16s ease;
+    font-family: var(--ui-font);
+}
+.ndn-modal.is-in { opacity: 1; }
+.ndn-modal__card {
+    width: 100%; max-width: 400px;
+    background: #fff; border-radius: 14px;
+    box-shadow: 0 24px 64px rgba(14, 19, 27, .34);
+    padding: 24px 24px 20px;
+    transform: translateY(8px) scale(.98);
+    transition: transform .18s cubic-bezier(.2, .8, .25, 1);
+}
+.ndn-modal.is-in .ndn-modal__card { transform: none; }
+.ndn-modal__title {
+    margin: 0 0 8px; font-size: 17px; font-weight: 700; color: var(--ui-ink);
+    letter-spacing: -.01em;
+}
+.ndn-modal__msg { margin: 0; font-size: 14px; line-height: 1.6; color: var(--ui-muted); white-space: pre-line; }
+.ndn-modal__actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 22px; }
+.ndn-btn {
+    font-family: inherit; font-size: 14px; font-weight: 600;
+    padding: 9px 18px; border-radius: 8px; cursor: pointer;
+    border: 1px solid transparent; transition: background .15s, border-color .15s, color .15s;
+}
+.ndn-btn--ghost { background: #fff; border-color: var(--ui-line); color: var(--ui-text); }
+.ndn-btn--ghost:hover { background: #F4F6F8; border-color: #CDD2D8; }
+.ndn-btn--primary { background: var(--ui-primary); color: #fff; }
+.ndn-btn--primary:hover { background: var(--ui-primary-600); }
+.ndn-btn--danger { background: var(--ui-danger); color: #fff; }
+.ndn-btn--danger:hover { background: var(--ui-danger-600); }
+.ndn-btn:focus-visible { outline: 3px solid rgba(30, 156, 146, .4); outline-offset: 2px; }
