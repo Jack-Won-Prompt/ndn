@@ -173,6 +173,30 @@
             return Math.max(240, window.innerHeight - (cfg.offset || 200));
         }
 
+        // 컬럼 폭 합이 컨테이너보다 좁으면 각 컬럼을 비율대로 늘려 표가 폭을 꽉
+        // 채우게 한다 → 오른쪽에 빈 여백이나 떠 있는 스크롤바가 생기지 않는다.
+        var ROWNUM_W = 66; // rowNum 헤더 폭
+        function fitColumns() {
+            var avail = host.getBoundingClientRect().width;
+            if (!avail) return;
+            var base = columns.map(function (c) { return c.width || c.minWidth || 100; });
+            var dataSum = base.reduce(function (a, b) { return a + b; }, 0);
+            var target = avail - ROWNUM_W - 2;   // 테두리 여유
+            if (target <= dataSum) return;       // 넘치면 가로 스크롤(그대로 둠)
+            var factor = target / dataSum;
+            var used = 0;
+            columns.forEach(function (c, i) {
+                if (i === columns.length - 1) {
+                    c.width = target - used;     // 반올림 잔여는 마지막 컬럼에
+                } else {
+                    c.width = Math.floor(base[i] * factor);
+                    used += c.width;
+                }
+                delete c.minWidth;               // 고정폭으로 확정
+            });
+        }
+        fitColumns();
+
         var grid = new Grid({
             el: host,
             data: cfg.data,

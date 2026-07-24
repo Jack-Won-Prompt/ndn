@@ -10,7 +10,7 @@
 </style>
 <link rel="stylesheet" href="{{ asset('admin-assets/vendor/tui-grid/tui-pagination.css') }}">
 <link rel="stylesheet" href="{{ asset('admin-assets/vendor/tui-grid/tui-grid.css') }}">
-<link rel="stylesheet" href="{{ asset('admin-assets/css/embed.css') }}">
+<link rel="stylesheet" href="{{ asset('admin-assets/css/embed.css') }}?v={{ @filemtime(public_path('admin-assets/css/embed.css')) }}">
 </head>
 <body>
 <div class="screen">
@@ -28,7 +28,7 @@
 @hasSection('grid')
     <script src="{{ asset('admin-assets/vendor/tui-grid/tui-pagination.js') }}"></script>
     <script src="{{ asset('admin-assets/vendor/tui-grid/tui-grid.js') }}"></script>
-    <script src="{{ asset('admin-assets/js/grid.js') }}"></script>
+    <script src="{{ asset('admin-assets/js/grid.js') }}?v={{ @filemtime(public_path('admin-assets/js/grid.js')) }}"></script>
     @yield('grid')
 @endif
 @yield('script')
