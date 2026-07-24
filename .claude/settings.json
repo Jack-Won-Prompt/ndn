@@ -124,7 +124,9 @@
       "mcp__playwright__browser_snapshot",
       "mcp__playwright__browser_press_key",
       "Bash(./vendor/bin/pint)",
-      "Bash(./vendor/bin/pest)"
+      "Bash(./vendor/bin/pest)",
+      "Bash(/e/xampp/php/php.exe -r \"var_dump\\(function_exists\\('imagecreatetruecolor'\\), function_exists\\('imagefilledpolygon'\\), function_exists\\('imagepng'\\)\\);\")",
+      "Bash(/e/xampp/php/php.exe \"C:/Users/82103/AppData/Local/Temp/claude/e--xampp-htdocs-ndn/86c0f14c-6b0b-4c12-a8c7-8f091e3b87e7/scratchpad/gen_favicon.php\")"
     ]
   }
 }

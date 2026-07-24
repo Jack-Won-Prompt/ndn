@@ -19,6 +19,9 @@
 <title>@yield('title', 'N.D.N Korea — 외국인 계절근로자 통합관리')</title>
 <meta name="description" content="@yield('description', '주식회사 앤디앤(N.D.N Korea)은 외국인 계절근로자(E-8)의 전 주기를 하나의 체계로 운영합니다.')">
 <meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/svg+xml" href="{{ asset('site/assets/favicon.svg') }}">
+<link rel="icon" type="image/png" sizes="32x32" href="{{ asset('site/assets/favicon-32.png') }}">
+<link rel="apple-touch-icon" href="{{ asset('site/assets/apple-touch-icon.png') }}">
 <link rel="preload" href="{{ asset('site/assets/fonts/PretendardVariable.woff2') }}" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="{{ asset('site/assets/css/style.css') }}">
 </head>
