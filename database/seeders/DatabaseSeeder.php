@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use App\Shared\Enums\UserRole;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -17,28 +15,15 @@ class DatabaseSeeder extends Seeder
 
         // 운영(production)에서는 테스트 계정·데모 데이터를 만들지 않는다.
         // 관리자 계정은 별도로 생성한다: php artisan ndn:create-admin ...
+        // 운영에서 테스트가 필요하면 아래 시더를 명시적으로 실행:
+        //   php artisan db:seed --class=Database\\Seeders\\TestAccountsSeeder --force
+        //   php artisan db:seed --class=Database\\Seeders\\DemoDataSeeder --force
         if (app()->environment('production')) {
             return;
         }
 
-        // 로컬/스테이징용 역할별 테스트 계정 (CLAUDE.md §3: 시더에 역할·테스트 계정 포함)
-        $accounts = [
-            ['NDN 관리자',  'admin@ndn.test',   UserRole::NdnAdmin],
-            ['시청 담당자',  'city@ndn.test',    UserRole::CityOfficer],
-            ['농가',        'farm@ndn.test',    UserRole::FarmOwner],
-            ['송출기관',     'agency@ndn.test',  UserRole::SendingAgency],
-            ['제휴 대리점',  'partner@ndn.test', UserRole::PartnerAgency],
-        ];
-
-        foreach ($accounts as [$name, $email, $role]) {
-            $user = User::factory()->create([
-                'name' => $name,
-                'email' => $email,
-            ]);
-            $user->assignRole($role->value);
-        }
-
-        // 내부 시연·검증용 데모 업무 데이터 (로컬 전용)
+        // 로컬/스테이징: 역할별 테스트 계정 + 데모 업무 데이터
+        $this->call(TestAccountsSeeder::class);
         $this->call(DemoDataSeeder::class);
     }
 }

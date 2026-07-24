@@ -39,6 +39,38 @@
         </form>
 
         <p class="login-hint">NDN 관리자(ndn_admin) 계정만 접근할 수 있습니다.</p>
+
+        @if (config('ndn.show_test_logins'))
+            <div class="login-testaccts">
+                <div class="login-testaccts__head">테스트 계정 · 클릭하면 자동 입력</div>
+                <ul>
+                    @foreach ([
+                        ['admin@ndn.test', 'NDN 관리자', true],
+                        ['city@ndn.test', '시청 담당자', false],
+                        ['farm@ndn.test', '농가', false],
+                        ['agency@ndn.test', '송출기관', false],
+                        ['partner@ndn.test', '제휴 대리점', false],
+                    ] as [$acctEmail, $acctLabel, $acctIsAdmin])
+                        <li>
+                            <button type="button" class="login-testacct" data-email="{{ $acctEmail }}" data-pw="password">
+                                <span class="login-testacct__role">{{ $acctLabel }}@if ($acctIsAdmin) <em>★ 콘솔 접근</em>@endif</span>
+                                <span class="login-testacct__email">{{ $acctEmail }}</span>
+                            </button>
+                        </li>
+                    @endforeach
+                </ul>
+                <div class="login-testaccts__foot">비밀번호 공통 <code>password</code> · 콘솔은 ★관리자만 접근</div>
+            </div>
+            <script>
+                document.querySelectorAll('.login-testacct').forEach(function (b) {
+                    b.addEventListener('click', function () {
+                        document.getElementById('email').value = b.dataset.email;
+                        document.getElementById('password').value = b.dataset.pw;
+                        document.getElementById('password').focus();
+                    });
+                });
+            </script>
+        @endif
     </div>
 </div>
 </body>
