@@ -19,6 +19,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'worker' => EnsureWorkerToken::class,
             'ndn_admin' => EnsureNdnAdmin::class,
         ]);
+
+        // 미로그인 웹 요청은 Fortify 기본 /login 이 아니라 운영 콘솔 로그인으로
+        $middleware->redirectGuestsTo(fn () => route('admin.login'));
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
