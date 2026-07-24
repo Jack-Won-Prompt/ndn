@@ -53,15 +53,31 @@
 * { box-sizing: border-box; }
 body {
     margin: 0; font-family: var(--mv2-font-sans); font-size: var(--mv2-fz-md);
-    color: var(--mv2-text-default); background: var(--mv2-slate-50);
+    color: var(--mv2-text-default); background: #FFFFFF;
     -webkit-font-smoothing: antialiased;
 }
-.screen { padding: var(--mv2-sp-5) var(--mv2-sp-6) var(--mv2-sp-10); }
+.screen { padding: 26px 30px 40px; max-width: 1560px; }
 
 /* 화면 머리말 */
-.screen__head { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: var(--mv2-sp-5); gap: 12px; flex-wrap: wrap; }
-.screen__title { font-size: var(--mv2-fz-2xl); font-weight: var(--mv2-fw-bold); color: var(--mv2-text-strong); letter-spacing: -.01em; margin: 0; }
-.screen__sub { font-size: var(--mv2-fz-sm); color: var(--mv2-text-muted); margin: 5px 0 0; }
+.screen__head { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 20px; gap: 12px; flex-wrap: wrap; }
+.screen__title {
+    font-size: 23px; font-weight: var(--mv2-fw-bold); color: var(--mv2-text-strong);
+    letter-spacing: -.02em; margin: 0; display: flex; align-items: center; gap: 11px;
+}
+.screen__title::before {
+    content: ""; width: 4px; height: 20px; border-radius: 3px;
+    background: linear-gradient(180deg, var(--mv2-primary-400), var(--mv2-primary-600));
+}
+.screen__sub { font-size: var(--mv2-fz-sm); color: var(--mv2-text-muted); margin: 7px 0 0; }
+
+/* 그리드를 감싸는 카드 — 흰 배경 위에서 표를 또렷하게 */
+.grid-card {
+    background: #fff;
+    border: 1px solid var(--mv2-border-default);
+    border-radius: var(--mv2-r-lg);
+    box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 6px 20px rgba(15,23,42,.05);
+    padding: 12px 14px 14px;
+}
 
 .toolbar { display: inline-flex; gap: 6px; }
 .toolbar input {
@@ -189,3 +205,26 @@ body {
 }
 .ndn-ctxmenu li { padding: 8px 12px; border-radius: var(--mv2-r-sm); cursor: pointer; color: var(--mv2-text-default); }
 .ndn-ctxmenu li:hover { background: var(--mv2-slate-50); color: var(--mv2-text-strong); }
+
+/* ---------------- Toast UI Grid 미세 조정 (세련화) ---------------- */
+.tui-grid-container { font-family: var(--mv2-font-sans); border-radius: var(--mv2-r-md); overflow: hidden; }
+/* 헤더: 대문자 라벨 톤, 살짝 넉넉한 높이 */
+.tui-grid-cell-header { font-weight: var(--mv2-fw-semibold) !important; font-size: var(--mv2-fz-xs) !important; letter-spacing: .01em; }
+.tui-grid-cell-header .tui-grid-cell-content,
+.tui-grid-cell .tui-grid-cell-content { padding-top: 9px !important; padding-bottom: 9px !important; }
+/* 본문 셀 폰트 */
+.tui-grid-rside-area .tui-grid-cell, .tui-grid-lside-area .tui-grid-cell { font-size: var(--mv2-fz-sm); }
+/* 행번호 칼럼 옅게 */
+.tui-grid-row-header-draggable, .tui-grid-cell-row-header { color: var(--mv2-text-faint) !important; }
+/* 페이지네이션 여백 */
+.tui-grid-pagination { margin-top: 12px; }
+.tui-pagination .tui-page-btn { border-radius: var(--mv2-r-sm) !important; }
+
+/* 그리드 툴바 버튼 — 더 단정하게 */
+.ndn-gridbar { gap: 7px; margin-bottom: 12px; }
+.ndn-gridbar__btn {
+    padding: 7px 13px; box-shadow: var(--mv2-shadow-xs);
+    display: inline-flex; align-items: center; gap: 6px;
+}
+.ndn-gridbar__btn:hover { background: var(--mv2-slate-25); }
+.ndn-gridbar__btn:active { transform: translateY(1px); }

@@ -14,15 +14,30 @@ class WorkerFactory extends Factory
 {
     protected $model = Worker::class;
 
+    /** 국적별 현실적인 이름 풀 (송출 4개국) */
+    public const NAMES = [
+        'BD' => ['Md. Rahman', 'Abdul Karim', 'Mohammad Hasan', 'Shakil Ahmed', 'Jamal Uddin', 'Rafiqul Islam', 'Nazrul Haque', 'Kamal Hossain'],
+        'LA' => ['Somchai Vong', 'Bounmy Phet', 'Khamla Sisouk', 'Thongchan Keo', 'Vilay Sengdao', 'Somsak Chanthavong'],
+        'LK' => ['Nuwan Perera', 'Kasun Silva', 'Chaminda Fernando', 'Sunil Jayawardena', 'Dinesh Bandara', 'Ruwan Gunawardena'],
+        'VN' => ['Nguyen Van An', 'Tran Van Binh', 'Le Van Cuong', 'Pham Van Dung', 'Hoang Van Em', 'Vu Van Phong'],
+    ];
+
+    /** 국적 → locale 매핑 */
+    private const LOCALE = ['BD' => 'bn', 'LA' => 'lo', 'LK' => 'si', 'VN' => 'vi'];
+
+    /** 국적 → 여권번호 접두 (국가별 형식 근사) */
+    private const PASSPORT_PREFIX = ['BD' => 'BW', 'LA' => 'P', 'LK' => 'N', 'VN' => 'C'];
+
     public function definition(): array
     {
+        $nat = fake()->randomElement(['BD', 'LA', 'LK', 'VN']);
+
         return [
-            'name' => fake()->name(),
-            'nationality' => fake()->randomElement(['BD', 'LA', 'LK', 'VN']),
-            'locale' => fake()->randomElement(['bn', 'lo', 'si', 'vi']),
+            'name' => fake()->randomElement(self::NAMES[$nat]),
+            'nationality' => $nat,
+            'locale' => self::LOCALE[$nat],
             'status' => 'active',
-            // 여권번호 형식: 대문자 1 + 숫자 7~8 (blind index 검색 테스트에 사용)
-            'passport_no' => fake()->bothify('?#######'),
+            'passport_no' => self::PASSPORT_PREFIX[$nat].fake()->numerify('#######'),
             'birth_date' => fake()->date('Y-m-d', '2004-01-01'),
             'phone_home_country' => fake()->numerify('+8801#########'),
         ];

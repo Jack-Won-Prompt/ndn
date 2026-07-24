@@ -124,9 +124,47 @@
      * @param {Object} cfg { el, columns, data, perPage, frozenCount, offset,
      *                        title, editable, onEdit }
      */
+    /* 세련된 라이트 테마 — 수직 보더 제거(모던), 옅은 헤더, 얇은 행 구분선 */
+    function applyNdnTheme(Grid) {
+        Grid.applyTheme('default', {
+            grid: {
+                background: '#FFFFFF',
+                border: '#EAEDF1',
+                text: '#2D3543',
+            },
+            selection: { background: 'rgba(30,156,146,.14)', border: '#1E9C92' },
+            scrollbar: {
+                border: '#EAEDF1', background: '#FFFFFF',
+                emptySpace: '#FFFFFF', thumb: '#D5DBE3', active: '#B7BFCB',
+            },
+            cell: {
+                normal: {
+                    background: '#FFFFFF', border: '#EEF1F4',
+                    text: '#2D3543',
+                    showVerticalBorder: false, showHorizontalBorder: true,
+                },
+                header: {
+                    background: '#F7F9FB', border: '#E2E5E9',
+                    text: '#5C6878',
+                    showVerticalBorder: false, showHorizontalBorder: true,
+                },
+                rowHeader: {
+                    background: '#F7F9FB', border: '#EEF1F4', text: '#8A95A4',
+                    showVerticalBorder: false, showHorizontalBorder: true,
+                },
+                selectedHeader: { background: '#EAEDF1' },
+                focused: { border: '#1E9C92' },
+                focusedInactive: { border: '#D5DBE3' },
+                evenRow: { background: '#FFFFFF' },
+                oddRow: { background: '#FCFDFE' },
+                dummy: { background: '#FFFFFF' },
+            },
+        });
+    }
+
     window.ndnGrid = function (cfg) {
         var Grid = tui.Grid;
-        Grid.applyTheme('striped');
+        applyNdnTheme(Grid);
 
         var host = document.getElementById(cfg.el);
         var columns = cfg.columns.slice();
@@ -140,6 +178,9 @@
             data: cfg.data,
             columns: columns,
             rowHeaders: ['rowNum'],
+            rowHeight: 42,
+            minRowHeight: 42,
+            header: { height: 44 },
             bodyHeight: bodyHeight(),
             minBodyHeight: 200,
             scrollX: true,

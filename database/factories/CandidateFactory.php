@@ -17,11 +17,13 @@ class CandidateFactory extends Factory
 
     public function definition(): array
     {
+        $nat = fake()->randomElement(['BD', 'LA', 'LK', 'VN']);
+
         return [
             'demand_request_id' => null,
             'worker_id' => null,
-            'name' => fake()->name(),
-            'nationality' => fake()->randomElement(['BD', 'LA', 'LK', 'VN']),
+            'name' => fake()->randomElement(WorkerFactory::NAMES[$nat]),
+            'nationality' => $nat,
             'age' => fake()->numberBetween(20, 45),
             'gender' => fake()->randomElement(['male', 'female']),
             'status' => CandidateStatus::Applied,

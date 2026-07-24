@@ -31,5 +31,8 @@ class DatabaseSeeder extends Seeder
             ]);
             $user->assignRole($role->value);
         }
+
+        // 내부 시연·검증용 데모 업무 데이터
+        $this->call(DemoDataSeeder::class);
     }
 }

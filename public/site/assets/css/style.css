@@ -734,3 +734,65 @@ body.flags-off .bg-flag { display: none; }
     .hero::after, .page-head::after, .hero__bg, .page-head__bg { display: none; }
     .hero h1, .page-head h1, .hero__lead, .page-head p { color: #000; }
 }
+
+/* ==========================================================================
+   22. 라이트/클린 테마 오버라이드 — 검정 계통 섹션을 흰색으로
+   (헤더·통계·프로세스·CTA·푸터를 밝게, 텍스트는 잉크색)
+   ========================================================================== */
+
+/* 헤더: 화이트 + 다크 텍스트 */
+.header { background: rgba(255, 255, 255, .9); border-bottom: 1px solid var(--line); }
+.logo__mark { color: var(--ink); }
+.logo__sub { color: var(--gray-500); }
+.nav a { color: var(--gray-700); }
+.nav a:hover { color: var(--ink); background: var(--gray-100); }
+.nav a[aria-current="page"] { color: var(--ink); box-shadow: inset 0 -2px 0 var(--ink); }
+.nav-toggle { color: var(--ink); border-color: var(--gray-300); }
+
+/* 어두운 섹션 → 밝은 배경 */
+.section--dark { background: var(--gray-50); color: var(--gray-700); }
+.section--dark h2, .section--dark h3, .section--dark h4 { color: var(--ink); }
+.section--dark .eyebrow { color: var(--gray-500); }
+.section--dark .sec-head p, .section--dark .card p, .section--dark .split p { color: var(--gray-500); }
+.section--dark .rule { background: var(--ink); }
+.section--dark .card { background: #fff; border-color: var(--line); }
+.section--dark .card:hover { border-color: var(--ink); box-shadow: var(--shadow-md); }
+.section--dark .card__icon { background: var(--gray-50); border-color: var(--line); }
+.section--dark .checks li { color: var(--gray-700); }
+.section--dark .checks li::before { border-color: var(--ink); }
+
+/* 통계 */
+.stats { background: var(--line); border-color: var(--line); }
+.stat { background: #fff; }
+.stat__num { color: var(--ink); }
+.stat__label { color: var(--gray-500); }
+.section--dark .stats + p { color: var(--gray-500) !important; }
+
+/* 프로세스 단계 */
+.step__num { background: #fff; border-color: var(--line); }
+.step:hover .step__num { border-color: var(--ink); background: var(--gray-50); }
+.step::before { background: var(--line); }
+.step__label { color: var(--gray-500); }
+.step h3 { color: var(--ink); }
+.step p { color: var(--gray-500); }
+
+/* 국가 배지 */
+.country { background: var(--gray-50); border-color: var(--line); color: var(--ink); }
+.country__code { background: var(--gray-100); color: var(--ink); }
+.country__lang { color: var(--gray-500); }
+
+/* CTA: 밝은 배경 + 다크 버튼 */
+.cta { background: var(--gray-50); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.cta h2 { color: var(--ink); }
+.cta p { color: var(--gray-500); }
+.cta .btn--light { background: var(--ink); color: #fff; }
+.cta .btn--light:hover { background: #000; }
+.cta .btn--ghost { border-color: var(--gray-300); color: var(--ink); }
+.cta .btn--ghost:hover { border-color: var(--ink); background: #fff; }
+
+/* 푸터: 밝게 */
+.footer { background: var(--gray-50); border-top: 1px solid var(--line); color: var(--gray-500); }
+.footer__grid { border-bottom-color: var(--line); }
+.footer h4 { color: var(--ink); }
+.footer a:hover { color: var(--ink); }
+.footer__bottom { border-top-color: var(--line); color: var(--gray-500); }

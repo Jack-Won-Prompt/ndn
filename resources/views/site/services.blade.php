@@ -37,7 +37,7 @@
                 </div>
                 <div class="split__media">
                     <div class="photo photo--wide">
-                        <img src="{{ asset('site/assets/img/worker_consult.jpg') }}" alt="송출국 출국 행사 장면">
+                        <img src="{{ asset('site/assets/img/interview.jpg') }}" alt="현지 면접 장면">
                     </div>
                 </div>
             </div>
