@@ -122,8 +122,15 @@
                     .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
                     .then(function (res) {
                         if (res.ok && Array.isArray(res.j.rows)) {
-                            res.j.rows.forEach(function (row) { grid.addRow(row); });
-                            ndnToast(res.j.rows.length + '행을 불러왔습니다. 검토 후 저장하세요.', { type: 'success' });
+                            if (res.j.replace) {
+                                // 서버가 이미 저장함 → 전체 데이터 교체
+                                grid.setData(res.j.rows);
+                                ndnToast(res.j.message || '가져와 저장했습니다.', { type: 'success' });
+                            } else {
+                                // 검토용 신규 행으로 추가 (사용자가 확인 후 저장)
+                                res.j.rows.forEach(function (row) { grid.addRow(row); });
+                                ndnToast(res.j.rows.length + '행을 불러왔습니다. 검토 후 저장하세요.', { type: 'success' });
+                            }
                         } else {
                             ndnToast(res.j.message || '엑셀을 읽지 못했습니다.', { type: 'error', title: '가져오기 실패' });
                         }

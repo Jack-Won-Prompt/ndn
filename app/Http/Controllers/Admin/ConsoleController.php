@@ -221,15 +221,7 @@ class ConsoleController extends Controller
 
     private function workers(Request $request): View
     {
-        $q = trim((string) $request->query('q', ''));
-
-        $rows = Worker::query()
-            ->when($q !== '', fn ($query) => $query->where('name', 'like', "%{$q}%"))
-            ->latest('id')
-            ->limit(1000)
-            ->get();
-
-        return view('admin.screens.workers', ['rows' => $rows, 'q' => $q]);
+        return view('admin.screens.workers', ['rows' => WorkerGridController::rows()]);
     }
 
     /** 근로자 상세 — 개인정보 열람 감사 로그 (CLAUDE.md §7-6) */
