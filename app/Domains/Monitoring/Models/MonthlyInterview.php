@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domains\Monitoring\Models;
 
+use App\Domains\Monitoring\Enums\InterviewSource;
 use App\Domains\Monitoring\Enums\RiskLevel;
 use App\Domains\Recruitment\Models\Worker;
 use App\Models\User;
@@ -16,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * 월별 인터뷰 (CLAUDE.md §5, 업무흐름 §7).
  *
  * @property RiskLevel $risk_level
+ * @property InterviewSource $source
  */
 class MonthlyInterview extends Model
 {
@@ -37,6 +39,7 @@ class MonthlyInterview extends Model
         'inspector_user_id',
         'inspection_checkin_id',
         'interviewed_on',
+        'source',
         'pay_received',
         'no_discrimination',
         'follows_rules',
@@ -52,6 +55,7 @@ class MonthlyInterview extends Model
     {
         return [
             'interviewed_on' => 'date',
+            'source' => InterviewSource::class,
             'pay_received' => 'boolean',
             'no_discrimination' => 'boolean',
             'follows_rules' => 'boolean',

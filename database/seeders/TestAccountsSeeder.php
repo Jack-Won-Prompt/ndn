@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Domains\Recruitment\Models\Worker;
 use App\Models\User;
 use App\Shared\Enums\UserRole;
 use Illuminate\Database\Seeder;
@@ -46,6 +47,37 @@ class TestAccountsSeeder extends Seeder
             }
         }
 
-        $this->command?->info('테스트 계정 5종 준비 완료 (비밀번호: password)');
+        $this->seedWorkerAppAccounts();
+
+        $this->command?->info('테스트 계정 준비 완료 (비밀번호: password)');
+    }
+
+    /**
+     * 근로자 앱(모바일) 로그인용 계정 — 송출 4개국 × 언어별 1명 (CLAUDE.md §6, §9).
+     * 앱의 다국어 화면을 언어마다 실제로 확인할 수 있게 국적별로 하나씩 만든다.
+     */
+    private function seedWorkerAppAccounts(): void
+    {
+        $workers = [
+            ['Nguyen Van An', 'worker.vn@ndn.test', 'VN', 'vi'],
+            ['Md. Rahman', 'worker.bd@ndn.test', 'BD', 'bn'],
+            ['Somchai Vong', 'worker.la@ndn.test', 'LA', 'lo'],
+            ['Nuwan Perera', 'worker.lk@ndn.test', 'LK', 'si'],
+        ];
+
+        foreach ($workers as [$name, $email, $nationality, $locale]) {
+            Worker::firstOrCreate(
+                ['email' => $email],
+                [
+                    'name' => $name,
+                    'password' => 'password',   // hashed cast 가 해시 처리
+                    'nationality' => $nationality,
+                    'locale' => $locale,
+                    'status' => 'active',
+                ],
+            );
+        }
+
+        $this->command?->info('근로자 앱 계정 4종 준비 완료 (worker.{vn,bd,la,lk}@ndn.test)');
     }
 }
