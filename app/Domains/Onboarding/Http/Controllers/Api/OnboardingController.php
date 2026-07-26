@@ -12,6 +12,8 @@ use App\Domains\Recruitment\Models\Worker;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use RuntimeException;
 
 /**
@@ -38,7 +40,8 @@ class OnboardingController extends Controller
     {
         $data = $request->validate([
             'payload' => ['required', 'array'],
-            'signature' => ['nullable', 'string'], // 실제 파일 업로드는 별도 서명 URL 흐름
+            // 전자서명: base64(data URL 또는 순수 base64) PNG. 서명 캔버스 결과.
+            'signature' => ['nullable', 'string'],
         ]);
 
         /** @var Worker $worker */
@@ -53,9 +56,31 @@ class OnboardingController extends Controller
         }
 
         $submission->payload = $data['payload'];
+
+        // 전자서명 저장 — private 디스크에 PNG 로 저장하고 경로만 보관(§9)
+        if (! empty($data['signature'])) {
+            $binary = $this->decodeSignature($data['signature']);
+            if ($binary !== null) {
+                $path = 'onboarding/signatures/'.$worker->id.'_'.Str::uuid()->toString().'.png';
+                Storage::disk('local')->put($path, $binary);
+                $submission->signature_path = $path;
+            }
+        }
+
         $submission->save();
 
         return new OnboardingResource($submission->refresh());
+    }
+
+    /** base64(data URL 허용) → 바이너리. 유효하지 않으면 null. */
+    private function decodeSignature(string $raw): ?string
+    {
+        if (str_contains($raw, ',')) {
+            $raw = substr($raw, strpos($raw, ',') + 1);
+        }
+        $binary = base64_decode(strtr($raw, ' ', '+'), true);
+
+        return $binary === false ? null : $binary;
     }
 
     /** 제출 */

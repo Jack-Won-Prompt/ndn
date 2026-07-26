@@ -18,6 +18,8 @@ use App\Domains\Settlement\Enums\SettlementStatus;
 use App\Domains\Settlement\Models\SettlementRequest;
 use App\Domains\Support\Models\SupportTicket;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 /**
  * 내부 시연·검증용 데모 데이터.
@@ -68,7 +70,7 @@ class DemoDataSeeder extends Seeder
             ]);
         });
 
-        // 온보딩 제출 18건 (검수 단계 분포)
+        // 온보딩 제출 18건 (검수 단계 분포) — 전자서명은 실제 파일로 저장(§9, private)
         $workers->take(18)->each(function ($w) {
             $status = fake()->randomElement([
                 OnboardingStatus::Submitted,
@@ -79,6 +81,7 @@ class DemoDataSeeder extends Seeder
                 'worker_id' => $w->id,
                 'status' => $status,
                 'submitted_at' => now()->subDays(fake()->numberBetween(1, 30)),
+                'signature_path' => $this->makeSignature($w->id),
             ]);
         });
 
@@ -103,5 +106,32 @@ class DemoDataSeeder extends Seeder
         $workers->random(15)->each(function ($w) {
             SupportTicket::factory()->create(['worker_id' => $w->id]);
         });
+    }
+
+    /** 데모용 전자서명 PNG 를 private 디스크에 생성하고 경로 반환 */
+    private function makeSignature(int $workerId): string
+    {
+        $img = imagecreatetruecolor(400, 150);
+        $white = imagecolorallocate($img, 255, 255, 255);
+        $ink = imagecolorallocate($img, 20, 30, 50);
+        imagefill($img, 0, 0, $white);
+        imagesetthickness($img, 3);
+        $px = 40;
+        $py = 90;
+        for ($x = 40; $x < 360; $x += 6) {
+            $y = 90 + (int) (35 * sin($x / 18 + $workerId));
+            imageline($img, $px, $py, $x, $y, $ink);
+            $px = $x;
+            $py = $y;
+        }
+        ob_start();
+        imagepng($img);
+        $png = (string) ob_get_clean();
+        imagedestroy($img);
+
+        $path = 'onboarding/signatures/'.$workerId.'_'.Str::uuid()->toString().'.png';
+        Storage::disk('local')->put($path, $png);
+
+        return $path;
     }
 }
