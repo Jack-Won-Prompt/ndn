@@ -24,6 +24,13 @@
 <link rel="apple-touch-icon" href="{{ asset('site/assets/apple-touch-icon.png') }}">
 <link rel="preload" href="{{ asset('site/assets/fonts/PretendardVariable.woff2') }}" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="{{ asset('site/assets/css/style.css') }}">
+<style>
+    .lang-switch{display:flex;gap:2px;align-items:center;margin-left:16px;flex-wrap:wrap;}
+    .lang-switch__item{font-size:12px;color:#6B7280;text-decoration:none;padding:4px 8px;border-radius:6px;line-height:1;white-space:nowrap;}
+    .lang-switch__item:hover{background:rgba(30,156,146,.1);color:#178578;}
+    .lang-switch__item.is-active{background:#1E9C92;color:#fff;font-weight:700;}
+    @media (max-width:860px){.lang-switch{width:100%;margin:8px 0 0;justify-content:flex-start;}}
+</style>
 </head>
 <body>
 
@@ -40,6 +47,15 @@
                 <a href="{{ route($item['route']) }}" @if ($active === $key) aria-current="page" @endif>{{ $item['label'] }}</a>
             @endforeach
         </nav>
+        {{-- 언어 선택기 — 자국어 표기는 번역하지 않는다(data-no-translate) --}}
+        <div class="lang-switch" data-no-translate>
+            @php $curLocale = session('site_locale', 'ko'); @endphp
+            @foreach (\App\Shared\Translation\SiteTranslator::NATIVE as $lc => $native)
+                <a href="{{ route('site.lang', $lc) }}"
+                   class="lang-switch__item @if ($curLocale === $lc) is-active @endif"
+                   hreflang="{{ $lc }}">{{ $native }}</a>
+            @endforeach
+        </div>
         <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav">
             <span class="sr-only">메뉴 열기</span>☰
         </button>

@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\InvitationController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\InvitationAcceptController;
 use App\Http\Controllers\PortalController;
+use App\Http\Controllers\SiteController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -24,12 +25,15 @@ use Illuminate\Support\Facades\Route;
 | 정적 HTML 을 Blade 뷰로 전환. 공통 골격은 site.layout, 각 페이지는 <main> 만.
 | URL 은 /ndn, /ndn/about … 처럼 .html 없이 깔끔하게. 에셋은 여전히 public/site/assets.
 */
-Route::view('/', 'site.home', ['active' => 'home'])->name('site.home');
-Route::view('/about', 'site.about', ['active' => 'about'])->name('site.about');
-Route::view('/services', 'site.services', ['active' => 'services'])->name('site.services');
-Route::view('/worker-support', 'site.worker', ['active' => 'worker'])->name('site.worker');
-Route::view('/partners', 'site.partners', ['active' => 'partners'])->name('site.partners');
-Route::view('/contact', 'site.contact', ['active' => 'contact'])->name('site.contact');
+// 회사소개 사이트 — 선택 언어(ko/bn/lo/si/vi)로 자동 번역 렌더 (SiteController)
+Route::get('/', [SiteController::class, 'page'])->defaults('key', 'home')->name('site.home');
+Route::get('/about', [SiteController::class, 'page'])->defaults('key', 'about')->name('site.about');
+Route::get('/services', [SiteController::class, 'page'])->defaults('key', 'services')->name('site.services');
+Route::get('/worker-support', [SiteController::class, 'page'])->defaults('key', 'worker')->name('site.worker');
+Route::get('/partners', [SiteController::class, 'page'])->defaults('key', 'partners')->name('site.partners');
+Route::get('/contact', [SiteController::class, 'page'])->defaults('key', 'contact')->name('site.contact');
+// 경로는 프로젝트 루트의 물리 디렉터리(lang/)와 겹치지 않게 set-language 를 쓴다.
+Route::get('/set-language/{locale}', [SiteController::class, 'setLocale'])->name('site.lang');
 
 /*
 |--------------------------------------------------------------------------
