@@ -11,7 +11,9 @@ use App\Http\Controllers\Admin\DemandGridController;
 use App\Http\Controllers\Admin\SignupApprovalController;
 use App\Http\Controllers\Admin\TicketGridController;
 use App\Http\Controllers\Admin\WorkerGridController;
+use App\Http\Controllers\Admin\InvitationController;
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\InvitationAcceptController;
 use App\Http\Controllers\PortalController;
 use Illuminate\Support\Facades\Route;
 
@@ -51,6 +53,12 @@ Route::prefix('portal')->name('portal.')->group(function () {
     Route::post('/logout', [PortalController::class, 'logout'])->name('logout');
     Route::get('/', [PortalController::class, 'index'])->name('index');
 });
+
+/*
+| 조직 초대 수락 (공개 · 비인증) — 시청·농가·송출·대리점 초대 링크
+*/
+Route::get('/invite/{token}', [InvitationAcceptController::class, 'show'])->name('invite.show');
+Route::post('/invite/{token}', [InvitationAcceptController::class, 'accept'])->name('invite.accept');
 
 /*
 | 채팅 (조직 사용자: NDN·시청·농가·해외협력사) — 근로자는 /api/v1/chat
@@ -109,6 +117,13 @@ Route::prefix('admin')->group(function () {
             ->whereNumber('worker')->name('admin.signups.approve');
         Route::post('/signups/{worker}/reject', [SignupApprovalController::class, 'reject'])
             ->whereNumber('worker')->name('admin.signups.reject');
+
+        // 조직 초대 관리
+        Route::post('/invitations/send', [InvitationController::class, 'send'])->name('admin.invitations.send');
+        Route::post('/invitations/{invitation}/resend', [InvitationController::class, 'resend'])
+            ->whereNumber('invitation')->name('admin.invitations.resend');
+        Route::post('/invitations/{invitation}/revoke', [InvitationController::class, 'revoke'])
+            ->whereNumber('invitation')->name('admin.invitations.revoke');
 
         Route::get('/onboarding/{submission}', [ConsoleController::class, 'onboardingDetail'])
             ->whereNumber('submission')->name('admin.onboarding.detail');

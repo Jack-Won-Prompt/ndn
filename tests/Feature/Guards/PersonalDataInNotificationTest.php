@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domains\Support\Notifications\NewNoticeNotification;
+use App\Notifications\InvitationNotification;
 use App\Shared\Notifications\Contracts\PersonalDataFreeChannel;
 
 /**
@@ -32,6 +33,9 @@ it('근로자 알림 본문에 개인정보 패턴이 없다', function () {
         new NewNoticeNotification(count: 3, workerLocale: 'ko'),
         new NewNoticeNotification(count: 3, workerLocale: 'vi'),
         new NewNoticeNotification(count: 3, workerLocale: 'bn'),
+        // 조직 초대 이메일 — 역할 라벨 + 링크만, 개인정보 없음
+        new InvitationNotification(acceptUrl: 'http://localhost/ndn/invite/'.str_repeat('a1', 20), roleLabel: '시청 담당자'),
+        new InvitationNotification(acceptUrl: 'http://localhost/ndn/invite/'.str_repeat('b2', 20), roleLabel: '제휴 대리점'),
     ];
 
     foreach ($notifications as $notification) {

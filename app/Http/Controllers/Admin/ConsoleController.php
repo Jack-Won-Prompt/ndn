@@ -87,6 +87,7 @@ class ConsoleController extends Controller
             [
                 'group' => '설정',
                 'items' => [
+                    ['key' => 'invitations', 'label' => '조직 초대', 'icon' => 'users'],
                     ['key' => 'settings', 'label' => '사이트 설정', 'icon' => 'cog'],
                 ],
             ],
@@ -112,6 +113,10 @@ class ConsoleController extends Controller
             'candidates' => $this->candidates($request),
             'workers' => $this->workers($request),
             'signups' => view('admin.screens.signups', ['rows' => SignupApprovalController::rows()]),
+            'invitations' => view('admin.screens.invitations', [
+                'rows' => InvitationController::rows(),
+                'roleOptions' => InvitationController::roleOptions(),
+            ]),
             'onboarding' => $this->onboarding($request),
             'settlement' => $this->settlement($request),
             'monitoring' => $this->monitoring($request),
