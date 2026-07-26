@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\EnsureNdnAdmin;
 use App\Http\Middleware\EnsureWorkerToken;
+use App\Http\Middleware\RecordAccessLog;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -23,6 +24,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // 미로그인 웹 요청은 Fortify 기본 /login 이 아니라 운영 콘솔 로그인으로
         $middleware->redirectGuestsTo(fn () => route('admin.login'));
+
+        // 접속·페이지 접근 로그 기록 (메인 비로그인 + 로그인 이후 모두)
+        $middleware->web(append: [RecordAccessLog::class]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

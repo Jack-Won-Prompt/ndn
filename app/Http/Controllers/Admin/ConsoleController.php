@@ -89,6 +89,7 @@ class ConsoleController extends Controller
                 'items' => [
                     ['key' => 'invitations', 'label' => '조직 초대', 'icon' => 'users'],
                     ['key' => 'settings', 'label' => '사이트 설정', 'icon' => 'cog'],
+                    ['key' => 'accesslog', 'label' => '접속 로그', 'icon' => 'inbox'],
                 ],
             ],
         ];
@@ -123,6 +124,10 @@ class ConsoleController extends Controller
             'tickets' => $this->tickets($request),
             'chat' => view('admin.screens.chat', ['me' => app(ChatService::class)->partyForUser(Auth::user())]),
             'settings' => $this->settingsForm(),
+            'accesslog' => view('admin.screens.accesslog', [
+                'rows' => AccessLogController::rows(),
+                'summary' => AccessLogController::summary(),
+            ]),
             default => abort(404),
         };
     }
