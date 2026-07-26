@@ -26,7 +26,9 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * NDN 운영 콘솔 — MDI 탭 워크스페이스 셸 + 임베디드 업무 화면.
@@ -250,6 +252,46 @@ class ConsoleController extends Controller
         $rows = OnboardingSubmission::with('worker')->latest('id')->limit(1000)->get();
 
         return view('admin.screens.onboarding', ['rows' => $rows]);
+    }
+
+    /**
+     * 온보딩 제출물 상세 (검수 팝업용). 본인 기입 payload 는 개인정보이므로
+     * 열람 시 감사 로그를 남긴다 (CLAUDE.md §7-6).
+     */
+    public function onboardingDetail(OnboardingSubmission $submission): JsonResponse
+    {
+        $submission->loadMissing('worker');
+        $submission->worker?->recordAccessBy(Auth::user(), 'onboarding-detail');
+
+        $hasSignature = filled($submission->signature_path)
+            && Storage::disk('local')->exists($submission->signature_path);
+
+        return response()->json([
+            'id' => $submission->id,
+            'worker' => $submission->worker?->name ?? '—',
+            'status' => $submission->status->label(),
+            'submitted_at' => $submission->submitted_at?->format('Y-m-d H:i') ?? '—',
+            'review_note' => $submission->review_note,
+            'payload' => $submission->payload ?? [],
+            'has_signature' => $hasSignature,
+            'signature_url' => $hasSignature
+                ? route('admin.onboarding.signature', $submission)
+                : null,
+        ]);
+    }
+
+    /** 전자서명 파일 스트리밍 (private 스토리지 · 열람 감사 로그). */
+    public function onboardingSignature(OnboardingSubmission $submission): StreamedResponse
+    {
+        abort_unless(
+            filled($submission->signature_path) && Storage::disk('local')->exists($submission->signature_path),
+            404,
+        );
+
+        $submission->loadMissing('worker');
+        $submission->worker?->recordAccessBy(Auth::user(), 'onboarding-signature');
+
+        return Storage::disk('local')->response($submission->signature_path);
     }
 
     /** 지자체 월간 보고서 PDF 다운로드 (업무흐름 §10) */

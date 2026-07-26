@@ -55,6 +55,10 @@ Route::prefix('admin')->group(function () {
             ->whereNumber('ticket')->name('admin.tickets.status');
         Route::get('/screen/workers/{worker}', [ConsoleController::class, 'worker'])
             ->whereNumber('worker')->name('admin.screen.worker');
+        Route::get('/onboarding/{submission}', [ConsoleController::class, 'onboardingDetail'])
+            ->whereNumber('submission')->name('admin.onboarding.detail');
+        Route::get('/onboarding/{submission}/signature', [ConsoleController::class, 'onboardingSignature'])
+            ->whereNumber('submission')->name('admin.onboarding.signature');
         Route::get('/screen/{key}', [ConsoleController::class, 'screen'])
             ->where('key', '[a-z_]+')->name('admin.screen');
     });

@@ -238,6 +238,17 @@
             m.actions.parentNode.insertBefore(note, m.actions);
         }
 
+        // 첨부/문서 링크(새 탭) — 예: 전자서명 파일 열기
+        (opts.links || []).forEach(function (l) {
+            var a = document.createElement('a');
+            a.className = 'ndn-btn ndn-btn--ghost';
+            a.href = l.href;
+            a.target = '_blank';
+            a.rel = 'noopener';
+            a.textContent = l.label;
+            m.actions.appendChild(a);
+        });
+
         var close = document.createElement('button');
         close.type = 'button';
         close.className = 'ndn-btn ndn-btn--primary';

@@ -39,18 +39,35 @@
             { name: 'submitted', header: '제출일시', width: 160, align: 'center', sortable: true },
             { name: 'note', header: '검수 메모', minWidth: 200 },
         ],
+        // 더블클릭 → 제출물 상세(본인 기입 payload + 전자서명) 팝업
+        // 서버 조회로 payload 복호화 + 개인정보 열람 감사 로그(§7-6)
         onRowDblClick: function (row) {
-            ndnDetailModal({
-                title: '온보딩 #' + row.id,
-                subtitle: row.worker,
-                rows: [
-                    ['근로자', row.worker],
-                    ['상태', row.status, true],
-                    ['제출일시', row.submitted],
-                    ['검수 메모', row.note],
-                ],
-                note: '본인 기입 정보(주소·비상연락처 등)는 암호화 저장되어 목록에 표시하지 않습니다.',
-            });
+            var LABELS = { address_kr: '국내 주소', emergency_contact: '비상 연락처' };
+            fetch('{{ url('admin/onboarding') }}/' + row.id, { headers: { 'Accept': 'application/json' } })
+                .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+                .then(function (o) {
+                    var rows = [
+                        ['근로자', o.worker],
+                        ['상태', o.status],
+                        ['제출일시', o.submitted_at],
+                    ];
+                    var p = o.payload || {};
+                    Object.keys(p).forEach(function (k) {
+                        var v = p[k];
+                        rows.push([LABELS[k] || k, (v && typeof v === 'object') ? JSON.stringify(v) : v]);
+                    });
+                    rows.push(['전자서명', o.has_signature ? '첨부됨' : '없음']);
+                    if (o.review_note) rows.push(['검수 메모', o.review_note]);
+
+                    ndnDetailModal({
+                        title: '온보딩 #' + o.id,
+                        subtitle: o.worker,
+                        rows: rows,
+                        links: o.signature_url ? [{ label: '전자서명 파일 열기', href: o.signature_url }] : [],
+                        note: '본인 기입 정보 열람은 감사 로그에 기록됩니다.',
+                    });
+                })
+                .catch(function () { ndnToast('상세를 불러오지 못했습니다.', { type: 'error' }); });
         },
     });
 </script>
