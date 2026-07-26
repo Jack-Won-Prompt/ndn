@@ -25,11 +25,12 @@
 <link rel="preload" href="{{ asset('site/assets/fonts/PretendardVariable.woff2') }}" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="{{ asset('site/assets/css/style.css') }}">
 <style>
-    .lang-switch{display:flex;gap:2px;align-items:center;margin-left:16px;flex-wrap:wrap;}
-    .lang-switch__item{font-size:12px;color:#6B7280;text-decoration:none;padding:4px 8px;border-radius:6px;line-height:1;white-space:nowrap;}
-    .lang-switch__item:hover{background:rgba(30,156,146,.1);color:#178578;}
-    .lang-switch__item.is-active{background:#1E9C92;color:#fff;font-weight:700;}
-    @media (max-width:860px){.lang-switch{width:100%;margin:8px 0 0;justify-content:flex-start;}}
+    .lang-switch{display:flex;gap:6px;align-items:center;margin-left:16px;flex-wrap:nowrap;}
+    .lang-switch__flag{display:inline-flex;line-height:0;border-radius:4px;overflow:hidden;padding:0;border:1px solid rgba(15,23,42,.12);opacity:.6;transition:opacity .15s,box-shadow .15s;}
+    .lang-switch__flag img{display:block;width:26px;height:19px;object-fit:cover;}
+    .lang-switch__flag:hover{opacity:1;}
+    .lang-switch__flag.is-active{opacity:1;border-color:#1E9C92;box-shadow:0 0 0 2px rgba(30,156,146,.35);}
+    @media (max-width:860px){.lang-switch{margin-left:auto;}}
 </style>
 </head>
 <body>
@@ -47,13 +48,15 @@
                 <a href="{{ route($item['route']) }}" @if ($active === $key) aria-current="page" @endif>{{ $item['label'] }}</a>
             @endforeach
         </nav>
-        {{-- 언어 선택기 — 자국어 표기는 번역하지 않는다(data-no-translate) --}}
+        {{-- 언어 선택기 — 국가 국기 아이콘 한 줄 (번역 제외) --}}
         <div class="lang-switch" data-no-translate>
             @php $curLocale = session('site_locale', 'ko'); @endphp
             @foreach (\App\Shared\Translation\SiteTranslator::NATIVE as $lc => $native)
                 <a href="{{ route('site.lang', $lc) }}"
-                   class="lang-switch__item @if ($curLocale === $lc) is-active @endif"
-                   hreflang="{{ $lc }}">{{ $native }}</a>
+                   class="lang-switch__flag @if ($curLocale === $lc) is-active @endif"
+                   hreflang="{{ $lc }}" title="{{ $native }}" aria-label="{{ $native }}">
+                    <img src="{{ asset('site/assets/flags/'.$lc.'.svg') }}" alt="{{ $native }}" width="26" height="19" loading="lazy">
+                </a>
             @endforeach
         </div>
         <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav">
