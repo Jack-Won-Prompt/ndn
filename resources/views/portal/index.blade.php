@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <title>협력 포털 — N.D.N Korea</title>
+@include('partials.tz-cookie')
 <link rel="icon" type="image/svg+xml" href="{{ asset('site/assets/favicon.svg') }}">
 <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('site/assets/favicon-32.png') }}">
 <style>

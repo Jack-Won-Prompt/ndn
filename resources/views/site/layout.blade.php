@@ -25,13 +25,21 @@
 <link rel="preload" href="{{ asset('site/assets/fonts/PretendardVariable.woff2') }}" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="{{ asset('site/assets/css/style.css') }}">
 <style>
-    .lang-switch{display:flex;gap:6px;align-items:center;margin-left:16px;flex-wrap:nowrap;}
+    .lang-switch{display:flex;gap:6px;align-items:center;margin-left:16px;flex-wrap:nowrap;flex:0 0 auto;}
     .lang-switch__flag{display:inline-flex;line-height:0;border-radius:4px;overflow:hidden;padding:0;border:1px solid rgba(15,23,42,.12);opacity:.6;transition:opacity .15s,box-shadow .15s;}
     .lang-switch__flag img{display:block;width:26px;height:19px;object-fit:cover;}
     .lang-switch__flag:hover{opacity:1;}
     .lang-switch__flag.is-active{opacity:1;border-color:#1E9C92;box-shadow:0 0 0 2px rgba(30,156,146,.35);}
+    /* 번역으로 라벨이 길어져도 상단 메뉴는 항상 한 줄 유지(데스크톱). 넘치면 가로 스크롤. */
+    @media (min-width:821px){
+        .header__inner{gap:16px;flex-wrap:nowrap;}
+        .nav{flex-wrap:nowrap;min-width:0;overflow-x:auto;scrollbar-width:none;}
+        .nav::-webkit-scrollbar{display:none;}
+        .nav a{white-space:nowrap;}
+    }
     @media (max-width:860px){.lang-switch{margin-left:auto;}}
 </style>
+@include('partials.tz-cookie')
 </head>
 <body>
 

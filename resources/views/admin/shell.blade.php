@@ -16,6 +16,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>N.D.N Korea 운영 콘솔</title>
+@include('partials.tz-cookie')
 <link rel="icon" type="image/svg+xml" href="{{ asset('site/assets/favicon.svg') }}">
 <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('site/assets/favicon-32.png') }}">
 <link rel="apple-touch-icon" href="{{ asset('site/assets/apple-touch-icon.png') }}">
