@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Domains\Demand\Http\Controllers\DemandRequestController;
 use App\Http\Controllers\Admin\AuthController as AdminAuthController;
 use App\Http\Controllers\Admin\ConsoleController;
+use App\Http\Controllers\Admin\DemandGridController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -55,6 +56,10 @@ Route::prefix('admin')->group(function () {
             ->whereNumber('ticket')->name('admin.tickets.status');
         Route::get('/screen/workers/{worker}', [ConsoleController::class, 'worker'])
             ->whereNumber('worker')->name('admin.screen.worker');
+        // wwGrid CRUD — 수요 신청
+        Route::post('/grid/demand/save', [DemandGridController::class, 'save'])->name('admin.grid.demand.save');
+        Route::post('/grid/demand/import', [DemandGridController::class, 'import'])->name('admin.grid.demand.import');
+
         Route::get('/onboarding/{submission}', [ConsoleController::class, 'onboardingDetail'])
             ->whereNumber('submission')->name('admin.onboarding.detail');
         Route::get('/onboarding/{submission}/signature', [ConsoleController::class, 'onboardingSignature'])

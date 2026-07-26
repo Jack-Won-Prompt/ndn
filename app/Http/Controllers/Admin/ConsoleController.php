@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Domains\Demand\Enums\DemandStatus;
+use App\Domains\Demand\Models\City;
 use App\Domains\Demand\Models\DemandRequest;
+use App\Domains\Demand\Models\Farm;
 use App\Domains\Monitoring\Models\MonthlyInterview;
 use App\Domains\Onboarding\Enums\OnboardingStatus;
 use App\Domains\Onboarding\Models\OnboardingSubmission;
@@ -208,9 +210,13 @@ class ConsoleController extends Controller
 
     private function demand(Request $request): View
     {
-        $rows = DemandRequest::with(['farm', 'city'])->latest('id')->limit(1000)->get();
-
-        return view('admin.screens.demand', ['rows' => $rows]);
+        return view('admin.screens.demand', [
+            'rows' => DemandGridController::rows(),
+            'farms' => Farm::orderBy('name')->get(['id', 'name'])
+                ->map(fn ($f) => ['value' => $f->id, 'label' => $f->name])->all(),
+            'cities' => City::orderBy('name')->get(['id', 'name'])
+                ->map(fn ($c) => ['value' => $c->id, 'label' => $c->name])->all(),
+        ]);
     }
 
     private function workers(Request $request): View

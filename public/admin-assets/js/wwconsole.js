@@ -1,0 +1,168 @@
+/* ==========================================================================
+   NDN 운영 콘솔 — wwGrid 통합 헬퍼
+   모든 리스트 화면이 wwGrid 로 동작하도록 표준 테마·툴바·저장/엑셀 흐름 제공.
+   ========================================================================== */
+(function () {
+    'use strict';
+
+    // 콘솔 무채색+teal 테마 (wwGrid CSS 변수 오버라이드)
+    var THEME = {
+        accent: '#1E9C92', accentDark: '#14807A',
+        headerBg: '#F7F9FB', headerGroupBg: '#EAEFF3', headerHoverBg: '#EEF2F5',
+        footerBg: '#F7F9FB', selectedBg: '#DFF2F0', selectedMixBg: '#C6E7E3',
+        modifiedBg: '#FFF8E6', newBg: '#F0FBF4', summaryBg: '#F1F4F7',
+        border: '#D5DBE3', rowBorder: '#EAEDF1', borderSub: '#B7BFCB',
+    };
+
+    function csrf() {
+        var m = document.querySelector('meta[name="csrf-token"]');
+        return m ? m.content : '';
+    }
+
+    // 그리드 본문 높이 = 뷰포트 - 그리드 시작위치 - (헤더/푸터/여백)
+    function fitHeight(host) {
+        var top = host.getBoundingClientRect().top + window.scrollY;
+        return Math.max(220, Math.floor(window.innerHeight - top - 150));
+    }
+
+    function btn(label, cls, onClick) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'ndn-gridbar__btn' + (cls ? ' ' + cls : '');
+        b.textContent = label;
+        b.addEventListener('click', onClick);
+        return b;
+    }
+
+    /**
+     * @param {object} cfg
+     *   el          {string}  마운트 DOM id
+     *   columns     {Array}   wwGrid 컬럼 정의
+     *   columnGroups{Array}   (선택) 헤더 그루핑
+     *   data        {Array}   초기 데이터
+     *   editable    {bool}    편집(등록/수정/삭제) 가능 여부 (기본 false)
+     *   summary     {bool}    합계행
+     *   title       {string}  엑셀 파일명·제목
+     *   saveUrl     {string}  변경 저장 POST 엔드포인트 (editable 시)
+     *   importUrl   {string}  엑셀 업로드 POST 엔드포인트 (editable 시)
+     *   newRow      {object}  '신규 행' 기본값
+     *   onRowDblClick {func}  읽기전용 상세 팝업 등 (row) => void
+     */
+    window.wwConsole = function (cfg) {
+        var host = document.getElementById(cfg.el);
+        var editable = cfg.editable === true;
+
+        // 툴바 자리(그리드보다 위) 먼저 삽입 → 높이 계산이 정확해진다
+        var bar = document.createElement('div');
+        bar.className = 'ndn-gridbar';
+        host.parentNode.insertBefore(bar, host);
+
+        var grid = new wwGrid({
+            el: host,
+            data: cfg.data || [],
+            columns: cfg.columns,
+            columnGroups: cfg.columnGroups || [],
+            rowKey: 'id',
+            height: fitHeight(host),
+            editable: editable,
+            rowCheckbox: editable,
+            rowNumber: true,
+            summary: cfg.summary === true,
+            toolbar: false,
+            footer: true,
+            theme: THEME,
+        });
+
+        /* ---------- 저장 (수정추적 → 서버) ---------- */
+        function save() {
+            var mods = grid.getModifiedRows();
+            var n = mods.updated.length + mods.added.length + mods.deleted.length;
+            if (n === 0) { ndnToast('변경된 내용이 없습니다.', { type: 'info' }); return; }
+
+            fetch(cfg.saveUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf(), 'Accept': 'application/json' },
+                body: JSON.stringify(mods),
+            })
+                .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+                .then(function (res) {
+                    if (res.ok) {
+                        if (Array.isArray(res.j.rows)) grid.setData(res.j.rows);
+                        ndnToast(res.j.message || '저장했습니다.', { type: 'success' });
+                    } else {
+                        ndnToast(res.j.message || '저장하지 못했습니다.', { type: 'error', title: '저장 실패' });
+                    }
+                })
+                .catch(function () { ndnToast('네트워크 오류로 저장하지 못했습니다.', { type: 'error', title: '저장 실패' }); });
+        }
+
+        /* ---------- 삭제 (체크 행) ---------- */
+        function removeChecked() {
+            var checked = grid.getCheckedRows();
+            if (!checked.length) { ndnToast('삭제할 행을 선택하세요.', { type: 'info' }); return; }
+            ndnConfirm(checked.length + '개 행을 삭제 목록에 넣습니다. (저장 시 반영)', {
+                title: '행 삭제', okText: '삭제', danger: true,
+            }).then(function (ok) { if (ok) grid.removeCheckedRows(); });
+        }
+
+        /* ---------- 엑셀 업로드(가져오기) ---------- */
+        function excelUpload() {
+            var input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.xlsx,.xls,.csv';
+            input.addEventListener('change', function () {
+                if (!input.files.length) return;
+                var fd = new FormData();
+                fd.append('file', input.files[0]);
+                fetch(cfg.importUrl, {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': csrf(), 'Accept': 'application/json' },
+                    body: fd,
+                })
+                    .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+                    .then(function (res) {
+                        if (res.ok && Array.isArray(res.j.rows)) {
+                            res.j.rows.forEach(function (row) { grid.addRow(row); });
+                            ndnToast(res.j.rows.length + '행을 불러왔습니다. 검토 후 저장하세요.', { type: 'success' });
+                        } else {
+                            ndnToast(res.j.message || '엑셀을 읽지 못했습니다.', { type: 'error', title: '가져오기 실패' });
+                        }
+                    })
+                    .catch(function () { ndnToast('엑셀 업로드에 실패했습니다.', { type: 'error', title: '가져오기 실패' }); });
+            });
+            input.click();
+        }
+
+        /* ---------- 툴바 구성 ---------- */
+        if (editable) {
+            if (cfg.importUrl) bar.appendChild(btn('엑셀 업로드', '', excelUpload));
+            bar.appendChild(btn('엑셀 다운로드', '', function () { grid.downloadExcel({ filename: cfg.title || 'export' }); }));
+            var sep = document.createElement('span'); sep.style.cssText = 'width:1px;height:20px;background:var(--mv2-border-default);margin:0 4px;'; bar.appendChild(sep);
+            bar.appendChild(btn('신규 행', '', function () { grid.addRow(cfg.newRow || {}); }));
+            bar.appendChild(btn('행 삭제', '', removeChecked));
+            bar.appendChild(btn('변경 취소', '', function () { grid.resetModified(); }));
+            var saveBtn = btn('변경 저장', 'ndn-gridbar__btn--primary', save);
+            bar.appendChild(saveBtn);
+        } else {
+            bar.appendChild(btn('엑셀 다운로드', '', function () { grid.downloadExcel({ filename: cfg.title || 'export' }); }));
+        }
+
+        /* ---------- 읽기전용 상세 팝업(더블클릭) ---------- */
+        if (typeof cfg.onRowDblClick === 'function') {
+            host.addEventListener('dblclick', function (e) {
+                var tr = e.target.closest('[data-row-index]');
+                if (!tr) return;
+                var idx = parseInt(tr.getAttribute('data-row-index'), 10);
+                if (isNaN(idx)) return;
+                var row = grid.getData()[idx];
+                if (row) cfg.onRowDblClick(row);
+            });
+        }
+
+        window.addEventListener('resize', function () {
+            if (grid._wrapEl) grid._wrapEl.style.maxHeight = fitHeight(host) + 'px';
+        });
+
+        return grid;
+    };
+})();

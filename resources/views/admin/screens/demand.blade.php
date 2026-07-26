@@ -1,70 +1,45 @@
 @extends('admin.screens.layout')
 @section('title', '수요 신청')
 
-@php
-    $kind = fn (string $s) => match ($s) {
-        'submitted' => 'warn', 'aggregated' => 'info', 'letter_issued' => 'ok', 'rejected' => 'err', default => '',
-    };
-    $data = $rows->map(fn ($d) => [
-        'id'          => $d->id,
-        'farm'        => $d->farm?->name ?? '—',
-        'nationality' => $d->nationality,
-        'headcount'   => $d->headcount,
-        'crop'        => $d->crop,
-        'status'      => $d->status->label().'|'.$kind($d->status->value),
-        'period'      => $d->period_start?->format('Y-m-d'),
-        'created'     => $d->created_at?->format('Y-m-d'),
-        'period_end'  => $d->period_end?->format('Y-m-d'),
-        'note'        => $d->note,
-    ])->values();
-@endphp
-
 @section('content')
     <div class="screen__head">
         <div>
             <h1 class="screen__title">수요 신청</h1>
-            <p class="screen__sub">행을 더블클릭하면 상세를 팝업으로 확인 · 상태 전이는 도메인 Action</p>
+            <p class="screen__sub">관리자가 시·농가를 대신해 등록·수정 · <strong>편집 후 [변경 저장]</strong> · 엑셀 업로드/다운로드</p>
         </div>
     </div>
 
     <div id="grid-demand"></div>
 @endsection
 
-@section('grid')
+@section('wwgrid')
 <script>
-    ndnGrid({
+    var FARMS  = @json($farms);
+    var CITIES = @json($cities);
+
+    wwConsole({
         el: 'grid-demand',
-        frozenCount: 2,
-        perPage: 20,
-        data: @json($data),
+        editable: true,
+        title: '수요신청',
+        saveUrl: '{{ route('admin.grid.demand.save') }}',
+        importUrl: '{{ route('admin.grid.demand.import') }}',
+        newRow: { nationality: 'BD', gender: 'any', headcount: 1, status: 'draft' },
+        data: @json($rows),
         columns: [
-            { name: 'id', header: '번호', width: 70, align: 'center', sortable: true },
-            { name: 'farm', header: '농가', minWidth: 180, sortable: true, filter: 'text' },
-            { name: 'nationality', header: '국적', width: 80, align: 'center', sortable: true, filter: 'select' },
-            { name: 'headcount', header: '인원', width: 80, align: 'right', sortable: true },
-            { name: 'crop', header: '품목', minWidth: 120, filter: 'select' },
-            { name: 'status', header: '상태', width: 120, align: 'center', renderer: { type: window.NDN_PillRenderer } },
-            { name: 'period', header: '시작일', width: 120, align: 'center', sortable: true },
-            { name: 'created', header: '등록일', width: 120, align: 'center', sortable: true },
-            { name: 'period_end', header: '종료일', hidden: true },
-            { name: 'note', header: '비고', hidden: true },
+            { header: '농가', name: 'farm_id', width: 150, editor: 'combo', options: FARMS, sortable: true },
+            { header: '지자체', name: 'city_id', width: 130, editor: 'combo', options: CITIES },
+            { header: '국적', name: 'nationality', width: 80, editor: 'combo', align: 'center',
+              options: [{value:'BD',label:'방글라'},{value:'LA',label:'라오스'},{value:'LK',label:'스리랑카'},{value:'VN',label:'베트남'}] },
+            { header: '인원', name: 'headcount', width: 80, editor: 'number', min: 1, max: 999 },
+            { header: '성별', name: 'gender', width: 90, editor: 'combo', align: 'center',
+              options: [{value:'male',label:'남성'},{value:'female',label:'여성'},{value:'any',label:'무관'}] },
+            { header: '품목', name: 'crop', width: 110, editor: 'text' },
+            { header: '시작일', name: 'period_start', width: 120, editor: 'date' },
+            { header: '종료일', name: 'period_end', width: 120, editor: 'date' },
+            { header: '상태', name: 'status', width: 120, editor: 'combo', align: 'center',
+              options: [{value:'draft',label:'작성 중'},{value:'submitted',label:'제출'},{value:'aggregated',label:'취합'},{value:'letter_issued',label:'레터 발행'},{value:'rejected',label:'반려'}] },
+            { header: '비고', name: 'note', width: 200, editor: 'text' },
         ],
-        onRowDblClick: function (row) {
-            ndnDetailModal({
-                title: '수요 신청 #' + row.id,
-                subtitle: row.farm,
-                rows: [
-                    ['농가', row.farm],
-                    ['국적', row.nationality],
-                    ['인원', row.headcount + '명'],
-                    ['품목', row.crop],
-                    ['상태', row.status, true],
-                    ['근무 기간', row.period + ' ~ ' + (row.period_end || '—')],
-                    ['비고', row.note],
-                    ['등록일', row.created],
-                ],
-            });
-        },
     });
 </script>
 @endsection

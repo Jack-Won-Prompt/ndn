@@ -10,6 +10,7 @@
 </style>
 <link rel="stylesheet" href="{{ asset('admin-assets/vendor/tui-grid/tui-pagination.css') }}">
 <link rel="stylesheet" href="{{ asset('admin-assets/vendor/tui-grid/tui-grid.css') }}">
+<link rel="stylesheet" href="{{ asset('admin-assets/vendor/wwgrid/wwGrid.css') }}?v={{ @filemtime(public_path('admin-assets/vendor/wwgrid/wwGrid.css')) }}">
 <link rel="stylesheet" href="{{ asset('admin-assets/css/ui.css') }}?v={{ @filemtime(public_path('admin-assets/css/ui.css')) }}">
 <link rel="stylesheet" href="{{ asset('admin-assets/css/embed.css') }}?v={{ @filemtime(public_path('admin-assets/css/embed.css')) }}">
 </head>
@@ -32,6 +33,11 @@
     <script src="{{ asset('admin-assets/vendor/tui-grid/tui-grid.js') }}"></script>
     <script src="{{ asset('admin-assets/js/grid.js') }}?v={{ @filemtime(public_path('admin-assets/js/grid.js')) }}"></script>
     @yield('grid')
+@endif
+@hasSection('wwgrid')
+    <script src="{{ asset('admin-assets/vendor/wwgrid/wwGrid.js') }}?v={{ @filemtime(public_path('admin-assets/vendor/wwgrid/wwGrid.js')) }}"></script>
+    <script src="{{ asset('admin-assets/js/wwconsole.js') }}?v={{ @filemtime(public_path('admin-assets/js/wwconsole.js')) }}"></script>
+    @yield('wwgrid')
 @endif
 @yield('script')
 </body>
