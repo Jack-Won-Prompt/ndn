@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
         // 운영에서 테스트가 필요하면 아래 시더를 명시적으로 실행:
         //   php artisan db:seed --class=Database\\Seeders\\TestAccountsSeeder --force
         //   php artisan db:seed --class=Database\\Seeders\\DemoDataSeeder --force
+        //   php artisan db:seed --class=Database\\Seeders\\IntegrityTestSeeder --force  // 정합성 검증 20건+파일
         if (app()->environment('production')) {
             return;
         }

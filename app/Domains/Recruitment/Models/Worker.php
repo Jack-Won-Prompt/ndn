@@ -37,10 +37,12 @@ class Worker extends Model implements AuthenticatableContract
      *
      * @var list<string>
      */
-    protected array $sensitive = ['passport_no', 'birth_date', 'phone_home_country'];
+    protected array $sensitive = ['passport_no', 'birth_date', 'phone_home_country', 'email'];
 
     protected $fillable = [
         'name',
+        'email',
+        'password',
         'nationality',
         'locale',
         'status',
@@ -48,6 +50,13 @@ class Worker extends Model implements AuthenticatableContract
         'birth_date',
         'phone_home_country',
     ];
+
+    /**
+     * 직렬화에서 아예 제외할 속성.
+     *
+     * @var list<string>
+     */
+    protected $hidden = ['password'];
 
     /**
      * blind index 컬럼은 애플리케이션이 파생해 채우므로 직접 대입 금지.
@@ -63,6 +72,8 @@ class Worker extends Model implements AuthenticatableContract
             'passport_no' => 'encrypted',
             'birth_date' => 'encrypted',
             'phone_home_country' => 'encrypted',
+            // 로그인 비밀번호 — 대입 시 자동 단방향 해시 (§9)
+            'password' => 'hashed',
         ];
     }
 
