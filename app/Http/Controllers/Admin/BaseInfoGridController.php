@@ -1,0 +1,180 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Controllers\Admin;
+
+use App\Domains\Demand\Models\City;
+use App\Domains\Demand\Models\Farm;
+use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use OpenSpout\Reader\CSV\Reader;
+
+/** 기준정보(농가·지자체) wwGrid CRUD + 엑셀. */
+class BaseInfoGridController extends Controller
+{
+    /* ============================ 지자체(City) ============================ */
+
+    public static function cityRows(): array
+    {
+        return City::orderBy('name')->get()
+            ->map(fn (City $c) => ['id' => $c->id, 'name' => $c->name, 'region' => $c->region])->all();
+    }
+
+    public function citySave(Request $request): JsonResponse
+    {
+        $payload = $request->validate(['updated' => ['array'], 'added' => ['array'], 'deleted' => ['array']]);
+        try {
+            DB::transaction(function () use ($payload) {
+                $del = collect($payload['deleted'] ?? [])->pluck('id')->filter()->all();
+                if ($del) {
+                    City::whereIn('id', $del)->delete();
+                }
+                foreach ($payload['updated'] ?? [] as $i => $u) {
+                    $cur = $u['current'] ?? [];
+                    if (empty($cur['id'])) {
+                        continue;
+                    }
+                    $f = $this->cityFields($cur);
+                    $this->check($f, ['name' => ['required', 'string', 'max:50'], 'region' => ['nullable', 'string', 'max:50']], "지자체 수정 {$i}행");
+                    City::whereKey($cur['id'])->update($f);
+                }
+                foreach ($payload['added'] ?? [] as $i => $a) {
+                    $f = $this->cityFields($a);
+                    $this->check($f, ['name' => ['required', 'string', 'max:50'], 'region' => ['nullable', 'string', 'max:50']], "지자체 신규 {$i}행");
+                    City::create($f);
+                }
+            });
+        } catch (\RuntimeException $e) {
+            return response()->json(['ok' => false, 'message' => $e->getMessage()], 422);
+        }
+
+        return response()->json(['ok' => true, 'message' => '저장했습니다.', 'rows' => self::cityRows()]);
+    }
+
+    private function cityFields(array $r): array
+    {
+        return [
+            'name' => isset($r['name']) ? trim((string) $r['name']) : null,
+            'region' => isset($r['region']) ? trim((string) $r['region']) : null,
+        ];
+    }
+
+    /* ============================== 농가(Farm) ============================== */
+
+    public static function farmRows(): array
+    {
+        return Farm::orderBy('name')->get()
+            ->map(fn (Farm $f) => [
+                'id' => $f->id,
+                'name' => $f->name,
+                'city_id' => $f->city_id,
+                'main_crop' => $f->main_crop,
+                'contact_phone' => $f->contact_phone,
+                'address' => $f->address,
+            ])->all();
+    }
+
+    public function farmSave(Request $request): JsonResponse
+    {
+        $payload = $request->validate(['updated' => ['array'], 'added' => ['array'], 'deleted' => ['array']]);
+        $rules = [
+            'name' => ['required', 'string', 'max:100'],
+            'city_id' => ['nullable', 'integer', 'exists:cities,id'],
+            'main_crop' => ['nullable', 'string', 'max:100'],
+            'contact_phone' => ['nullable', 'string', 'max:30'],
+            'address' => ['nullable', 'string', 'max:200'],
+        ];
+        try {
+            DB::transaction(function () use ($payload, $rules) {
+                $del = collect($payload['deleted'] ?? [])->pluck('id')->filter()->all();
+                if ($del) {
+                    Farm::whereIn('id', $del)->get()->each->delete();
+                }
+                foreach ($payload['updated'] ?? [] as $i => $u) {
+                    $cur = $u['current'] ?? [];
+                    if (empty($cur['id'])) {
+                        continue;
+                    }
+                    $f = $this->farmFields($cur);
+                    $this->check($f, $rules, "농가 수정 {$i}행");
+                    Farm::whereKey($cur['id'])->update($f);
+                }
+                foreach ($payload['added'] ?? [] as $i => $a) {
+                    $f = $this->farmFields($a);
+                    $this->check($f, $rules, "농가 신규 {$i}행");
+                    Farm::create($f);
+                }
+            });
+        } catch (\RuntimeException $e) {
+            return response()->json(['ok' => false, 'message' => $e->getMessage()], 422);
+        }
+
+        return response()->json(['ok' => true, 'message' => '저장했습니다.', 'rows' => self::farmRows()]);
+    }
+
+    private function farmFields(array $r): array
+    {
+        return [
+            'name' => isset($r['name']) ? trim((string) $r['name']) : null,
+            'city_id' => ($r['city_id'] ?? '') === '' ? null : (int) $r['city_id'],
+            'main_crop' => ($r['main_crop'] ?? '') ?: null,
+            'contact_phone' => ($r['contact_phone'] ?? '') ?: null,
+            'address' => ($r['address'] ?? '') ?: null,
+        ];
+    }
+
+    public function farmImport(Request $request): JsonResponse
+    {
+        $request->validate(['file' => ['required', 'file', 'mimes:xlsx,xls,csv,txt', 'max:5120']]);
+        $map = ['농가' => 'name', '농가명' => 'name', '지자체' => 'city', '시청' => 'city',
+            '품목' => 'main_crop', '주작물' => 'main_crop', '연락처' => 'contact_phone', '전화' => 'contact_phone', '주소' => 'address'];
+        $cities = City::pluck('id', 'name');
+        try {
+            $ext = strtolower($request->file('file')->getClientOriginalExtension());
+            $reader = in_array($ext, ['csv', 'txt'], true) ? new Reader : new \OpenSpout\Reader\XLSX\Reader;
+            $reader->open($request->file('file')->getPathname());
+            $rows = [];
+            $header = null;
+            foreach ($reader->getSheetIterator() as $sheet) {
+                foreach ($sheet->getRowIterator() as $r) {
+                    $cells = array_map(fn ($c) => (string) $c->getValue(), $r->getCells());
+                    if ($header === null) {
+                        $header = array_map(fn ($h) => $map[trim($h)] ?? null, $cells);
+
+                        continue;
+                    }
+                    $row = [];
+                    foreach ($header as $ci => $field) {
+                        if ($field) {
+                            $row[$field] = trim($cells[$ci] ?? '');
+                        }
+                    }
+                    if (empty($row['name'])) {
+                        continue;
+                    }
+                    $row['city_id'] = $cities[$row['city'] ?? ''] ?? null;
+                    unset($row['city']);
+                    $rows[] = $row;
+                }
+                break;
+            }
+            $reader->close();
+        } catch (\Throwable $e) {
+            return response()->json(['ok' => false, 'message' => '엑셀을 읽지 못했습니다: '.$e->getMessage()], 422);
+        }
+
+        return response()->json(['ok' => true, 'rows' => $rows]);
+    }
+
+    private function check(array $fields, array $rules, string $label): void
+    {
+        $v = Validator::make($fields, $rules);
+        if ($v->fails()) {
+            throw new \RuntimeException($label.': '.$v->errors()->first());
+        }
+    }
+}

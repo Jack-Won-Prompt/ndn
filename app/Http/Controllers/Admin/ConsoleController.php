@@ -57,6 +57,7 @@ class ConsoleController extends Controller
                 'group' => '수요·모집',
                 'items' => [
                     ['key' => 'demand', 'label' => '수요 신청', 'icon' => 'clipboard'],
+                    ['key' => 'baseinfo', 'label' => '농가·지자체', 'icon' => 'users'],
                 ],
             ],
             [
@@ -104,6 +105,7 @@ class ConsoleController extends Controller
         return match ($key) {
             'dashboard' => $this->dashboard(),
             'demand' => $this->demand($request),
+            'baseinfo' => $this->baseinfo(),
             'candidates' => $this->candidates($request),
             'workers' => $this->workers($request),
             'onboarding' => $this->onboarding($request),
@@ -118,6 +120,16 @@ class ConsoleController extends Controller
     private function candidates(Request $request): View
     {
         return view('admin.screens.candidates', ['rows' => CandidateGridController::rows()]);
+    }
+
+    private function baseinfo(): View
+    {
+        return view('admin.screens.baseinfo', [
+            'cityRows' => BaseInfoGridController::cityRows(),
+            'farmRows' => BaseInfoGridController::farmRows(),
+            'cityOptions' => City::orderBy('name')->get(['id', 'name'])
+                ->map(fn ($c) => ['value' => $c->id, 'label' => $c->name])->all(),
+        ]);
     }
 
     private function settlement(Request $request): View

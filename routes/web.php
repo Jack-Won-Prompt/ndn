@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Domains\Demand\Http\Controllers\DemandRequestController;
 use App\Http\Controllers\Admin\AuthController as AdminAuthController;
 use App\Http\Controllers\Admin\ConsoleController;
+use App\Http\Controllers\Admin\BaseInfoGridController;
 use App\Http\Controllers\Admin\CandidateGridController;
 use App\Http\Controllers\Admin\DemandGridController;
 use App\Http\Controllers\Admin\WorkerGridController;
@@ -67,6 +68,10 @@ Route::prefix('admin')->group(function () {
         // wwGrid CRUD — 후보자
         Route::post('/grid/candidates/save', [CandidateGridController::class, 'save'])->name('admin.grid.candidates.save');
         Route::post('/grid/candidates/import', [CandidateGridController::class, 'import'])->name('admin.grid.candidates.import');
+        // wwGrid CRUD — 기준정보(농가·지자체)
+        Route::post('/grid/cities/save', [BaseInfoGridController::class, 'citySave'])->name('admin.grid.cities.save');
+        Route::post('/grid/farms/save', [BaseInfoGridController::class, 'farmSave'])->name('admin.grid.farms.save');
+        Route::post('/grid/farms/import', [BaseInfoGridController::class, 'farmImport'])->name('admin.grid.farms.import');
 
         Route::get('/onboarding/{submission}', [ConsoleController::class, 'onboardingDetail'])
             ->whereNumber('submission')->name('admin.onboarding.detail');

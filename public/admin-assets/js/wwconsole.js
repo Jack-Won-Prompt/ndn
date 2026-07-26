@@ -63,7 +63,7 @@
             columns: cfg.columns,
             columnGroups: cfg.columnGroups || [],
             rowKey: 'id',
-            height: fitHeight(host),
+            height: cfg.height || fitHeight(host),
             editable: editable,
             rowCheckbox: editable,
             rowNumber: true,
@@ -166,9 +166,11 @@
             });
         }
 
-        window.addEventListener('resize', function () {
-            if (grid._wrapEl) grid._wrapEl.style.maxHeight = fitHeight(host) + 'px';
-        });
+        if (!cfg.height) {
+            window.addEventListener('resize', function () {
+                if (grid._wrapEl) grid._wrapEl.style.maxHeight = fitHeight(host) + 'px';
+            });
+        }
 
         return grid;
     };
