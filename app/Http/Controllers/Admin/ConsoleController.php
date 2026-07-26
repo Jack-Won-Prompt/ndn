@@ -79,6 +79,7 @@ class ConsoleController extends Controller
                     ['key' => 'settlement', 'label' => '정착 처리보드', 'icon' => 'grid'],
                     ['key' => 'monitoring', 'label' => '월별 점검', 'icon' => 'clipboard'],
                     ['key' => 'tickets', 'label' => '민원', 'icon' => 'inbox'],
+                    ['key' => 'chat', 'label' => '채팅', 'icon' => 'inbox'],
                 ],
             ],
             [
@@ -112,6 +113,7 @@ class ConsoleController extends Controller
             'settlement' => $this->settlement($request),
             'monitoring' => $this->monitoring($request),
             'tickets' => $this->tickets($request),
+            'chat' => view('admin.screens.chat'),
             'settings' => $this->settingsForm(),
             default => abort(404),
         };

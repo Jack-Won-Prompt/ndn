@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\CandidateGridController;
 use App\Http\Controllers\Admin\DemandGridController;
 use App\Http\Controllers\Admin\TicketGridController;
 use App\Http\Controllers\Admin\WorkerGridController;
+use App\Http\Controllers\ChatController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -37,6 +38,18 @@ Route::middleware('auth')->group(function () {
     Route::get('/demand/{demand}', [DemandRequestController::class, 'show'])->name('demand.show');
     Route::post('/farms/{farm}/demand', [DemandRequestController::class, 'store'])->name('demand.store');
     Route::post('/demand/{demand}/submit', [DemandRequestController::class, 'submit'])->name('demand.submit');
+});
+
+/*
+| 채팅 (조직 사용자: NDN·시청·농가·해외협력사) — 근로자는 /api/v1/chat
+*/
+Route::middleware('auth')->prefix('chat')->name('chat.')->group(function () {
+    Route::get('/conversations', [ChatController::class, 'conversations'])->name('conversations');
+    Route::get('/contacts', [ChatController::class, 'contacts'])->name('contacts');
+    Route::get('/search-workers', [ChatController::class, 'searchWorkers'])->name('search-workers');
+    Route::post('/open', [ChatController::class, 'open'])->name('open');
+    Route::get('/{conversation}/messages', [ChatController::class, 'messages'])->whereNumber('conversation')->name('messages');
+    Route::post('/{conversation}/messages', [ChatController::class, 'send'])->whereNumber('conversation')->name('send');
 });
 
 /*

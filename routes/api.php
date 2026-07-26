@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Domains\Onboarding\Http\Controllers\Api\OnboardingController;
 use App\Domains\Recruitment\Http\Controllers\Api\WorkerProfileController;
+use App\Domains\Support\Http\Controllers\Api\ChatController;
 use App\Domains\Support\Http\Controllers\Api\SosController;
 use App\Domains\Support\Http\Controllers\Api\TicketController;
 use Illuminate\Support\Facades\Route;
@@ -30,4 +31,10 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'worker'])->group(function () {
     // 민원 (문제신고/문의/연장/조기귀국)
     Route::get('/tickets', [TicketController::class, 'index']);
     Route::post('/tickets', [TicketController::class, 'store']);
+
+    // 채팅 (근로자 ↔ NDN·시청·농가) — 자국어 작성, 자동 번역
+    Route::get('/chat/conversations', [ChatController::class, 'conversations']);
+    Route::post('/chat/open', [ChatController::class, 'open']);
+    Route::get('/chat/{conversation}/messages', [ChatController::class, 'messages'])->whereNumber('conversation');
+    Route::post('/chat/{conversation}/messages', [ChatController::class, 'send'])->whereNumber('conversation');
 });
