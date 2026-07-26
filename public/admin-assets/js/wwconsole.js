@@ -73,6 +73,12 @@
             theme: THEME,
         });
 
+        // 행이 적어도 그리드가 뷰포트 높이를 채우도록 고정 높이 적용
+        // (짧게 끝나 아래에 페이지 공백이 생기는 것 방지)
+        if (!cfg.height && grid._wrapEl) {
+            grid._wrapEl.style.height = fitHeight(host) + 'px';
+        }
+
         /* ---------- 저장 (수정추적 → 서버) ---------- */
         function save() {
             var mods = grid.getModifiedRows();
@@ -172,7 +178,11 @@
 
         if (!cfg.height) {
             window.addEventListener('resize', function () {
-                if (grid._wrapEl) grid._wrapEl.style.maxHeight = fitHeight(host) + 'px';
+                if (grid._wrapEl) {
+                    var hpx = fitHeight(host) + 'px';
+                    grid._wrapEl.style.maxHeight = hpx;
+                    grid._wrapEl.style.height = hpx;
+                }
             });
         }
 
