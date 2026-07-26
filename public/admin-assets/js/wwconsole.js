@@ -186,6 +186,9 @@
             });
         }
 
+        // 인스턴스를 host 요소에 노출 (외부 버튼 연동·디버깅·테스트용)
+        host.wwgrid = grid;
+
         return grid;
     };
 })();

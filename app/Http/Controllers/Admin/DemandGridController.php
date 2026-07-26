@@ -149,6 +149,7 @@ class DemandGridController extends Controller
             '상태' => 'status', '비고' => 'note',
         ];
         $genderMap = ['남성' => 'male', '여성' => 'female', '무관' => 'any', 'male' => 'male', 'female' => 'female', 'any' => 'any'];
+        $natMap = ['방글라데시' => 'BD', '방글라' => 'BD', '라오스' => 'LA', '스리랑카' => 'LK', '베트남' => 'VN'];
         $statusMap = ['작성 중' => 'draft', '작성중' => 'draft', '제출' => 'submitted', '취합' => 'aggregated',
             '레터 발행' => 'letter_issued', '레터발행' => 'letter_issued', '반려' => 'rejected',
             'draft' => 'draft', 'submitted' => 'submitted', 'aggregated' => 'aggregated', 'letter_issued' => 'letter_issued', 'rejected' => 'rejected'];
@@ -192,7 +193,8 @@ class DemandGridController extends Controller
                         $row['headcount'] = (int) $row['headcount'];
                     }
                     if (isset($row['nationality'])) {
-                        $row['nationality'] = strtoupper($row['nationality']);
+                        $n = trim($row['nationality']);
+                        $row['nationality'] = $natMap[$n] ?? strtoupper($n);
                     }
                     $rows[] = $row;
                 }

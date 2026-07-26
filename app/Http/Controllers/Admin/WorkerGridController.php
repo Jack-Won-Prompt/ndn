@@ -127,6 +127,7 @@ class WorkerGridController extends Controller
             '국적' => 'nationality', '언어' => 'locale', '상태' => 'status',
             '여권번호' => 'passport_no', '생년월일' => 'birth_date', '본국전화' => 'phone_home_country', '전화' => 'phone_home_country',
         ];
+        $natMap = ['방글라데시' => 'BD', '방글라' => 'BD', '라오스' => 'LA', '스리랑카' => 'LK', '베트남' => 'VN'];
 
         try {
             $ext = strtolower($request->file('file')->getClientOriginalExtension());
@@ -134,7 +135,7 @@ class WorkerGridController extends Controller
             $reader->open($request->file('file')->getPathname());
 
             $created = 0;
-            DB::transaction(function () use ($reader, $map, &$created) {
+            DB::transaction(function () use ($reader, $map, $natMap, &$created) {
                 $header = null;
                 foreach ($reader->getSheetIterator() as $sheet) {
                     foreach ($sheet->getRowIterator() as $r) {
@@ -153,9 +154,10 @@ class WorkerGridController extends Controller
                         if (empty($row['name'])) {
                             continue;
                         }
+                        $nat = trim($row['nationality'] ?? '');
                         Worker::create([
                             'name' => $row['name'],
-                            'nationality' => strtoupper($row['nationality'] ?? ''),
+                            'nationality' => $natMap[$nat] ?? strtoupper($nat),
                             'locale' => in_array($row['locale'] ?? '', self::LOCALES, true) ? $row['locale'] : 'ko',
                             'status' => ($row['status'] ?? '') ?: 'active',
                             // 민감필드: 있으면 암호화 cast 로 저장됨

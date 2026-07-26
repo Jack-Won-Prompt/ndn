@@ -53,10 +53,11 @@ class CandidateGridController extends Controller
         return [
             'name' => isset($row['name']) ? trim((string) $row['name']) : null,
             'nationality' => isset($row['nationality']) ? strtoupper(trim((string) $row['nationality'])) : null,
-            'age' => ($row['age'] ?? '') === '' ? null : (int) $row['age'],
+            // wwGrid 는 빈 숫자 셀을 0 으로 채우므로 0/빈값은 null 로 취급
+            'age' => (($row['age'] ?? '') === '' || (int) $row['age'] === 0) ? null : (int) $row['age'],
             'gender' => ($row['gender'] ?? '') ?: null,
             'status' => ($row['status'] ?? '') ?: CandidateStatus::Applied->value,
-            'queue_position' => ($row['queue_position'] ?? '') === '' ? null : (int) $row['queue_position'],
+            'queue_position' => (($row['queue_position'] ?? '') === '' || (int) $row['queue_position'] < 1) ? null : (int) $row['queue_position'],
         ];
     }
 
@@ -113,6 +114,7 @@ class CandidateGridController extends Controller
         $genderMap = ['남성' => 'male', '여성' => 'female', '남' => 'male', '여' => 'female', 'male' => 'male', 'female' => 'female'];
         $statusMap = ['지원' => 'applied', '합격' => 'passed', '보류' => 'held', '불합격' => 'rejected',
             'applied' => 'applied', 'passed' => 'passed', 'held' => 'held', 'rejected' => 'rejected'];
+        $natMap = ['방글라데시' => 'BD', '방글라' => 'BD', '라오스' => 'LA', '스리랑카' => 'LK', '베트남' => 'VN'];
 
         try {
             $ext = strtolower($request->file('file')->getClientOriginalExtension());
@@ -146,7 +148,8 @@ class CandidateGridController extends Controller
                         $row['age'] = (int) $row['age'];
                     }
                     if (isset($row['nationality'])) {
-                        $row['nationality'] = strtoupper($row['nationality']);
+                        $n = trim($row['nationality']);
+                        $row['nationality'] = $natMap[$n] ?? strtoupper($n);
                     }
                     $rows[] = $row;
                 }
