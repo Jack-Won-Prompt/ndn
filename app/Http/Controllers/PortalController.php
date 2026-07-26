@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Domains\Support\Services\ChatService;
 use App\Shared\Enums\UserRole;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -73,7 +74,7 @@ class PortalController extends Controller
 
         return view('portal.index', [
             'user' => $user,
-            'me' => app(\App\Domains\Support\Services\ChatService::class)->partyForUser($user),
+            'me' => app(ChatService::class)->partyForUser($user),
         ]);
     }
 

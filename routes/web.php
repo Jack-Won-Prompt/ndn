@@ -61,6 +61,9 @@ Route::middleware('auth')->prefix('chat')->name('chat.')->group(function () {
     Route::post('/open', [ChatController::class, 'open'])->name('open');
     Route::get('/{conversation}/messages', [ChatController::class, 'messages'])->whereNumber('conversation')->name('messages');
     Route::post('/{conversation}/messages', [ChatController::class, 'send'])->whereNumber('conversation')->name('send');
+    Route::patch('/{conversation}/messages/{message}', [ChatController::class, 'update'])->whereNumber(['conversation', 'message'])->name('update');
+    Route::delete('/{conversation}/messages/{message}', [ChatController::class, 'destroy'])->whereNumber(['conversation', 'message'])->name('destroy');
+    Route::get('/{conversation}/files/{message}', [ChatController::class, 'file'])->whereNumber(['conversation', 'message'])->name('file');
 });
 
 /*

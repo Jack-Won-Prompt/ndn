@@ -6,11 +6,13 @@ namespace App\Http\Controllers;
 
 use App\Domains\Recruitment\Models\Worker;
 use App\Domains\Support\Models\ChatConversation;
+use App\Domains\Support\Models\ChatMessage;
 use App\Domains\Support\Services\ChatService;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * 조직 사용자(NDN·시청·농가·해외협력사)용 채팅 (웹 세션).
@@ -107,18 +109,82 @@ class ChatController extends Controller
         $me = $this->me();
         abort_if($conversation->sideOf($me[0], $me[1]) === null, 403);
 
-        return response()->json(['messages' => $this->chat->messagesFor($conversation, $me)]);
+        return response()->json(['messages' => $this->messagesPayload($conversation, $me)]);
     }
 
-    /** 메시지 전송 */
+    /** 메시지 전송 (본문·첨부·답장) */
     public function send(Request $request, ChatConversation $conversation): JsonResponse
     {
         $me = $this->me();
         abort_if($conversation->sideOf($me[0], $me[1]) === null, 403);
+        $data = $request->validate([
+            'body' => ['nullable', 'string', 'max:5000'],
+            'file' => ['nullable', 'file', 'max:10240', 'mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,ppt,pptx,hwp,txt,zip'],
+            'reply_to_id' => ['nullable', 'integer'],
+        ]);
+
+        try {
+            $this->chat->send(
+                $conversation, $me,
+                $data['body'] ?? null,
+                $request->file('file'),
+                isset($data['reply_to_id']) ? (int) $data['reply_to_id'] : null,
+            );
+        } catch (\RuntimeException $e) {
+            return response()->json(['ok' => false, 'message' => $e->getMessage()], 422);
+        }
+
+        return response()->json(['messages' => $this->messagesPayload($conversation, $me)]);
+    }
+
+    /** 메시지 수정 (본인, 재번역) */
+    public function update(Request $request, ChatConversation $conversation, ChatMessage $message): JsonResponse
+    {
+        $me = $this->me();
+        abort_if($conversation->sideOf($me[0], $me[1]) === null, 403);
+        abort_if($message->conversation_id !== $conversation->id, 404);
         $data = $request->validate(['body' => ['required', 'string', 'max:5000']]);
 
-        $this->chat->send($conversation, $me, $data['body']);
+        try {
+            $this->chat->editMessage($conversation, $me, $message, $data['body']);
+        } catch (\RuntimeException $e) {
+            return response()->json(['ok' => false, 'message' => $e->getMessage()], 422);
+        }
 
-        return response()->json(['messages' => $this->chat->messagesFor($conversation, $me)]);
+        return response()->json(['messages' => $this->messagesPayload($conversation, $me)]);
+    }
+
+    /** 메시지 삭제 (본인) */
+    public function destroy(ChatConversation $conversation, ChatMessage $message): JsonResponse
+    {
+        $me = $this->me();
+        abort_if($conversation->sideOf($me[0], $me[1]) === null, 403);
+        abort_if($message->conversation_id !== $conversation->id, 404);
+
+        try {
+            $this->chat->deleteMessage($conversation, $me, $message);
+        } catch (\RuntimeException $e) {
+            return response()->json(['ok' => false, 'message' => $e->getMessage()], 422);
+        }
+
+        return response()->json(['messages' => $this->messagesPayload($conversation, $me)]);
+    }
+
+    /** 첨부 파일 다운로드/미리보기 (참여자만) */
+    public function file(ChatConversation $conversation, ChatMessage $message): StreamedResponse
+    {
+        $me = $this->me();
+        abort_if($conversation->sideOf($me[0], $me[1]) === null, 403);
+
+        return $this->chat->streamFile($conversation, $me, $message);
+    }
+
+    /** 첨부 URL 을 포함한 메시지 페이로드. */
+    private function messagesPayload(ChatConversation $conversation, array $me): array
+    {
+        return $this->chat->messagesFor(
+            $conversation, $me,
+            fn (ChatMessage $m) => route('chat.file', ['conversation' => $conversation->id, 'message' => $m->id]),
+        );
     }
 }
