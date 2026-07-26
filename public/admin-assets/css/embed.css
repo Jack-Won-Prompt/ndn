@@ -208,6 +208,10 @@ body {
 .ndn-ctxmenu li { padding: 8px 12px; border-radius: var(--mv2-r-sm); cursor: pointer; color: var(--mv2-text-default); }
 .ndn-ctxmenu li:hover { background: var(--mv2-slate-50); color: var(--mv2-text-strong); }
 
+/* wwGrid: 고정 높이로 채울 때 마지막 행 하단 라인이 사라지지 않도록 복원
+   (wwGrid.css 는 마지막 행 border-bottom 을 제거함) */
+.cg-tbody tr:last-child { border-bottom: 1px solid var(--cg-row-border); }
+
 /* 그리드 툴바 버튼 — 더 단정하게 */
 .ndn-gridbar { gap: 7px; margin-bottom: 12px; }
 .ndn-gridbar__btn {
