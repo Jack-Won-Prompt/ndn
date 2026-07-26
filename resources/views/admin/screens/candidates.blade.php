@@ -1,59 +1,38 @@
 @extends('admin.screens.layout')
 @section('title', '후보자·평가')
 
-@php
-    $kind = fn (string $s) => match ($s) {
-        'passed' => 'ok', 'held' => 'warn', 'rejected' => 'err', default => '',
-    };
-    $data = $rows->map(fn ($c) => [
-        'id'          => $c->id,
-        'name'        => $c->name,
-        'nationality' => $c->nationality,
-        'age'         => $c->age ?? '—',
-        'status'      => $c->status->label().'|'.$kind($c->status->value),
-        'queue'       => $c->queue_position ?? '—',
-    ])->values();
-@endphp
-
 @section('content')
     <div class="screen__head">
         <div>
             <h1 class="screen__title">후보자·평가</h1>
-            <p class="screen__sub">행을 더블클릭하면 상세를 팝업으로 확인 · 합격/보류/불합격 · 보류자 대기열 순번</p>
+            <p class="screen__sub">모집 명단 등록·수정 · <strong>편집 후 [변경 저장]</strong> · 엑셀 업로드/다운로드</p>
         </div>
     </div>
 
     <div id="grid-candidates"></div>
 @endsection
 
-@section('grid')
+@section('wwgrid')
 <script>
-    ndnGrid({
+    wwConsole({
         el: 'grid-candidates',
-        frozenCount: 2,
-        perPage: 20,
-        data: @json($data),
+        editable: true,
+        title: '후보자',
+        saveUrl: '{{ route('admin.grid.candidates.save') }}',
+        importUrl: '{{ route('admin.grid.candidates.import') }}',
+        newRow: { nationality: 'BD', gender: 'male', status: 'applied' },
+        data: @json($rows),
         columns: [
-            { name: 'id', header: '번호', width: 70, align: 'center', sortable: true },
-            { name: 'name', header: '이름', minWidth: 160, sortable: true, filter: 'text' },
-            { name: 'nationality', header: '국적', width: 80, align: 'center', sortable: true, filter: 'select' },
-            { name: 'age', header: '나이', width: 70, align: 'center', sortable: true },
-            { name: 'status', header: '상태', width: 110, align: 'center', renderer: { type: window.NDN_PillRenderer } },
-            { name: 'queue', header: '대기 순번', width: 110, align: 'center', sortable: true },
+            { header: '이름', name: 'name', width: 160, editor: 'text', sortable: true },
+            { header: '국적', name: 'nationality', width: 100, editor: 'combo', align: 'center',
+              options: [{value:'BD',label:'방글라'},{value:'LA',label:'라오스'},{value:'LK',label:'스리랑카'},{value:'VN',label:'베트남'}] },
+            { header: '나이', name: 'age', width: 80, editor: 'number', min: 18, max: 70 },
+            { header: '성별', name: 'gender', width: 90, editor: 'combo', align: 'center',
+              options: [{value:'male',label:'남성'},{value:'female',label:'여성'}] },
+            { header: '상태', name: 'status', width: 110, editor: 'combo', align: 'center',
+              options: [{value:'applied',label:'지원'},{value:'passed',label:'합격'},{value:'held',label:'보류'},{value:'rejected',label:'불합격'}] },
+            { header: '대기 순번', name: 'queue_position', width: 100, editor: 'number', min: 1 },
         ],
-        onRowDblClick: function (row) {
-            ndnDetailModal({
-                title: '후보자 #' + row.id,
-                subtitle: row.name,
-                rows: [
-                    ['이름', row.name],
-                    ['국적', row.nationality],
-                    ['나이', row.age],
-                    ['상태', row.status, true],
-                    ['대기 순번', row.queue],
-                ],
-            });
-        },
     });
 </script>
 @endsection

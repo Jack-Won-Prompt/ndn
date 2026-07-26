@@ -149,6 +149,9 @@ class DemandGridController extends Controller
             '상태' => 'status', '비고' => 'note',
         ];
         $genderMap = ['남성' => 'male', '여성' => 'female', '무관' => 'any', 'male' => 'male', 'female' => 'female', 'any' => 'any'];
+        $statusMap = ['작성 중' => 'draft', '작성중' => 'draft', '제출' => 'submitted', '취합' => 'aggregated',
+            '레터 발행' => 'letter_issued', '레터발행' => 'letter_issued', '반려' => 'rejected',
+            'draft' => 'draft', 'submitted' => 'submitted', 'aggregated' => 'aggregated', 'letter_issued' => 'letter_issued', 'rejected' => 'rejected'];
 
         $farms = Farm::pluck('id', 'name');   // name => id
         $cities = City::pluck('id', 'name');
@@ -184,6 +187,7 @@ class DemandGridController extends Controller
                     if (isset($row['gender'])) {
                         $row['gender'] = $genderMap[$row['gender']] ?? 'any';
                     }
+                    $row['status'] = $statusMap[$row['status'] ?? ''] ?? 'draft';
                     if (isset($row['headcount'])) {
                         $row['headcount'] = (int) $row['headcount'];
                     }

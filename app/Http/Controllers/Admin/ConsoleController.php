@@ -11,7 +11,6 @@ use App\Domains\Demand\Models\Farm;
 use App\Domains\Monitoring\Models\MonthlyInterview;
 use App\Domains\Onboarding\Enums\OnboardingStatus;
 use App\Domains\Onboarding\Models\OnboardingSubmission;
-use App\Domains\Recruitment\Models\Candidate;
 use App\Domains\Recruitment\Models\Worker;
 use App\Domains\Reporting\Actions\GenerateMonthlyReportAction;
 use App\Domains\Settlement\Enums\SettlementStatus;
@@ -118,9 +117,7 @@ class ConsoleController extends Controller
 
     private function candidates(Request $request): View
     {
-        $rows = Candidate::latest('id')->limit(1000)->get();
-
-        return view('admin.screens.candidates', ['rows' => $rows]);
+        return view('admin.screens.candidates', ['rows' => CandidateGridController::rows()]);
     }
 
     private function settlement(Request $request): View
