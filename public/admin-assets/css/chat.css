@@ -63,6 +63,17 @@
 .chat-contact__name { font-size: var(--mv2-fz-sm); font-weight: 600; color: var(--mv2-text-strong); }
 .chat-contact__label { font-size: var(--mv2-fz-xs); color: var(--mv2-text-muted); }
 
+/* ---------- 근로자 자동완성(typeahead) 드롭다운 (인라인: 모달 클리핑 방지) ---------- */
+#chat-new-workers { display: none; background: #fff; border: 1px solid var(--mv2-border-default); border-radius: 8px; box-shadow: 0 6px 18px rgba(15,23,42,.08); max-height: 240px; overflow-y: auto; margin-top: 4px; }
+#chat-new-workers.is-open { display: block; }
+.chat-ac__item { width: 100%; text-align: left; display: flex; flex-direction: column; gap: 1px; background: none; border: 0; border-bottom: 1px solid var(--mv2-border-soft); padding: 8px 12px; cursor: pointer; font-family: inherit; }
+.chat-ac__item:last-child { border-bottom: 0; }
+.chat-ac__item.is-active { background: var(--mv2-primary-50, #E9F6F4); }
+.chat-ac__name { font-size: var(--mv2-fz-sm); font-weight: 600; color: var(--mv2-text-strong); }
+.chat-ac__name mark { background: #FEF3C7; color: inherit; padding: 0 1px; border-radius: 2px; }
+.chat-ac__sub { font-size: var(--mv2-fz-xs); color: var(--mv2-text-muted); }
+.chat-ac__empty { padding: 12px 14px; font-size: var(--mv2-fz-sm); color: var(--mv2-text-faint); text-align: center; }
+
 /* ---------- 답장 인용 ---------- */
 .chat-quote { display: flex; flex-direction: column; gap: 1px; border-left: 3px solid var(--mv2-primary-400); padding: 3px 8px; margin-bottom: 6px; background: rgba(15,23,42,.04); border-radius: 4px; }
 .chat-msg--mine .chat-quote { background: rgba(255,255,255,.18); border-left-color: rgba(255,255,255,.6); }

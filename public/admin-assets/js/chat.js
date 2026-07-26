@@ -300,23 +300,75 @@
             });
             document.getElementById('chat-new-worker-wrap').style.display = j.canSearchWorker ? '' : 'none';
         });
-        searchWorkers('');
+        closeAC();
     }
-    function closeNewChat() { document.getElementById('chat-new').classList.remove('is-open'); }
+    function closeNewChat() { document.getElementById('chat-new').classList.remove('is-open'); closeAC(); }
+
+    /* ---------- 근로자 자동완성(typeahead) 검색 ---------- */
+    var acItems = [];   // 현재 제안 목록
+    var acActive = -1;  // 키보드 활성 인덱스
+    var NAT = { VN: '베트남', BD: '방글라데시', LA: '라오스', LK: '스리랑카', KH: '캄보디아', NP: '네팔', KR: '한국' };
 
     function searchWorkers(q) {
         jsonApi(BASE + '/search-workers?q=' + encodeURIComponent(q)).then(function (j) {
-            var box = document.getElementById('chat-new-workers');
-            box.innerHTML = '';
-            (j.workers || []).forEach(function (w) {
-                var b = el('button', 'chat-contact'); b.type = 'button';
-                b.appendChild(el('span', 'chat-contact__name', w.name));
-                b.appendChild(el('span', 'chat-contact__label', w.nationality + ' · 근로자'));
-                b.addEventListener('click', function () { openWith('worker', w.id); });
-                box.appendChild(b);
-            });
+            acItems = j.workers || [];
+            acActive = -1;
+            renderWorkerAC(q);
         });
     }
+
+    function renderWorkerAC(q) {
+        var box = document.getElementById('chat-new-workers');
+        box.innerHTML = '';
+        if (!acItems.length) {
+            box.appendChild(el('div', 'chat-ac__empty', q ? '일치하는 근로자가 없습니다' : '이름을 입력하세요'));
+            box.classList.add('is-open');
+            return;
+        }
+        acItems.forEach(function (w, i) {
+            var b = el('button', 'chat-ac__item' + (i === acActive ? ' is-active' : '')); b.type = 'button';
+            var nm = el('span', 'chat-ac__name'); nm.innerHTML = highlight(w.name, q);
+            var sub = el('span', 'chat-ac__sub', natLabel(w.nationality) + ' · ' + (w.locale || '-') + ' · #' + w.id);
+            b.appendChild(nm); b.appendChild(sub);
+            // mousedown: input blur 로 인한 닫힘보다 먼저 선택 처리
+            b.addEventListener('mousedown', function (e) { e.preventDefault(); openWith('worker', w.id); });
+            b.addEventListener('mouseenter', function () { acActive = i; markActive(); });
+            box.appendChild(b);
+        });
+        box.classList.add('is-open');
+    }
+
+    function markActive() {
+        var box = document.getElementById('chat-new-workers');
+        [].forEach.call(box.querySelectorAll('.chat-ac__item'), function (c, i) {
+            c.classList.toggle('is-active', i === acActive);
+        });
+        var act = box.querySelectorAll('.chat-ac__item')[acActive];
+        if (act) act.scrollIntoView({ block: 'nearest' });
+    }
+    function moveAC(delta) {
+        if (!acItems.length) return;
+        acActive = (acActive + delta + acItems.length) % acItems.length;
+        markActive();
+    }
+    function chooseAC() {
+        if (acActive >= 0 && acItems[acActive]) openWith('worker', acItems[acActive].id);
+        else if (acItems.length === 1) openWith('worker', acItems[0].id);
+    }
+    function closeAC() {
+        var box = document.getElementById('chat-new-workers');
+        if (box) { box.innerHTML = ''; box.classList.remove('is-open'); }
+        acActive = -1;
+    }
+
+    function highlight(text, q) {
+        var esc = function (s) { return s.replace(/[&<>"]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]); }); };
+        if (!q) return esc(text);
+        var idx = text.toLowerCase().indexOf(q.toLowerCase());
+        if (idx < 0) return esc(text);
+        return esc(text.slice(0, idx)) + '<mark>' + esc(text.slice(idx, idx + q.length)) + '</mark>' + esc(text.slice(idx + q.length));
+    }
+    function natLabel(code) { return code ? (NAT[code] || code) + '(' + code + ')' : ''; }
 
     function openWith(type, id) {
         jsonApi(BASE + '/open', {
@@ -363,8 +415,23 @@
         });
         document.getElementById('chat-new-btn').addEventListener('click', openNewChat);
         document.getElementById('chat-new-close').addEventListener('click', closeNewChat);
+
+        // 근로자 자동완성 검색 (typeahead)
         var sb = document.getElementById('chat-new-search');
-        var t; sb.addEventListener('input', function () { clearTimeout(t); t = setTimeout(function () { searchWorkers(sb.value.trim()); }, 250); });
+        var t;
+        sb.addEventListener('input', function () {
+            clearTimeout(t);
+            var q = sb.value.trim();
+            t = setTimeout(function () { searchWorkers(q); }, 200);
+        });
+        sb.addEventListener('focus', function () { searchWorkers(sb.value.trim()); });
+        sb.addEventListener('keydown', function (e) {
+            if (e.key === 'ArrowDown') { e.preventDefault(); moveAC(1); }
+            else if (e.key === 'ArrowUp') { e.preventDefault(); moveAC(-1); }
+            else if (e.key === 'Enter') { e.preventDefault(); chooseAC(); }
+            else if (e.key === 'Escape') { closeAC(); sb.blur(); }
+        });
+        sb.addEventListener('blur', function () { setTimeout(closeAC, 150); });
     }
     if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { init(); }
 })();

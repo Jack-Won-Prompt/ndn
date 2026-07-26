@@ -33,13 +33,13 @@
                         <button type="button" id="chat-new-close" class="chat-new__close">&times;</button>
                     </div>
                     <div class="chat-new__body">
-                        <div class="chat-new__label">조직</div>
-                        <div id="chat-new-orgs"></div>
                         <div id="chat-new-worker-wrap">
                             <div class="chat-new__label">근로자 검색</div>
-                            <input type="search" id="chat-new-search" placeholder="이름으로 검색">
+                            <input type="search" id="chat-new-search" placeholder="이름으로 검색 (자동완성)" autocomplete="off">
                             <div id="chat-new-workers"></div>
                         </div>
+                        <div class="chat-new__label">조직</div>
+                        <div id="chat-new-orgs"></div>
                     </div>
                 </div>
             </div>
