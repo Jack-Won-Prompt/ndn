@@ -208,60 +208,6 @@ body {
 .ndn-ctxmenu li { padding: 8px 12px; border-radius: var(--mv2-r-sm); cursor: pointer; color: var(--mv2-text-default); }
 .ndn-ctxmenu li:hover { background: var(--mv2-slate-50); color: var(--mv2-text-strong); }
 
-/* ---------------- Toast UI Grid 미세 조정 (세련화) ---------------- */
-.tui-grid-container { font-family: var(--mv2-font-sans); border-radius: var(--mv2-r-md); overflow: hidden; }
-/* 헤더: 대문자 라벨 톤, 살짝 넉넉한 높이 */
-.tui-grid-cell-header { font-weight: var(--mv2-fw-semibold) !important; font-size: var(--mv2-fz-xs) !important; letter-spacing: .01em; }
-.tui-grid-cell-header .tui-grid-cell-content,
-.tui-grid-cell .tui-grid-cell-content { padding-top: 9px !important; padding-bottom: 9px !important; }
-/* 본문 셀 폰트 */
-.tui-grid-rside-area .tui-grid-cell, .tui-grid-lside-area .tui-grid-cell { font-size: var(--mv2-fz-sm); }
-/* 행번호 칼럼 옅게 */
-.tui-grid-row-header-draggable, .tui-grid-cell-row-header { color: var(--mv2-text-faint) !important; }
-/* ---------------- 페이지네이션 (tui-pagination 재테마) ---------------- */
-.tui-pagination.tui-grid-pagination { height: auto; margin: 16px 0 6px; }
-/* 개별 버튼: 분리된 라운드 필, 무채색 → teal 선택 */
-.tui-pagination .tui-page-btn {
-    width: auto !important; min-width: 32px; height: 32px;
-    padding: 0 9px !important; margin: 0 3px !important;
-    display: inline-flex; align-items: center; justify-content: center;
-    color: var(--mv2-text-muted); background: #fff;
-    border: 1px solid var(--mv2-border-default) !important;
-    border-radius: var(--mv2-r-sm);
-    font-size: var(--mv2-fz-sm); font-weight: var(--mv2-fw-semibold);
-    font-variant-numeric: tabular-nums;
-    transition: all var(--mv2-dur-fast) var(--mv2-ease);
-    box-shadow: var(--mv2-shadow-xs);
-}
-.tui-pagination .tui-page-btn:hover {
-    background: var(--mv2-slate-25);
-    border-color: var(--mv2-primary-400) !important;
-    color: var(--mv2-primary-600);
-}
-/* 현재 페이지 */
-.tui-pagination .tui-is-selected,
-.tui-pagination strong.tui-page-btn {
-    color: #fff !important;
-    background: var(--mv2-primary-500) !important;
-    border-color: var(--mv2-primary-500) !important;
-    box-shadow: 0 1px 3px rgba(20,128,122,.28);
-    cursor: default;
-}
-.tui-pagination .tui-is-selected:hover { background: var(--mv2-primary-600) !important; color: #fff; }
-/* 이동 화살표 버튼 박스 통일 */
-.tui-pagination .tui-first, .tui-pagination .tui-prev,
-.tui-pagination .tui-next, .tui-pagination .tui-last {
-    height: 32px; border-radius: var(--mv2-r-sm);
-    border: 1px solid var(--mv2-border-default);
-}
-.tui-pagination .tui-prev { margin-right: 6px !important; }
-.tui-pagination .tui-next { margin-left: 6px !important; }
-/* 비활성(처음/이전 등) 옅게 */
-.tui-pagination .tui-is-disabled { opacity: .35; box-shadow: none; }
-.tui-pagination .tui-is-disabled:hover {
-    background: #fff; border-color: var(--mv2-border-default) !important; color: var(--mv2-text-muted);
-}
-
 /* 그리드 툴바 버튼 — 더 단정하게 */
 .ndn-gridbar { gap: 7px; margin-bottom: 12px; }
 .ndn-gridbar__btn {

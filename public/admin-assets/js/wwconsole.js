@@ -65,7 +65,7 @@
             rowKey: 'id',
             height: cfg.height || fitHeight(host),
             editable: editable,
-            rowCheckbox: editable,
+            rowCheckbox: editable && cfg.canDelete !== false,
             rowNumber: true,
             summary: cfg.summary === true,
             toolbar: false,
@@ -141,22 +141,26 @@
         }
 
         /* ---------- 툴바 구성 ---------- */
+        bar.appendChild(btn('엑셀 다운로드', '', function () { grid.downloadExcel({ filename: cfg.title || 'export' }); }));
         if (editable) {
-            if (cfg.importUrl) bar.appendChild(btn('엑셀 업로드', '', excelUpload));
-            bar.appendChild(btn('엑셀 다운로드', '', function () { grid.downloadExcel({ filename: cfg.title || 'export' }); }));
+            if (cfg.importUrl) bar.insertBefore(btn('엑셀 업로드', '', excelUpload), bar.firstChild);
             var sep = document.createElement('span'); sep.style.cssText = 'width:1px;height:20px;background:var(--mv2-border-default);margin:0 4px;'; bar.appendChild(sep);
-            bar.appendChild(btn('신규 행', '', function () { grid.addRow(cfg.newRow || {}); }));
-            bar.appendChild(btn('행 삭제', '', removeChecked));
+            if (cfg.canAdd !== false) bar.appendChild(btn('신규 행', '', function () { grid.addRow(cfg.newRow || {}); }));
+            if (cfg.canDelete !== false) bar.appendChild(btn('행 삭제', '', removeChecked));
             bar.appendChild(btn('변경 취소', '', function () { grid.resetModified(); }));
-            var saveBtn = btn('변경 저장', 'ndn-gridbar__btn--primary', save);
-            bar.appendChild(saveBtn);
-        } else {
-            bar.appendChild(btn('엑셀 다운로드', '', function () { grid.downloadExcel({ filename: cfg.title || 'export' }); }));
+            bar.appendChild(btn('변경 저장', 'ndn-gridbar__btn--primary', save));
         }
 
         /* ---------- 읽기전용 상세 팝업(더블클릭) ---------- */
         if (typeof cfg.onRowDblClick === 'function') {
             host.addEventListener('dblclick', function (e) {
+                // 편집 가능한 셀 더블클릭은 에디터에 양보
+                var cell = e.target.closest('[data-col-name]');
+                if (cell) {
+                    var colName = cell.getAttribute('data-col-name');
+                    var col = (cfg.columns || []).find(function (c) { return c.name === colName; });
+                    if (col && col.editor) return;
+                }
                 var tr = e.target.closest('[data-row-index]');
                 if (!tr) return;
                 var idx = parseInt(tr.getAttribute('data-row-index'), 10);

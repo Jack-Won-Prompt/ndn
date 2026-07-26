@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\ConsoleController;
 use App\Http\Controllers\Admin\BaseInfoGridController;
 use App\Http\Controllers\Admin\CandidateGridController;
 use App\Http\Controllers\Admin\DemandGridController;
+use App\Http\Controllers\Admin\TicketGridController;
 use App\Http\Controllers\Admin\WorkerGridController;
 use Illuminate\Support\Facades\Route;
 
@@ -72,6 +73,8 @@ Route::prefix('admin')->group(function () {
         Route::post('/grid/cities/save', [BaseInfoGridController::class, 'citySave'])->name('admin.grid.cities.save');
         Route::post('/grid/farms/save', [BaseInfoGridController::class, 'farmSave'])->name('admin.grid.farms.save');
         Route::post('/grid/farms/import', [BaseInfoGridController::class, 'farmImport'])->name('admin.grid.farms.import');
+        // wwGrid — 민원 상태 저장
+        Route::post('/grid/tickets/save', [TicketGridController::class, 'save'])->name('admin.grid.tickets.save');
 
         Route::get('/onboarding/{submission}', [ConsoleController::class, 'onboardingDetail'])
             ->whereNumber('submission')->name('admin.onboarding.detail');

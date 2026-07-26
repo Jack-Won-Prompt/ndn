@@ -143,16 +143,29 @@ class ConsoleController extends Controller
 
     private function monitoring(Request $request): View
     {
-        $rows = MonthlyInterview::with('worker')->latest('id')->limit(1000)->get();
+        $rows = MonthlyInterview::with('worker')->latest('id')->limit(1000)->get()
+            ->map(fn (MonthlyInterview $iv) => [
+                'id' => $iv->id,
+                'worker' => $iv->worker?->name ?? '—',
+                'date' => $iv->interviewed_on?->format('Y-m-d'),
+                'pay' => $iv->pay_received ? '양호' : '이상',
+                'discrim' => $iv->no_discrimination ? '양호' : '이상',
+                'rules' => $iv->follows_rules ? '양호' : '이상',
+                'group' => $iv->adapts_group ? '양호' : '이상',
+                'health' => $iv->health_ok ? '양호' : '이상',
+                'flight' => $iv->no_flight_signs ? '양호' : '이상',
+                'risk' => match ($iv->risk_level->value) {
+                    'high' => '고위험', 'medium' => '주의', default => '낮음'
+                },
+                'memo' => $iv->memo,
+            ])->all();
 
         return view('admin.screens.monitoring', ['rows' => $rows]);
     }
 
     private function tickets(Request $request): View
     {
-        $rows = SupportTicket::with('worker')->latest('id')->limit(1000)->get();
-
-        return view('admin.screens.tickets', ['rows' => $rows]);
+        return view('admin.screens.tickets', ['rows' => TicketGridController::rows()]);
     }
 
     /** 민원 상태 인라인 편집 저장 (그리드 셀 편집) */
@@ -256,7 +269,14 @@ class ConsoleController extends Controller
 
     private function onboarding(Request $request): View
     {
-        $rows = OnboardingSubmission::with('worker')->latest('id')->limit(1000)->get();
+        $rows = OnboardingSubmission::with('worker')->latest('id')->limit(1000)->get()
+            ->map(fn (OnboardingSubmission $o) => [
+                'id' => $o->id,
+                'worker' => $o->worker?->name ?? '—',
+                'status' => $o->status->label(),
+                'submitted' => $o->submitted_at?->format('Y-m-d H:i') ?? '—',
+                'note' => $o->review_note ?? '—',
+            ])->all();
 
         return view('admin.screens.onboarding', ['rows' => $rows]);
     }
