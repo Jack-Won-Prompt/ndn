@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\DemandGridController;
 use App\Http\Controllers\Admin\TicketGridController;
 use App\Http\Controllers\Admin\WorkerGridController;
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\PortalController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -38,6 +39,16 @@ Route::middleware('auth')->group(function () {
     Route::get('/demand/{demand}', [DemandRequestController::class, 'show'])->name('demand.show');
     Route::post('/farms/{farm}/demand', [DemandRequestController::class, 'store'])->name('demand.store');
     Route::post('/demand/{demand}/submit', [DemandRequestController::class, 'submit'])->name('demand.submit');
+});
+
+/*
+| 시청·농가·해외협력사 포털 (컨트롤러에서 인증 처리)
+*/
+Route::prefix('portal')->name('portal.')->group(function () {
+    Route::get('/login', [PortalController::class, 'showLogin'])->name('login');
+    Route::post('/login', [PortalController::class, 'login'])->name('login.attempt');
+    Route::post('/logout', [PortalController::class, 'logout'])->name('logout');
+    Route::get('/', [PortalController::class, 'index'])->name('index');
 });
 
 /*
