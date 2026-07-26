@@ -25,21 +25,26 @@
                 <p>수요를 취합하고 배치를 확정하는 주체들입니다.</p>
             </div>
 
-            <div class="grid grid--3">
+            <div class="grid grid--4">
                 <article class="card">
                     <div class="card__icon"><img src="{{ asset('site/assets/icons/admin.png') }}" alt=""></div>
                     <h3>지방자치단체</h3>
-                    <p>계절근로자 프로그램의 운영 주체입니다. 농가 수요를 취합하고 배정 인원을 확정합니다.</p>
+                    <p>충청남도 당진시, 경상남도 창녕군. 계절근로자 프로그램의 운영 주체로 농가 수요를 취합하고 배정 인원을 확정합니다.</p>
                 </article>
                 <article class="card">
                     <div class="card__icon"><img src="{{ asset('site/assets/icons/farm.png') }}" alt=""></div>
                     <h3>지역 농협 · 농가</h3>
-                    <p>실제 근로가 이루어지는 현장입니다. 숙소와 작업 환경을 함께 점검합니다.</p>
+                    <p>당진시 · 창녕군 지역 농협과 농가. 실제 근로가 이루어지는 현장으로 숙소와 작업 환경을 함께 점검합니다.</p>
                 </article>
                 <article class="card">
                     <div class="card__icon"><img src="{{ asset('site/assets/icons/education.png') }}" alt=""></div>
                     <h3>교육기관</h3>
-                    <p>한국어와 문화 교육 과정을 함께 설계합니다.</p>
+                    <p>청주대학교, 보건과학대학교, 충청대학교, 신성대학교. 한국어·문화 교육 과정과 유학 서비스를 함께 설계합니다.</p>
+                </article>
+                <article class="card">
+                    <div class="card__icon"><img src="{{ asset('site/assets/icons/network.png') }}" alt=""></div>
+                    <h3>산업체 · 협회</h3>
+                    <p>대한민국 축산협회, 봉제가공협회, 충청남도 내수면 어업협회 등 농·어·축산 분야 협력.</p>
                 </article>
             </div>
         </div>
@@ -52,19 +57,25 @@
                 <span class="eyebrow">Overseas</span>
                 <div class="rule"></div>
                 <h2>해외 송출기관</h2>
-                <p>현지 모집과 면접, 출국 준비를 담당하는 파트너입니다.</p>
+                <p>현지 모집과 면접, 출국 준비를 담당하는 정부·공공 파트너입니다.</p>
             </div>
 
-            <div class="countries">
-                <span class="country"><span class="country__code">BD</span> 방글라데시 <span class="country__lang">বাংলা</span></span>
-                <span class="country"><span class="country__code">LA</span> 라오스 <span class="country__lang">ລາວ</span></span>
-                <span class="country"><span class="country__code">LK</span> 스리랑카 <span class="country__lang">සිංහල</span></span>
-                <span class="country"><span class="country__code">VN</span> 베트남 <span class="country__lang">Tiếng Việt</span></span>
+            <div class="grid grid--2">
+                <article class="card">
+                    <div class="card__icon"><img src="{{ asset('site/assets/icons/network.png') }}" alt=""></div>
+                    <h3>방글라데시 · 보이셀(BOESL)</h3>
+                    <p>방글라데시 노동국 산하 국영 인력송출 기업 보이셀(BOESL)과 인력지원·교육·행정서비스 MOU를 체결했습니다. 방글라데시 현지에 NDN 교육서비스센터를 두어 모집·면접·사전교육을 직접 운영합니다.</p>
+                </article>
+                <article class="card">
+                    <div class="card__icon"><img src="{{ asset('site/assets/icons/network.png') }}" alt=""></div>
+                    <h3>중국 · 인력개발기관</h3>
+                    <p>허베이성 인력개발자원공사(스좌장 인력개발교육원), 산동성 인력지원센터 등과 협력 체계를 구축하여 현지 모집과 교육을 진행합니다.</p>
+                </article>
             </div>
 
-            <p style="margin-top:28px;font-size:15px;color:var(--gray-500);max-width:720px">
+            <p style="margin-top:28px;font-size:15px;color:var(--gray-500);max-width:760px">
                 각 송출국의 현지 파트너가 모집 공고, 서류 접수, 면접, 출국 준비를 담당합니다.
-                근로자는 모국어로 안내받으며, 출국 전 한국어·생활·안전 교육을 마칩니다.
+                근로자는 모국어로 안내받으며, 출국 전 한국어 · 생활 · 안전 교육을 마칩니다.
             </p>
         </div>
     </section>

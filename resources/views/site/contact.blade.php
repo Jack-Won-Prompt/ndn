@@ -97,7 +97,7 @@
                         </div>
                         <div>
                             <dt>주소</dt>
-                            <dd>{{ $S['contact.address'] ?? '○○도 ○○시 ○○로 ○○' }}</dd>
+                            <dd>{{ $S['contact.address'] ?? '경기도 김포시 양촌읍 대곶남로580번길 55, 가동' }}</dd>
                         </div>
                         <div>
                             <dt>대표전화</dt>
