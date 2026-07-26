@@ -49,6 +49,13 @@
 
 @section('script')
 <link rel="stylesheet" href="{{ asset('admin-assets/css/chat.css') }}?v={{ @filemtime(public_path('admin-assets/css/chat.css')) }}">
-<script>window.CHAT_BASE = '{{ url('chat') }}';</script>
+<script>
+    window.CHAT_BASE = '{{ url('chat') }}';
+    window.CHAT_ME = { type: '{{ $me[0] }}', id: {{ $me[1] ?? 0 }} };
+    window.PUSHER_KEY = '{{ config('broadcasting.connections.pusher.key') }}';
+    window.PUSHER_CLUSTER = '{{ config('broadcasting.connections.pusher.options.cluster') }}';
+    window.CHAT_AUTH = '{{ url('broadcasting/auth') }}';
+</script>
+<script src="{{ asset('admin-assets/vendor/pusher/pusher.min.js') }}"></script>
 <script src="{{ asset('admin-assets/js/chat.js') }}?v={{ @filemtime(public_path('admin-assets/js/chat.js')) }}"></script>
 @endsection

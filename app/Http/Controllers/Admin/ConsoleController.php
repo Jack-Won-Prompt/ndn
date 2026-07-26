@@ -113,7 +113,7 @@ class ConsoleController extends Controller
             'settlement' => $this->settlement($request),
             'monitoring' => $this->monitoring($request),
             'tickets' => $this->tickets($request),
-            'chat' => view('admin.screens.chat'),
+            'chat' => view('admin.screens.chat', ['me' => app(\App\Domains\Support\Services\ChatService::class)->partyForUser(Auth::user())]),
             'settings' => $this->settingsForm(),
             default => abort(404),
         };

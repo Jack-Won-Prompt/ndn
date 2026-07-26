@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 use App\Domains\Demand\Http\Controllers\DemandRequestController;
 use App\Http\Controllers\Admin\AuthController as AdminAuthController;
-use App\Http\Controllers\Admin\ConsoleController;
 use App\Http\Controllers\Admin\BaseInfoGridController;
 use App\Http\Controllers\Admin\CandidateGridController;
+use App\Http\Controllers\Admin\ConsoleController;
 use App\Http\Controllers\Admin\DemandGridController;
 use App\Http\Controllers\Admin\TicketGridController;
 use App\Http\Controllers\Admin\WorkerGridController;

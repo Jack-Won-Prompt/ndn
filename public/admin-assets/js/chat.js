@@ -84,9 +84,31 @@
 
     function startPoll() {
         stopPoll();
-        pollTimer = setInterval(function () { loadMessages(); loadConversations(); }, 4000);
+        // Pusher 실시간이 있으면 폴링은 느슨한 안전망(15초), 없으면 4초.
+        var interval = window.__chatRealtime ? 15000 : 4000;
+        pollTimer = setInterval(function () { loadMessages(); loadConversations(); }, interval);
     }
     function stopPoll() { if (pollTimer) clearInterval(pollTimer); }
+
+    /* ---------- 실시간 (Pusher) ---------- */
+    function setupRealtime() {
+        if (!window.PUSHER_KEY || typeof Pusher === 'undefined' || !window.CHAT_ME) return;
+        try {
+            var pusher = new Pusher(window.PUSHER_KEY, {
+                cluster: window.PUSHER_CLUSTER,
+                forceTLS: true,
+                authEndpoint: window.CHAT_AUTH,
+                auth: { headers: { 'X-CSRF-TOKEN': token } },
+            });
+            var name = 'private-chat.party.' + window.CHAT_ME.type + '.' + (window.CHAT_ME.id || 0);
+            var ch = pusher.subscribe(name);
+            ch.bind('message.new', function (data) {
+                loadConversations();
+                if (data && data.conversation_id === activeId) loadMessages();
+            });
+            window.__chatRealtime = true;
+        } catch (e) { /* 폴링 폴백 */ }
+    }
 
     /* ---------- 새 대화 (근로자 검색 + 조직 연락처) ---------- */
     function openNewChat() {
@@ -136,6 +158,7 @@
 
     /* ---------- 초기화 ---------- */
     function init() {
+        setupRealtime();
         loadConversations();
         document.getElementById('chat-send').addEventListener('click', send);
         document.getElementById('chat-input').addEventListener('keydown', function (e) {

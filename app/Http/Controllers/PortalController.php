@@ -71,7 +71,10 @@ class PortalController extends Controller
             return redirect()->route('portal.login');
         }
 
-        return view('portal.index', ['user' => $user]);
+        return view('portal.index', [
+            'user' => $user,
+            'me' => app(\App\Domains\Support\Services\ChatService::class)->partyForUser($user),
+        ]);
     }
 
     public function logout(Request $request): RedirectResponse

@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace App\Domains\Support\Services;
 
 use App\Domains\Recruitment\Models\Worker;
+use App\Domains\Support\Events\ChatMessageSent;
 use App\Domains\Support\Models\ChatConversation;
 use App\Domains\Support\Models\ChatMessage;
 use App\Models\User;
 use App\Shared\Translation\GoogleTranslator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 
 /**
  * 채팅 공용 서비스 — 콘솔(NDN)·포털(시청·농가·해외협력사)·근로자 API 공용.
@@ -108,6 +110,13 @@ class ChatService
             'last_message_at' => $msg->created_at,
             "{$side}_last_read_at" => $msg->created_at,
         ])->save();
+
+        // 실시간 알림 (Pusher) — 두 참여자 채널로. 실패해도 전송은 성공.
+        try {
+            broadcast(ChatMessageSent::forConversation($conv))->toOthers();
+        } catch (\Throwable $e) {
+            Log::warning('[Chat] broadcast 실패: '.$e->getMessage());
+        }
 
         return $msg;
     }
