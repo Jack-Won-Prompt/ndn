@@ -24,7 +24,7 @@ class WorkerResource extends JsonResource
             'name' => $this->name,
             'nationality' => $this->nationality,
             'locale' => $this->locale,
-            'status' => $this->status,
+            'status' => $this->status->value,
         ];
     }
 }

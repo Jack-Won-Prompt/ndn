@@ -6,6 +6,7 @@ namespace App\Domains\Reporting\Actions;
 
 use App\Domains\Monitoring\Enums\RiskLevel;
 use App\Domains\Monitoring\Models\MonthlyInterview;
+use App\Domains\Recruitment\Enums\WorkerStatus;
 use App\Domains\Recruitment\Models\Worker;
 use App\Domains\Support\Models\SupportTicket;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -34,7 +35,7 @@ class GenerateMonthlyReportAction
             'year' => $year,
             'month' => $month,
             'generated_at' => now()->format('Y-m-d H:i'),
-            'active_workers' => Worker::where('status', 'active')->count(),
+            'active_workers' => Worker::where('status', WorkerStatus::Active->value)->count(),
             'interview_total' => (clone $interviews)->count(),
             'risk_high' => (clone $interviews)->where('risk_level', RiskLevel::High->value)->count(),
             'risk_medium' => (clone $interviews)->where('risk_level', RiskLevel::Medium->value)->count(),

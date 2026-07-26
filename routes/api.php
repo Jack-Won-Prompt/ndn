@@ -21,6 +21,8 @@ use Illuminate\Support\Facades\Route;
 
 // 로그인은 토큰 발급 전이므로 인증 미들웨어 밖에 둔다. 무차별 대입 방지로 throttle 적용.
 Route::prefix('v1')->group(function () {
+    // 셀프 가입 (관리자 승인제) — 무차별 대입 방지로 throttle
+    Route::post('/auth/register', [AuthController::class, 'register'])->middleware('throttle:5,1');
     Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:10,1');
 });
 

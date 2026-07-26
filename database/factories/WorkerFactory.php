@@ -34,6 +34,9 @@ class WorkerFactory extends Factory
 
         return [
             'name' => fake()->randomElement(self::NAMES[$nat]),
+            // 앱 로그인 자격증명 (§9). password 는 hashed cast 로 저장 시 해시된다.
+            'email' => fake()->unique()->safeEmail(),
+            'password' => 'password',
             'nationality' => $nat,
             'locale' => self::LOCALE[$nat],
             'status' => 'active',

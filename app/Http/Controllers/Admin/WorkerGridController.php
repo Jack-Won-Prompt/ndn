@@ -33,7 +33,7 @@ class WorkerGridController extends Controller
             'name' => $w->name,
             'nationality' => $w->nationality,
             'locale' => $w->locale,
-            'status' => $w->status,
+            'status' => $w->status->value,
         ];
     }
 

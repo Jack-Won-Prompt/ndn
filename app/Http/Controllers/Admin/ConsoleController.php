@@ -71,6 +71,7 @@ class ConsoleController extends Controller
                 'group' => '근로자',
                 'items' => [
                     ['key' => 'workers', 'label' => '근로자', 'icon' => 'users'],
+                    ['key' => 'signups', 'label' => '가입 승인', 'icon' => 'inbox'],
                     ['key' => 'onboarding', 'label' => '온보딩 검수', 'icon' => 'inbox'],
                 ],
             ],
@@ -110,6 +111,7 @@ class ConsoleController extends Controller
             'baseinfo' => $this->baseinfo(),
             'candidates' => $this->candidates($request),
             'workers' => $this->workers($request),
+            'signups' => view('admin.screens.signups', ['rows' => SignupApprovalController::rows()]),
             'onboarding' => $this->onboarding($request),
             'settlement' => $this->settlement($request),
             'monitoring' => $this->monitoring($request),
@@ -262,7 +264,7 @@ class ConsoleController extends Controller
                 'name' => $worker->name,
                 'nationality' => $worker->nationality,
                 'locale' => $worker->locale,
-                'status' => $worker->status,
+                'status' => $worker->status->value,
                 'created' => $worker->created_at?->format('Y-m-d H:i'),
             ]);
         }

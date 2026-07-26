@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Recruitment\Models;
 
 use App\Domains\Onboarding\Models\ConsentRecord;
+use App\Domains\Recruitment\Enums\WorkerStatus;
 use App\Shared\Concerns\LogsPersonalDataAccess;
 use App\Shared\Concerns\MasksSensitiveData;
 use App\Shared\Enums\ConsentPurpose;
@@ -46,6 +47,8 @@ class Worker extends Model implements AuthenticatableContract
         'nationality',
         'locale',
         'status',
+        'approved_at',
+        'approved_by',
         'passport_no',
         'birth_date',
         'phone_home_country',
@@ -74,6 +77,9 @@ class Worker extends Model implements AuthenticatableContract
             'phone_home_country' => 'encrypted',
             // 로그인 비밀번호 — 대입 시 자동 단방향 해시 (§9)
             'password' => 'hashed',
+            // 계정 상태 (가입 승인제) — 문자열 리터럴 비교 금지, Enum 사용
+            'status' => WorkerStatus::class,
+            'approved_at' => 'datetime',
         ];
     }
 

@@ -29,7 +29,7 @@
             { header: '언어', name: 'locale', width: 100, editor: 'combo', align: 'center',
               options: [{value:'ko',label:'한국어'},{value:'bn',label:'벵골어'},{value:'lo',label:'라오어'},{value:'si',label:'싱할라어'},{value:'vi',label:'베트남어'}] },
             { header: '상태', name: 'status', width: 110, editor: 'combo', align: 'center',
-              options: [{value:'active',label:'재직'},{value:'inactive',label:'비활성'},{value:'returned',label:'귀국'}] },
+              options: [{value:'pending',label:'승인 대기'},{value:'active',label:'재직'},{value:'inactive',label:'비활성'},{value:'returned',label:'귀국'},{value:'rejected',label:'가입 거절'}] },
         ],
     });
 </script>
