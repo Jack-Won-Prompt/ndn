@@ -9,6 +9,7 @@ use App\Domains\Recruitment\Actions\RejectWorkerAction;
 use App\Domains\Recruitment\Enums\WorkerStatus;
 use App\Domains\Recruitment\Models\Worker;
 use App\Http\Controllers\Controller;
+use App\Shared\Support\LocalTime;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -32,7 +33,7 @@ class SignupApprovalController extends Controller
                 'email' => $w->email,
                 'nationality' => $w->nationality,
                 'locale' => $w->locale,
-                'registered' => $w->created_at?->format('Y-m-d H:i'),
+                'registered' => LocalTime::format($w->created_at),
             ])->all();
     }
 

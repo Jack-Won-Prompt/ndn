@@ -9,6 +9,7 @@ use App\Domains\Support\Events\ChatMessageSent;
 use App\Domains\Support\Models\ChatConversation;
 use App\Domains\Support\Models\ChatMessage;
 use App\Models\User;
+use App\Shared\Support\LocalTime;
 use App\Shared\Translation\GoogleTranslator;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
@@ -270,7 +271,7 @@ class ChatService
             'other_type' => $otherType,
             'title' => $this->conversationTitle($c, $otherSide, $otherType),
             'last' => $last ? $last->previewFor($side) : null,
-            'last_at' => $c->last_message_at?->format('Y-m-d H:i'),
+            'last_at' => LocalTime::format($c->last_message_at),
             'unread' => $unread,
         ];
     }
@@ -313,7 +314,7 @@ class ChatService
                 'deleted' => $m->isDeleted(),
                 'translated' => ! $mine && ! $m->isDeleted() && $m->translated_body !== null,
                 'edited' => $m->edited_at !== null && ! $m->isDeleted(),
-                'at' => $m->created_at->format('Y-m-d H:i'),
+                'at' => LocalTime::format($m->created_at),
             ];
 
             // 첨부

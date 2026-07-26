@@ -8,6 +8,7 @@ use App\Actions\SendInvitationAction;
 use App\Http\Controllers\Controller;
 use App\Models\Invitation;
 use App\Shared\Enums\UserRole;
+use App\Shared\Support\LocalTime;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -33,8 +34,8 @@ class InvitationController extends Controller
                 'status' => $i->status()->value,
                 'status_label' => $i->status()->label(),
                 'invited_by' => $i->invitedBy?->name ?? '—',
-                'created' => $i->created_at?->format('Y-m-d H:i'),
-                'expires' => $i->expires_at?->format('Y-m-d H:i'),
+                'created' => LocalTime::format($i->created_at),
+                'expires' => LocalTime::format($i->expires_at),
                 'can_manage' => $i->isPending(),
             ])->all();
     }

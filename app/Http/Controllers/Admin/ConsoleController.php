@@ -22,6 +22,7 @@ use App\Domains\Support\Models\SupportTicket;
 use App\Domains\Support\Services\ChatService;
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
+use App\Shared\Support\LocalTime;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -275,7 +276,7 @@ class ConsoleController extends Controller
                 'nationality' => $worker->nationality,
                 'locale' => $worker->locale,
                 'status' => $worker->status->value,
-                'created' => $worker->created_at?->format('Y-m-d H:i'),
+                'created' => LocalTime::format($worker->created_at),
             ]);
         }
 
@@ -289,7 +290,7 @@ class ConsoleController extends Controller
                 'id' => $o->id,
                 'worker' => $o->worker?->name ?? '—',
                 'status' => $o->status->label(),
-                'submitted' => $o->submitted_at?->format('Y-m-d H:i') ?? '—',
+                'submitted' => LocalTime::format($o->submitted_at) ?? '—',
                 'note' => $o->review_note ?? '—',
             ])->all();
 
@@ -312,7 +313,7 @@ class ConsoleController extends Controller
             'id' => $submission->id,
             'worker' => $submission->worker?->name ?? '—',
             'status' => $submission->status->label(),
-            'submitted_at' => $submission->submitted_at?->format('Y-m-d H:i') ?? '—',
+            'submitted_at' => LocalTime::format($submission->submitted_at) ?? '—',
             'review_note' => $submission->review_note,
             'payload' => $submission->payload ?? [],
             'has_signature' => $hasSignature,

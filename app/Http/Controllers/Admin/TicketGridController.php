@@ -8,6 +8,7 @@ use App\Domains\Support\Actions\UpdateTicketStatusAction;
 use App\Domains\Support\Enums\TicketStatus;
 use App\Domains\Support\Models\SupportTicket;
 use App\Http\Controllers\Controller;
+use App\Shared\Support\LocalTime;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -27,7 +28,7 @@ class TicketGridController extends Controller
                 'subject' => $t->subject,
                 'body' => $t->body,
                 'status' => $t->status->value,
-                'created' => $t->created_at?->format('Y-m-d H:i'),
+                'created' => LocalTime::format($t->created_at),
             ])->all();
     }
 

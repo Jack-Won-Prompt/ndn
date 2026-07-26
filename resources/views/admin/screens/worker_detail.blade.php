@@ -19,6 +19,6 @@
         <dt>국적</dt><dd>{{ $worker->nationality }}</dd>
         <dt>언어</dt><dd>{{ $worker->locale }}</dd>
         <dt>상태</dt><dd>{{ $worker->status->label() }}</dd>
-        <dt>등록일</dt><dd>{{ $worker->created_at?->format('Y-m-d H:i') }}</dd>
+        <dt>등록일</dt><dd>{{ \App\Shared\Support\LocalTime::format($worker->created_at) }}</dd>
     </dl>
 @endsection

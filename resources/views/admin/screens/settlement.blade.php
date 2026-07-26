@@ -30,7 +30,7 @@
                             @endif
                             @if ($s->sla_due_at)
                                 <div class="kcard__meta {{ $s->isOverdue() ? 'is-overdue' : '' }}">
-                                    SLA {{ $s->sla_due_at->format('m-d') }}{{ $s->isOverdue() ? ' · 지연' : '' }}
+                                    SLA {{ \App\Shared\Support\LocalTime::format($s->sla_due_at, 'm-d') }}{{ $s->isOverdue() ? ' · 지연' : '' }}
                                 </div>
                             @endif
                         </div>
