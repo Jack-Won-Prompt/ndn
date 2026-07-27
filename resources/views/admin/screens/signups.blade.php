@@ -11,7 +11,7 @@
 
     <div class="screen-tabs">
         <button type="button" class="screen-tab is-active" data-tab="list">목록</button>
-        <button type="button" class="screen-tab" data-tab="detail" id="su-detail-tab" hidden>상세</button>
+        <button type="button" class="screen-tab" data-tab="detail" id="su-detail-tab">상세</button>
     </div>
 
     <div data-tabpane="list">
@@ -51,7 +51,7 @@
     </div>
 
     <div data-tabpane="detail" hidden>
-        <div id="su-detail" class="dtl"></div>
+        <div id="su-detail" class="dtl"><div class="dtl-empty">목록에서 행을 더블클릭하면 상세·제출 서류와 승인/거절 버튼이 표시됩니다.</div></div>
     </div>
 
     <style>
@@ -107,7 +107,7 @@
                         if (res.ok) {
                             ndnToast(isApprove ? '승인되었습니다.' : '거절되었습니다.', { type: 'success' });
                             removeRow(id);
-                            document.getElementById('su-detail-tab').hidden = true;
+                            document.getElementById('su-detail').innerHTML = '<div class="dtl-empty">처리되었습니다. 목록에서 다른 신청을 선택하세요.</div>';
                             window.ndnSwitchTab('list');
                         } else { ndnToast(res.j.message || '처리 실패', { type: 'error' }); }
                     });

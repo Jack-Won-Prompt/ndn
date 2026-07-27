@@ -11,7 +11,7 @@
 
     <div class="screen-tabs">
         <button type="button" class="screen-tab is-active" data-tab="list">목록</button>
-        <button type="button" class="screen-tab" data-tab="detail" id="fv-detail-tab" hidden>상세</button>
+        <button type="button" class="screen-tab" data-tab="detail" id="fv-detail-tab">상세</button>
         <button type="button" class="screen-tab" data-tab="form">방문 등록</button>
     </div>
 
@@ -117,7 +117,7 @@
 
     {{-- 상세 (목록에서 행 더블클릭 시 이 탭으로) --}}
     <div data-tabpane="detail" hidden>
-        <div id="fv-detail" class="fv-detailwrap"></div>
+        <div id="fv-detail" class="fv-detailwrap"><div class="dtl-empty">목록에서 방문을 더블클릭하면 상세가 표시됩니다.</div></div>
     </div>{{-- /탭:detail --}}
 
     <style>

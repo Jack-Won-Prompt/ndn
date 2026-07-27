@@ -11,14 +11,14 @@
 
     <div class="screen-tabs">
         <button type="button" class="screen-tab is-active" data-tab="list">목록</button>
-        <button type="button" class="screen-tab" data-tab="detail" id="ob-detail-tab" hidden>상세</button>
+        <button type="button" class="screen-tab" data-tab="detail" id="ob-detail-tab">상세</button>
     </div>
 
     <div data-tabpane="list">
         <div id="grid-onboarding"></div>
     </div>
     <div data-tabpane="detail" hidden>
-        <div id="ob-detail" class="dtl"></div>
+        <div id="ob-detail" class="dtl"><div class="dtl-empty">목록에서 행을 더블클릭하면 상세·제출 서류가 표시됩니다.</div></div>
     </div>
 @endsection
 
