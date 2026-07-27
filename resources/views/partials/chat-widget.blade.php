@@ -64,6 +64,8 @@
         word-break: break-word; white-space: pre-wrap; box-shadow: 0 1px 2px rgba(15,23,42,.06); }
     .cw-bubble--in { align-self: flex-start; background: #fff; color: #0F172A; border-bottom-left-radius: 4px; }
     .cw-bubble--out { align-self: flex-end; background: #1E9C92; color: #fff; border-bottom-right-radius: 4px; }
+    .cw-bubble__orig { display: block; margin-top: 4px; padding-top: 4px; border-top: 1px dashed rgba(15,23,42,.15); font-size: 12px; opacity: .7; }
+    .cw-bubble--out .cw-bubble__orig { border-top-color: rgba(255,255,255,.3); }
     .cw-bubble__at { display: block; margin-top: 3px; font-size: 10px; opacity: .6; }
     .cw-greet { background: #E7F3F1; color: #0F172A; }
 
@@ -115,7 +117,12 @@
         list.forEach(function (m) {
             var b = document.createElement('div');
             b.className = 'cw-bubble ' + (m.mine ? 'cw-bubble--out' : 'cw-bubble--in');
-            b.innerHTML = esc(m.body) + (m.at ? '<span class="cw-bubble__at">' + esc(m.at) + '</span>' : '');
+            var html = esc(m.body);
+            if (m.translated && m.original) {
+                html += '<span class="cw-bubble__orig">' + esc(m.original) + '</span>';
+            }
+            if (m.at) html += '<span class="cw-bubble__at">' + esc(m.at) + '</span>';
+            b.innerHTML = html;
             msgs.appendChild(b);
         });
         msgs.scrollTop = msgs.scrollHeight;

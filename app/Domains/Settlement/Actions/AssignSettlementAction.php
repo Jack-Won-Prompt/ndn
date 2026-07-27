@@ -6,7 +6,11 @@ namespace App\Domains\Settlement\Actions;
 
 use App\Domains\Settlement\Enums\SettlementStatus;
 use App\Domains\Settlement\Models\SettlementRequest;
+use App\Domains\Settlement\Notifications\SettlementAssignedNotification;
+use App\Models\User;
 use App\Shared\Enums\ConsentPurpose;
+use App\Shared\Enums\UserRole;
+use Illuminate\Support\Facades\Notification;
 use RuntimeException;
 
 /**
@@ -40,6 +44,29 @@ class AssignSettlementAction
             'sla_due_at' => now()->addDays(self::SLA_DAYS),
         ]);
 
+        $this->notifyAgency($agencyId, $request);
+
         return $request;
+    }
+
+    /**
+     * 배정된 대리점(assigned_agency_id 일치 partner_agency 사용자들)에게 알림 발송.
+     * §7-3: 알림 본문에 개인정보 없음(건수 + 서비스 유형 + 로그인 링크). 큐 처리.
+     */
+    private function notifyAgency(int $agencyId, SettlementRequest $request): void
+    {
+        // whereHas 로 역할을 확인 — spatie role() 스코프는 역할 미존재 시 예외를 던지므로 사용하지 않는다.
+        $recipients = User::where('assigned_agency_id', $agencyId)
+            ->whereHas('roles', fn ($q) => $q->where('name', UserRole::PartnerAgency->value))
+            ->get();
+
+        if ($recipients->isEmpty()) {
+            return;
+        }
+
+        Notification::send(
+            $recipients,
+            new SettlementAssignedNotification(1, $request->type->label()),
+        );
     }
 }

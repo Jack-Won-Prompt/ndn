@@ -8,6 +8,8 @@ use App\Domains\Demand\Models\DemandRequest;
 use App\Domains\Demand\Policies\DemandRequestPolicy;
 use App\Domains\Onboarding\Models\OnboardingSubmission;
 use App\Domains\Onboarding\Policies\OnboardingSubmissionPolicy;
+use App\Domains\Settlement\Models\SettlementRequest;
+use App\Domains\Settlement\Policies\SettlementRequestPolicy;
 use App\Models\Setting;
 use App\Support\Livewire\BasePathHandleRequests;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -28,6 +30,7 @@ class AppServiceProvider extends ServiceProvider
     private array $policies = [
         DemandRequest::class => DemandRequestPolicy::class,
         OnboardingSubmission::class => OnboardingSubmissionPolicy::class,
+        SettlementRequest::class => SettlementRequestPolicy::class,
     ];
 
     public function register(): void

@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\TicketGridController;
 use App\Http\Controllers\Admin\WorkerGridController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\InvitationAcceptController;
+use App\Http\Controllers\Portal\PartnerSettlementController;
 use App\Http\Controllers\PortalController;
 use App\Http\Controllers\SiteChatController;
 use App\Http\Controllers\SiteController;
@@ -66,6 +67,15 @@ Route::prefix('portal')->name('portal.')->group(function () {
     Route::post('/login', [PortalController::class, 'login'])->name('login.attempt');
     Route::post('/logout', [PortalController::class, 'logout'])->name('logout');
     Route::get('/', [PortalController::class, 'index'])->name('index');
+
+    // 제휴 대리점 — 배정된 정착 서비스 건 조회·처리 (스코프+Policy 이중 방어, §7-4·§7-5)
+    Route::middleware('auth')->prefix('settlements')->name('settlements.')->group(function () {
+        Route::get('/', [PartnerSettlementController::class, 'index'])->name('index');
+        Route::get('/{settlement}', [PartnerSettlementController::class, 'show'])->whereNumber('settlement')->name('show');
+        Route::post('/{settlement}/process', [PartnerSettlementController::class, 'process'])->whereNumber('settlement')->name('process');
+        Route::post('/{settlement}/documents', [PartnerSettlementController::class, 'uploadDocument'])->whereNumber('settlement')->name('documents.store');
+        Route::get('/{settlement}/documents/{document}', [PartnerSettlementController::class, 'downloadDocument'])->whereNumber(['settlement', 'document'])->name('documents.show');
+    });
 });
 
 /*
@@ -127,6 +137,10 @@ Route::prefix('admin')->group(function () {
         Route::post('/grid/farms/import', [BaseInfoGridController::class, 'farmImport'])->name('admin.grid.farms.import');
         // wwGrid — 민원 상태 저장
         Route::post('/grid/tickets/save', [TicketGridController::class, 'save'])->name('admin.grid.tickets.save');
+
+        // 정착 처리보드 — 대리점 배정(§7-4 동의 없으면 거부)
+        Route::post('/settlements/{settlement}/assign', [ConsoleController::class, 'assignSettlement'])
+            ->whereNumber('settlement')->name('admin.settlements.assign');
 
         // 근로자 가입 승인 (셀프 가입 승인 큐)
         Route::get('/signups/{worker}', [SignupApprovalController::class, 'show'])

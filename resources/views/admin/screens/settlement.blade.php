@@ -34,6 +34,17 @@
                                     SLA {{ \App\Shared\Support\LocalTime::format($s->sla_due_at, 'm-d') }}{{ $s->isOverdue() ? ' · 지연' : '' }}
                                 </div>
                             @endif
+                            @if (! $s->assigned_agency_id && in_array($s->status->value, ['received', 'reviewing'], true) && ! empty($agencies))
+                                <div class="kassign" data-id="{{ $s->id }}">
+                                    <select class="kassign__sel">
+                                        <option value="">대리점 배정…</option>
+                                        @foreach ($agencies as $aid => $aname)
+                                            <option value="{{ $aid }}">{{ $aname }}</option>
+                                        @endforeach
+                                    </select>
+                                    <button type="button" class="kassign__btn">배정</button>
+                                </div>
+                            @endif
                         </div>
                     @empty
                         <div class="kanban__empty">—</div>
@@ -59,6 +70,11 @@
         .kcard__worker { font-size: 13px; font-weight: 600; color: var(--mv2-text-strong); }
         .kcard__meta { font-size: 11px; color: var(--mv2-text-muted); margin-top: 4px; }
         .kcard__meta.is-overdue { color: #B42318; font-weight: 600; }
+        .kassign { display: flex; gap: 4px; margin-top: 8px; }
+        .kassign__sel { flex: 1; min-width: 0; font-family: inherit; font-size: 11px; padding: 3px 4px; border: 1px solid var(--mv2-border-default); border-radius: 6px; background: #fff; }
+        .kassign__btn { flex: 0 0 auto; font-family: inherit; font-size: 11px; font-weight: 700; color: #fff; background: var(--mv2-primary-500); border: 0; border-radius: 6px; padding: 3px 9px; cursor: pointer; }
+        .kassign__btn:hover { background: var(--mv2-primary-600); }
+        .kassign__btn:disabled { opacity: .5; cursor: default; }
         @media (max-width: 1100px) { .kanban { grid-template-columns: repeat(2, 1fr); } }
     </style>
 @endsection
@@ -66,7 +82,34 @@
 @section('script')
 <script>
     (function () {
+        // 대리점 배정 (§7-4: 동의 없으면 서버가 거부)
         document.querySelector('.kanban').addEventListener('click', function (e) {
+            var btn = e.target.closest('.kassign__btn');
+            if (!btn) return;
+            e.stopPropagation();
+            var wrap = btn.closest('.kassign');
+            var sel = wrap.querySelector('.kassign__sel');
+            var agencyId = sel.value;
+            if (!agencyId) { ndnToast('배정할 대리점을 선택하세요.', { type: 'error' }); return; }
+            btn.disabled = true;
+            fetch('{{ url('admin/settlements') }}/' + wrap.getAttribute('data-id') + '/assign', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json', 'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                },
+                body: JSON.stringify({ agency_id: parseInt(agencyId, 10) }),
+            })
+                .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+                .then(function (res) {
+                    if (res.ok) { ndnToast('대리점에 배정하고 알림을 발송했습니다.', { type: 'success' }); setTimeout(function () { location.reload(); }, 600); }
+                    else { ndnToast(res.j.message || '배정 실패', { type: 'error' }); btn.disabled = false; }
+                })
+                .catch(function () { ndnToast('배정 중 오류가 발생했습니다.', { type: 'error' }); btn.disabled = false; });
+        });
+
+        document.querySelector('.kanban').addEventListener('click', function (e) {
+            if (e.target.closest('.kassign')) return;   // 배정 컨트롤 클릭은 근로자 팝업 제외
             var card = e.target.closest('.kcard[data-worker]');
             if (!card) return;
             var id = card.getAttribute('data-worker');

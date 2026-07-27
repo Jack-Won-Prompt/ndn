@@ -106,11 +106,17 @@
             }
         }
 
-        // 본문
+        // 본문 (상대 메시지가 번역된 경우: 번역본 + 원어 함께 표시)
         if (m.deleted) {
             bubble.appendChild(el('div', 'chat-bubble__body chat-bubble__body--deleted', m.body));
         } else if (m.body) {
             bubble.appendChild(el('div', 'chat-bubble__body', m.body));
+            if (m.translated && m.original) {
+                var orig = el('div', 'chat-bubble__orig');
+                orig.appendChild(el('span', 'chat-bubble__orig-tag', '원어' + (m.original_lang ? '(' + m.original_lang + ')' : '')));
+                orig.appendChild(el('span', 'chat-bubble__orig-txt', m.original));
+                bubble.appendChild(orig);
+            }
         }
 
         // 메타

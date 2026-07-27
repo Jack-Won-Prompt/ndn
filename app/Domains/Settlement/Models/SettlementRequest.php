@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -34,6 +35,7 @@ class SettlementRequest extends Model
         'status',
         'sla_due_at',
         'completed_at',
+        'partner_note',
     ];
 
     protected function casts(): array
@@ -51,6 +53,12 @@ class SettlementRequest extends Model
     public function worker(): BelongsTo
     {
         return $this->belongsTo(Worker::class);
+    }
+
+    /** @return HasMany<SettlementDocument, $this> 처리 증빙 문서 */
+    public function documents(): HasMany
+    {
+        return $this->hasMany(SettlementDocument::class)->latest('id');
     }
 
     /** SLA 기한을 넘긴 미완료 건인지 */

@@ -38,6 +38,9 @@
 .chat-msg--mine .chat-bubble { background: var(--mv2-primary-500); border-color: var(--mv2-primary-500); color: #fff; }
 .chat-bubble__body { font-size: var(--mv2-fz-sm); line-height: 1.55; white-space: pre-wrap; word-break: break-word; }
 .chat-bubble__meta { font-size: 10px; margin-top: 4px; color: var(--mv2-text-faint); }
+.chat-bubble__orig { margin-top: 5px; padding-top: 5px; border-top: 1px dashed var(--mv2-border-soft); display: flex; gap: 6px; align-items: baseline; }
+.chat-bubble__orig-tag { flex: 0 0 auto; font-size: 9px; font-weight: 700; color: #fff; background: var(--mv2-text-faint); border-radius: 4px; padding: 1px 5px; }
+.chat-bubble__orig-txt { font-size: 12px; line-height: 1.5; color: var(--mv2-text-muted); white-space: pre-wrap; word-break: break-word; }
 .chat-msg--mine .chat-bubble__meta { color: rgba(255,255,255,.75); }
 .chat-input-bar { display: flex; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--mv2-border-soft); background: #fff; }
 .chat-input-bar textarea {

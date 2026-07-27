@@ -128,10 +128,16 @@ class ChatService
             $fileMime = $file->getMimeType();
         }
 
-        // 본문 자동번역 (파일만 있으면 번역 없음)
+        // 본문 자동번역 (파일만 있으면 번역 없음).
+        // from 은 'auto' — 발신자의 선언 언어($ml)가 부정확해도 실제 언어를 감지해 상대 언어로 번역.
+        // (예: 방글라 방문자가 언어를 안 바꿔도 관리자는 한국어 번역본을 받는다.)
         $translated = null;
         if ($body !== null && $body !== '' && $otherLang !== $ml) {
-            $translated = GoogleTranslator::translate($body, $otherLang, $ml);
+            $translated = GoogleTranslator::translate($body, $otherLang, 'auto');
+            // 번역 결과가 원문과 사실상 동일하면(이미 상대 언어였음) 번역본 미저장
+            if ($translated !== null && trim($translated) === trim($body)) {
+                $translated = null;
+            }
         }
 
         // 답장 대상은 같은 대화의 메시지여야 함
@@ -330,6 +336,12 @@ class ChatService
                 'edited' => $m->edited_at !== null && ! $m->isDeleted(),
                 'at' => LocalTime::format($m->created_at),
             ];
+
+            // 상대 메시지가 번역된 경우, 원어(발신자 원문)도 함께 전달 → 화면에서 번역본+원어 동시 표시
+            if ($row['translated']) {
+                $row['original'] = (string) $m->body;
+                $row['original_lang'] = (string) $m->body_lang;
+            }
 
             // 첨부
             if ($m->hasFile()) {

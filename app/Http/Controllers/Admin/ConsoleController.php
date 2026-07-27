@@ -14,6 +14,7 @@ use App\Domains\Onboarding\Enums\OnboardingStatus;
 use App\Domains\Onboarding\Models\OnboardingSubmission;
 use App\Domains\Recruitment\Models\Worker;
 use App\Domains\Reporting\Actions\GenerateMonthlyReportAction;
+use App\Domains\Settlement\Actions\AssignSettlementAction;
 use App\Domains\Settlement\Enums\SettlementStatus;
 use App\Domains\Settlement\Models\SettlementRequest;
 use App\Domains\Support\Actions\UpdateTicketStatusAction;
@@ -23,6 +24,8 @@ use App\Domains\Support\Models\SupportTicket;
 use App\Domains\Support\Services\ChatService;
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
+use App\Models\User;
+use App\Shared\Enums\UserRole;
 use App\Shared\Support\LocalTime;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
@@ -162,7 +165,43 @@ class ConsoleController extends Controller
         $all = SettlementRequest::with('worker')->latest('id')->get();
         $stages = SettlementStatus::cases();
 
-        return view('admin.screens.settlement', ['all' => $all, 'stages' => $stages]);
+        return view('admin.screens.settlement', [
+            'all' => $all,
+            'stages' => $stages,
+            'agencies' => self::agencyOptions(),
+        ]);
+    }
+
+    /**
+     * 배정 가능한 제휴 대리점 목록 [assigned_agency_id => 표시명].
+     * 별도 대리점 테이블이 없으므로 partner_agency 사용자에서 도출한다.
+     *
+     * @return array<int, string>
+     */
+    private static function agencyOptions(): array
+    {
+        return User::whereNotNull('assigned_agency_id')
+            ->whereHas('roles', fn ($q) => $q->where('name', UserRole::PartnerAgency->value))
+            ->orderBy('name')
+            ->get(['name', 'assigned_agency_id'])
+            ->mapWithKeys(fn (User $u) => [$u->assigned_agency_id => $u->name])
+            ->all();
+    }
+
+    /** 정착 건을 대리점에 배정 (§7-4 동의 없으면 Action 이 거부). */
+    public function assignSettlement(Request $request, SettlementRequest $settlement, AssignSettlementAction $action): JsonResponse
+    {
+        $data = $request->validate([
+            'agency_id' => ['required', 'integer'],
+        ]);
+
+        try {
+            $action->execute($settlement, (int) $data['agency_id']);
+        } catch (\RuntimeException $e) {
+            return response()->json(['ok' => false, 'message' => $e->getMessage()], 422);
+        }
+
+        return response()->json(['ok' => true]);
     }
 
     private function monitoring(Request $request): View

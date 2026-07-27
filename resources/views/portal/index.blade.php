@@ -37,6 +37,9 @@
                 @if ($user->isRole(\App\Shared\Enums\UserRole::FarmOwner))
                     <a href="{{ route('demand.index') }}">수요 신청</a>
                 @endif
+                @if ($user->isRole(\App\Shared\Enums\UserRole::PartnerAgency))
+                    <a href="{{ route('portal.settlements.index') }}">정착 처리</a>
+                @endif
                 <a href="{{ route('portal.index') }}" class="is-active">채팅</a>
             </nav>
         </div>
