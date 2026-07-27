@@ -2,17 +2,22 @@
 
 declare(strict_types=1);
 
+use App\Domains\Matching\Http\Controllers\Api\MyPlacementController;
 use App\Domains\Monitoring\Http\Controllers\Api\MonthlyInterviewController;
+use App\Domains\Onboarding\Http\Controllers\Api\ConsentController;
 use App\Domains\Onboarding\Http\Controllers\Api\OnboardingController;
 use App\Domains\Recruitment\Http\Controllers\Api\AuthController;
 use App\Domains\Recruitment\Http\Controllers\Api\WorkerProfileController;
+use App\Domains\Settlement\Http\Controllers\Api\SettlementController;
 use App\Domains\Support\Http\Controllers\Api\ChatController;
 use App\Domains\Support\Http\Controllers\Api\SosController;
 use App\Domains\Support\Http\Controllers\Api\TicketController;
 use App\Http\Controllers\Api\Admin\AdminAuthController;
 use App\Http\Controllers\Api\Admin\ArrivalAdminController;
+use App\Http\Controllers\Api\Admin\CandidateAdminController;
 use App\Http\Controllers\Api\Admin\CaseworkAdminController;
 use App\Http\Controllers\Api\Admin\ChatAdminController;
+use App\Http\Controllers\Api\Admin\FieldWorkAdminController;
 use App\Http\Controllers\Api\Admin\MatchingAdminController;
 use App\Http\Controllers\Api\Admin\SosAdminController;
 use App\Http\Controllers\Api\Admin\WorkerAdminController;
@@ -47,6 +52,18 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'worker'])->group(function () {
     Route::get('/onboarding', [OnboardingController::class, 'show']);
     Route::post('/onboarding', [OnboardingController::class, 'store']);
     Route::post('/onboarding/submit', [OnboardingController::class, 'submit']);
+
+    // 내 배정·입국 일정 (업무흐름 §4·§5) — 확정된 배정만
+    Route::get('/my/placement', [MyPlacementController::class, 'show']);
+
+    // 정착 서비스 신청 (업무흐름 §6) — 통장·보험·통신·유심
+    Route::get('/settlements', [SettlementController::class, 'index']);
+    Route::post('/settlements', [SettlementController::class, 'store']);
+
+    // 동의 관리 (§7-4) — 본인 동의 상태 조회·동의·철회
+    Route::get('/consents', [ConsentController::class, 'index']);
+    Route::post('/consents/grant', [ConsentController::class, 'grant']);
+    Route::post('/consents/revoke', [ConsentController::class, 'revoke']);
 
     // 긴급 SOS — rate limit 완화(긴급 상황). 좌표는 이 요청 본문으로만 수신.
     Route::post('/sos', [SosController::class, 'store'])->middleware('throttle:60,1');
@@ -91,6 +108,12 @@ Route::prefix('v1/admin')->middleware(['auth:sanctum', 'portal'])->group(functio
     Route::post('/workers/{worker}/reject', [WorkerAdminController::class, 'reject'])->whereNumber('worker');
     Route::post('/workers/{worker}/status', [WorkerAdminController::class, 'updateStatus'])->whereNumber('worker');
 
+    // 현지 면접 평가 (업무흐름 §2) — 모바일 평가 시트 + 보류 대기열
+    Route::get('/candidates', [CandidateAdminController::class, 'index']);
+    Route::post('/candidates/{candidate}/evaluate', [CandidateAdminController::class, 'evaluate'])
+        ->whereNumber('candidate');
+    Route::post('/candidates/promote', [CandidateAdminController::class, 'promote']);
+
     // 매칭 (업무흐름 §4) — 수요 → 추천 후보 → 배정 → 확정 → 입국 인계
     Route::get('/demands', [MatchingAdminController::class, 'demands']);
     Route::get('/demands/{demand}/candidates', [MatchingAdminController::class, 'candidates'])->whereNumber('demand');
@@ -107,6 +130,14 @@ Route::prefix('v1/admin')->middleware(['auth:sanctum', 'portal'])->group(functio
     // 긴급 SOS 상황판
     Route::get('/sos', [SosAdminController::class, 'index']);
     Route::post('/sos/{sos}/status', [SosAdminController::class, 'updateStatus'])->whereNumber('sos');
+
+    // 현장 점검 (업무흐름 §7) — 농가 방문(사진)·근로자 인터뷰·GPS 체크인
+    Route::get('/field/farms', [FieldWorkAdminController::class, 'farms']);
+    Route::get('/farm-visits', [FieldWorkAdminController::class, 'index']);
+    Route::post('/farm-visits', [FieldWorkAdminController::class, 'store']);
+    Route::get('/farm-visits/{visit}/photos/{photo}', [FieldWorkAdminController::class, 'photo'])
+        ->whereNumber(['visit', 'photo']);
+    Route::post('/checkins', [FieldWorkAdminController::class, 'checkin']);
 
     // 처리 업무 — 온보딩 검수 · 민원 · 정착
     Route::get('/onboarding', [CaseworkAdminController::class, 'onboardingIndex']);
