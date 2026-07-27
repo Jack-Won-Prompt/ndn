@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domains\Demand\Models;
 
+use App\Domains\Matching\Models\Placement;
 use App\Models\User;
 use Database\Factories\FarmFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -42,6 +43,12 @@ class Farm extends Model
     }
 
     /** @return HasMany<DemandRequest, $this> */
+    /** 이 농가에 배정된 근로자들 @return HasMany<\App\Domains\Matching\Models\Placement, $this> */
+    public function placements(): HasMany
+    {
+        return $this->hasMany(Placement::class);
+    }
+
     public function demandRequests(): HasMany
     {
         return $this->hasMany(DemandRequest::class);

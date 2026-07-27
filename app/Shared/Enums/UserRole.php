@@ -44,6 +44,22 @@ enum UserRole: string
         return $this === self::Worker;
     }
 
+    /**
+     * 관리자 앱(모바일)에서 관리자 영역을 쓸 수 있는 역할.
+     *
+     * **권한이 넓은 순서**로 둔다 — 여러 역할을 가진 사용자의 주 역할을 고를 때
+     * 이 순서를 그대로 쓴다(User::primaryPortalRole).
+     *
+     * 송출기관·제휴 대리점은 제외한다. 대리점은 제3자 제공 동의·워터마크 등
+     * 별도 규칙(§7-4, §7-5)이 필요해 앱에서 다루지 않는다.
+     *
+     * @return list<self>
+     */
+    public static function portalAppRoles(): array
+    {
+        return [self::NdnAdmin, self::CityOfficer, self::FarmOwner];
+    }
+
     /** @return list<string> 전체 역할 값 목록 (시더용) */
     public static function values(): array
     {

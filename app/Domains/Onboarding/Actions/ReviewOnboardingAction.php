@@ -6,6 +6,7 @@ namespace App\Domains\Onboarding\Actions;
 
 use App\Domains\Onboarding\Enums\OnboardingStatus;
 use App\Domains\Onboarding\Models\OnboardingSubmission;
+use App\Domains\Onboarding\Support\OnboardingProfile;
 use App\Models\User;
 use InvalidArgumentException;
 use RuntimeException;
@@ -42,6 +43,38 @@ class ReviewOnboardingAction
             'review_note' => $note,
         ]);
 
+        // 승인된 정보만 근로자 레코드로 승격한다 — 성별·생년월일은 매칭 조건
+        // 대조(§4)에 쓰이므로 payload 에만 두면 안 된다.
+        if ($decision === OnboardingStatus::Approved) {
+            $this->promoteProfile($submission, $reviewer);
+        }
+
         return $submission;
+    }
+
+    /** 승인 시 payload 의 성별·생년월일을 workers 컬럼에 반영하고 기록을 남긴다. */
+    private function promoteProfile(OnboardingSubmission $submission, User $reviewer): void
+    {
+        $worker = $submission->worker;
+
+        if ($worker === null) {
+            return;
+        }
+
+        $changed = OnboardingProfile::applyTo($worker, $submission->payload ?? []);
+
+        if ($changed === []) {
+            return;
+        }
+
+        // 어떤 항목이 반영됐는지만 남긴다 — 값 자체는 남기지 않는다(§7-1).
+        activity('worker-profile')
+            ->performedOn($worker)
+            ->causedBy($reviewer)
+            ->withProperties([
+                'fields' => $changed,
+                'submission_id' => $submission->id,
+            ])
+            ->log('온보딩 승인으로 근로자 정보 갱신');
     }
 }

@@ -11,7 +11,6 @@ use App\Models\User;
 /**
  * 근로자 셀프 가입(관리자 승인제) — 등록 API + 승인/거절 Action (CLAUDE.md §9, §7).
  */
-
 function registerPayload(array $overrides = []): array
 {
     return array_merge([

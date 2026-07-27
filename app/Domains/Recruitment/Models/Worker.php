@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace App\Domains\Recruitment\Models;
 
+use App\Domains\Matching\Enums\PlacementStatus;
+use App\Domains\Matching\Models\Placement;
 use App\Domains\Onboarding\Models\ConsentRecord;
 use App\Domains\Recruitment\Enums\WorkerStatus;
 use App\Shared\Concerns\LogsPersonalDataAccess;
 use App\Shared\Concerns\MasksSensitiveData;
 use App\Shared\Enums\ConsentPurpose;
+use App\Shared\Enums\Gender;
 use App\Shared\Support\BlindIndex;
+use Carbon\Carbon;
 use Illuminate\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Database\Eloquent\Builder;
@@ -45,6 +49,7 @@ class Worker extends Model implements AuthenticatableContract
         'email',
         'password',
         'nationality',
+        'gender',
         'locale',
         'status',
         'approved_at',
@@ -79,6 +84,8 @@ class Worker extends Model implements AuthenticatableContract
             'password' => 'hashed',
             // 계정 상태 (가입 승인제) — 문자열 리터럴 비교 금지, Enum 사용
             'status' => WorkerStatus::class,
+            // 매칭 조건 대조용 (demand_requests.gender 와 대응)
+            'gender' => Gender::class,
             'approved_at' => 'datetime',
         ];
     }
@@ -110,6 +117,62 @@ class Worker extends Model implements AuthenticatableContract
     public function consents(): HasMany
     {
         return $this->hasMany(ConsentRecord::class);
+    }
+
+    /**
+     * 농가 배정 이력. 관리자 앱의 역할별 스코프(PortalScope)가 이 관계를 탄다.
+     *
+     * @return HasMany<Placement, $this>
+     */
+    public function placements(): HasMany
+    {
+        return $this->hasMany(Placement::class);
+    }
+
+    /** 현재 유효한 배정 (확정 건 중 최신). */
+    public function currentPlacement(): ?Placement
+    {
+        return $this->placements()
+            ->where('status', PlacementStatus::Confirmed->value)
+            ->latest('id')
+            ->first();
+    }
+
+    /**
+     * 아직 어느 농가에도 배정되지 않은 근로자 (취소된 배정은 배정으로 치지 않는다).
+     * 매칭 후보 조회의 기본 조건이다.
+     *
+     * @param  Builder<Worker>  $query
+     */
+    public function scopeUnassigned(Builder $query): void
+    {
+        $query->whereDoesntHave(
+            'placements',
+            fn (Builder $p) => $p->whereIn('status', [
+                PlacementStatus::Proposed->value,
+                PlacementStatus::Confirmed->value,
+            ]),
+        );
+    }
+
+    /**
+     * 만 나이. birth_date 는 encrypted 라 SQL 로 계산할 수 없어 PHP 에서 구한다
+     * (§7-1). 매칭 후보를 국적·미배정으로 좁힌 뒤 이 값으로 거른다.
+     */
+    public function age(): ?int
+    {
+        $birth = $this->birth_date;
+
+        if (blank($birth)) {
+            return null;
+        }
+
+        try {
+            return (int) Carbon::parse((string) $birth)->age;
+        } catch (\Throwable) {
+            // 형식이 깨진 값이 있어도 매칭 전체가 죽지 않게 한다.
+            return null;
+        }
     }
 
     /**

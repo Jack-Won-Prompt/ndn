@@ -8,6 +8,7 @@ use App\Domains\Onboarding\Actions\SubmitOnboardingAction;
 use App\Domains\Onboarding\Enums\OnboardingStatus;
 use App\Domains\Onboarding\Http\Resources\OnboardingResource;
 use App\Domains\Onboarding\Models\OnboardingSubmission;
+use App\Domains\Onboarding\Support\OnboardingProfile;
 use App\Domains\Recruitment\Models\Worker;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
@@ -38,11 +39,19 @@ class OnboardingController extends Controller
     /** 본인 기입 정보 저장 (편집 가능한 제출물이 없으면 새 draft 생성) */
     public function store(Request $request): OnboardingResource
     {
-        $data = $request->validate([
+        $request->validate([
             'payload' => ['required', 'array'],
             // 전자서명: base64(data URL 또는 순수 base64) PNG. 서명 캔버스 결과.
             'signature' => ['nullable', 'string'],
+            // 성별·생년월일은 매칭 조건 대조에 쓰이므로 형식을 검증한다.
+            // 승인 시 workers 컬럼으로 승격된다(OnboardingProfile).
+            ...OnboardingProfile::rules(),
         ]);
+
+        // payload 는 자유 형식이라 validated() 로 받으면 규칙이 없는 키(주소·계좌 등)가
+        // 전부 잘려 나간다. 검증만 위에서 하고 값은 원본 그대로 쓴다.
+        $payload = (array) $request->input('payload');
+        $signature = $request->input('signature');
 
         /** @var Worker $worker */
         $worker = $request->user();
@@ -55,11 +64,11 @@ class OnboardingController extends Controller
             $submission->worker_id = $worker->id;
         }
 
-        $submission->payload = $data['payload'];
+        $submission->payload = $payload;
 
         // 전자서명 저장 — private 디스크에 PNG 로 저장하고 경로만 보관(§9)
-        if (! empty($data['signature'])) {
-            $binary = $this->decodeSignature($data['signature']);
+        if (! empty($signature)) {
+            $binary = $this->decodeSignature($signature);
             if ($binary !== null) {
                 $path = 'onboarding/signatures/'.$worker->id.'_'.Str::uuid()->toString().'.png';
                 Storage::disk('local')->put($path, $binary);
