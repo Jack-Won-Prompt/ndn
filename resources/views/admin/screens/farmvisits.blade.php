@@ -11,6 +11,7 @@
 
     <div class="screen-tabs">
         <button type="button" class="screen-tab is-active" data-tab="list">목록</button>
+        <button type="button" class="screen-tab" data-tab="detail" id="fv-detail-tab" hidden>상세</button>
         <button type="button" class="screen-tab" data-tab="form">방문 등록</button>
     </div>
 
@@ -114,16 +115,10 @@
     </div>
     </div>{{-- /탭:list --}}
 
-    {{-- 상세 모달 --}}
-    <div class="fv-modal" id="fv-modal">
-        <div class="fv-modal__card">
-            <div class="fv-modal__head">
-                <b id="fv-modal-title">방문 점검</b>
-                <button type="button" class="fv-modal__x" id="fv-modal-close">&times;</button>
-            </div>
-            <div class="fv-modal__body" id="fv-modal-body"></div>
-        </div>
-    </div>
+    {{-- 상세 (목록에서 행 더블클릭 시 이 탭으로) --}}
+    <div data-tabpane="detail" hidden>
+        <div id="fv-detail" class="fv-detailwrap"></div>
+    </div>{{-- /탭:detail --}}
 
     <style>
         .fv-form{background:#fff;border:1px solid var(--mv2-border-default);border-radius:var(--mv2-r-lg);padding:18px;margin-bottom:14px;box-shadow:0 1px 2px rgba(15,23,42,.04);}
@@ -152,12 +147,11 @@
         .fv-badge--normal{background:#E7F6EC;color:#1B7F43;}
         .fv-badge--caution{background:#FEF3C7;color:#8a6d00;}
         .fv-badge--issue{background:var(--mv2-pill-err-bg);color:var(--mv2-pill-err-fg);}
-        .fv-modal{position:fixed;inset:0;background:rgba(15,23,42,.4);display:none;align-items:center;justify-content:center;z-index:1000;}
-        .fv-modal.is-open{display:flex;}
-        .fv-modal__card{width:640px;max-width:94%;max-height:88vh;background:#fff;border-radius:14px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.3);}
-        .fv-modal__head{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--mv2-border-soft);}
-        .fv-modal__x{background:none;border:0;font-size:22px;cursor:pointer;color:var(--mv2-text-muted);}
-        .fv-modal__body{padding:18px;overflow-y:auto;}
+        .fv-detailwrap{background:#fff;border:1px solid var(--mv2-border-default);border-radius:var(--mv2-r-lg);padding:20px;box-shadow:0 1px 2px rgba(15,23,42,.04),0 6px 20px rgba(15,23,42,.05);}
+        .fv-detail-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+        .fv-detail-head b{font-size:var(--mv2-fz-md);color:var(--mv2-text-strong);}
+        .fv-back{font-family:inherit;font-size:var(--mv2-fz-xs);font-weight:700;color:var(--mv2-primary-600);background:none;border:1px solid var(--mv2-border-default);border-radius:var(--mv2-r-sm);padding:5px 12px;cursor:pointer;}
+        .fv-back:hover{background:var(--mv2-primary-50,#E9F6F4);}
         .fv-dl{display:grid;grid-template-columns:120px 1fr;gap:0;margin:0;}
         .fv-dl dt{color:var(--mv2-text-muted);font-size:var(--mv2-fz-xs);font-weight:700;padding:8px 0;border-bottom:1px solid var(--mv2-border-soft);}
         .fv-dl dd{margin:0;font-size:var(--mv2-fz-sm);padding:8px 0;border-bottom:1px solid var(--mv2-border-soft);white-space:pre-wrap;}
@@ -319,7 +313,6 @@
             fetch(BASE + '/' + id, { headers: { 'Accept': 'application/json' } })
                 .then(function (r) { return r.json(); })
                 .then(function (d) {
-                    document.getElementById('fv-modal-title').textContent = d.farm + ' · ' + d.visited_on;
                     var rows = [
                         ['농가', d.farm], ['방문일', d.visited_on], ['점검자', d.inspector],
                         ['농가 상태', d.farm_status], ['근무 상태', d.worker_status],
@@ -327,7 +320,9 @@
                         ['근무 현황', d.work_note || '—'], ['애로사항', d.issue_note || '—'],
                         ['조치·후속', d.action_note || '—'], ['메모', d.memo || '—'],
                     ];
-                    var html = '<dl class="fv-dl">';
+                    var html = '<div class="fv-detail-head"><b>' + esc(d.farm) + ' · ' + esc(d.visited_on) + '</b>'
+                        + '<button type="button" class="fv-back" onclick="window.ndnSwitchTab(\'list\')">← 목록</button></div>';
+                    html += '<dl class="fv-dl">';
                     rows.forEach(function (r) { html += '<dt>' + esc(r[0]) + '</dt><dd>' + esc(r[1]) + '</dd>'; });
                     html += '</dl>';
                     if (d.photos && d.photos.length) {
@@ -340,21 +335,20 @@
                         d.interviews.forEach(function (iv) { html += renderIv(iv); });
                         html += '</div>';
                     }
-                    document.getElementById('fv-modal-body').innerHTML = html;
-                    document.getElementById('fv-modal').classList.add('is-open');
+                    document.getElementById('fv-detail').innerHTML = html;
+                    document.getElementById('fv-detail-tab').hidden = false;
+                    window.ndnSwitchTab('detail');
                 });
         }
         document.getElementById('fv-table').addEventListener('dblclick', function (e) {
             var tr = e.target.closest('tr[data-id]'); if (tr) openDetail(tr.getAttribute('data-id'));
         });
-        // 근로자 인터뷰 '이력' 토글 (모달 본문 위임)
-        document.getElementById('fv-modal-body').addEventListener('click', function (e) {
+        // 근로자 인터뷰 '이력' 토글 (상세 탭 위임)
+        document.getElementById('fv-detail').addEventListener('click', function (e) {
             var b = e.target.closest('[data-hist]'); if (!b) return;
             var box = document.querySelector('[data-histbox="' + b.getAttribute('data-hist') + '"]');
             if (box) loadHistory(b.getAttribute('data-hist'), box);
         });
-        document.getElementById('fv-modal-close').addEventListener('click', function () { document.getElementById('fv-modal').classList.remove('is-open'); });
-        document.getElementById('fv-modal').addEventListener('click', function (e) { if (e.target.id === 'fv-modal') this.classList.remove('is-open'); });
     })();
 </script>
 @endsection
