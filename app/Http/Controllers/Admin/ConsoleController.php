@@ -81,6 +81,7 @@ class ConsoleController extends Controller
                 'items' => [
                     ['key' => 'settlement', 'label' => '정착 처리보드', 'icon' => 'grid'],
                     ['key' => 'monitoring', 'label' => '월별 점검', 'icon' => 'clipboard'],
+                    ['key' => 'farmvisits', 'label' => '농가 방문 점검', 'icon' => 'clipboard'],
                     ['key' => 'tickets', 'label' => '민원', 'icon' => 'inbox'],
                     ['key' => 'chat', 'label' => '채팅', 'icon' => 'inbox'],
                 ],
@@ -122,6 +123,11 @@ class ConsoleController extends Controller
             'onboarding' => $this->onboarding($request),
             'settlement' => $this->settlement($request),
             'monitoring' => $this->monitoring($request),
+            'farmvisits' => view('admin.screens.farmvisits', [
+                'rows' => FarmVisitController::rows(),
+                'farms' => FarmVisitController::farmOptions(),
+                'statuses' => FarmVisitController::statusOptions(),
+            ]),
             'tickets' => $this->tickets($request),
             'chat' => view('admin.screens.chat', ['me' => app(ChatService::class)->partyForUser(Auth::user())]),
             'settings' => $this->settingsForm(),

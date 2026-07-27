@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\BaseInfoGridController;
 use App\Http\Controllers\Admin\CandidateGridController;
 use App\Http\Controllers\Admin\ConsoleController;
 use App\Http\Controllers\Admin\DemandGridController;
+use App\Http\Controllers\Admin\FarmVisitController;
 use App\Http\Controllers\Admin\InvitationController;
 use App\Http\Controllers\Admin\SignupApprovalController;
 use App\Http\Controllers\Admin\TicketGridController;
@@ -122,6 +123,13 @@ Route::prefix('admin')->group(function () {
             ->whereNumber('worker')->name('admin.signups.approve');
         Route::post('/signups/{worker}/reject', [SignupApprovalController::class, 'reject'])
             ->whereNumber('worker')->name('admin.signups.reject');
+
+        // 농가 월별 방문 점검 (본사)
+        Route::post('/farm-visits', [FarmVisitController::class, 'store'])->name('admin.farm-visits.store');
+        Route::get('/farm-visits/{farmVisit}', [FarmVisitController::class, 'show'])
+            ->whereNumber('farmVisit')->name('admin.farm-visits.show');
+        Route::get('/farm-visits/{farmVisit}/photos/{photo}', [FarmVisitController::class, 'photo'])
+            ->whereNumber(['farmVisit', 'photo'])->name('admin.farm-visits.photo');
 
         // 조직 초대 관리
         Route::post('/invitations/send', [InvitationController::class, 'send'])->name('admin.invitations.send');
