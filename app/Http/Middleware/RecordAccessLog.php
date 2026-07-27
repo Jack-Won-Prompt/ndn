@@ -44,6 +44,7 @@ class RecordAccessLog
             AccessLog::create([
                 'user_id' => $user?->id,
                 'actor' => $actor,
+                'actor_email' => $user?->email,   // 로그인 ID (게스트는 null)
                 'method' => $request->method(),
                 'path' => '/'.ltrim($request->path(), '/'),
                 'route_name' => $request->route()?->getName(),

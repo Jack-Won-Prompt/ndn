@@ -15,7 +15,7 @@ class AccessLog extends Model
     public const UPDATED_AT = null;
 
     protected $fillable = [
-        'user_id', 'actor', 'method', 'path', 'route_name',
+        'user_id', 'actor', 'actor_email', 'method', 'path', 'route_name',
         'status', 'ip', 'user_agent', 'referer', 'created_at',
     ];
 

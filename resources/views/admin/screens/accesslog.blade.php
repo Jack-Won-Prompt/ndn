@@ -26,7 +26,7 @@
             <thead>
                 <tr>
                     <th style="width:150px">시각</th>
-                    <th style="width:180px">사용자</th>
+                    <th style="width:220px">사용자 · 로그인 ID</th>
                     <th style="width:60px">방식</th>
                     <th>경로</th>
                     <th style="width:60px">상태</th>
@@ -36,13 +36,16 @@
             <tbody>
                 @forelse ($rows as $r)
                     <tr data-auth="{{ $r['is_guest'] ? '0' : '1' }}"
-                        data-search="{{ strtolower(($r['actor'] ?? '').' '.$r['path'].' '.($r['ip'] ?? '')) }}">
+                        data-search="{{ strtolower(($r['actor'] ?? '').' '.($r['email'] ?? '').' '.$r['path'].' '.($r['ip'] ?? '')) }}">
                         <td class="c">{{ $r['at'] }}</td>
                         <td>
                             @if ($r['is_guest'])
                                 <span class="al-tag al-tag--guest">게스트</span>
                             @else
                                 <span class="al-tag al-tag--auth">{{ $r['actor'] }}</span>
+                                @if ($r['email'])
+                                    <div class="al-email">{{ $r['email'] }}</div>
+                                @endif
                             @endif
                         </td>
                         <td class="c">{{ $r['method'] }}</td>
@@ -80,6 +83,7 @@
         .al-tag { display: inline-block; font-size: 11px; font-weight: 700; border-radius: 100px; padding: 2px 9px; }
         .al-tag--guest { background: var(--mv2-slate-25); color: var(--mv2-text-muted); }
         .al-tag--auth { background: var(--mv2-primary-50, #E9F6F4); color: var(--mv2-primary-600); }
+        .al-email { font-size: 11px; color: var(--mv2-text-muted); margin-top: 3px; font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; }
         .al-status { font-weight: 700; font-size: 12px; }
         .al-status--ok { color: #1B7F43; }
         .al-status--redir { color: #8a6d00; }

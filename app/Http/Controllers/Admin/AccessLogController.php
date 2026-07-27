@@ -21,6 +21,7 @@ class AccessLogController extends Controller
                 'id' => $l->id,
                 'at' => LocalTime::format($l->created_at, 'Y-m-d H:i:s'),
                 'actor' => $l->actor ?? '게스트',
+                'email' => $l->actor_email,
                 'is_guest' => $l->user_id === null,
                 'method' => $l->method,
                 'path' => $l->path,
