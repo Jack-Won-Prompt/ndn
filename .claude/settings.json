@@ -173,7 +173,26 @@
       "Bash(./vendor/bin/pest --filter=\"Invitation|PersonalDataInNotification\")",
       "Bash(./vendor/bin/pint app/Http/Controllers/Admin/ConsoleController.php app/Http/Controllers/InvitationAcceptController.php tests/Feature/Guards/PersonalDataInNotificationTest.php)",
       "Bash(./vendor/bin/pint app/Shared/Translation app/Http/Controllers/SiteController.php)",
-      "Bash(./vendor/bin/pint app/Domains/Monitoring database/seeders/TestAccountsSeeder.php database/migrations/2026_07_26_150100_add_source_to_monthly_interviews_table.php tests/Feature/Api/WorkerSelfAssessmentTest.php)"
+      "Bash(./vendor/bin/pint app/Domains/Monitoring database/seeders/TestAccountsSeeder.php database/migrations/2026_07_26_150100_add_source_to_monthly_interviews_table.php tests/Feature/Api/WorkerSelfAssessmentTest.php)",
+      "Bash(git -C /e/xampp/htdocs/ndn add resources/views/site/layout.blade.php public/site/assets/flags/)",
+      "Bash(git -C /e/xampp/htdocs/ndn diff --cached --name-only)",
+      "Bash(git -C /e/xampp/htdocs/ndn commit -m ' *)",
+      "Bash(php /e/xampp/htdocs/ndn/artisan migrate --force)",
+      "Bash(git -C /e/xampp/htdocs/ndn add database/migrations/2026_07_26_190000_create_access_logs_table.php app/Models/AccessLog.php app/Http/Middleware/RecordAccessLog.php bootstrap/app.php app/Http/Controllers/Admin/AccessLogController.php app/Http/Controllers/Admin/ConsoleController.php resources/views/admin/screens/accesslog.blade.php)",
+      "Bash(php /e/xampp/htdocs/ndn/artisan tinker '--execute=echo \"app.tz=\".config\\(\"app.timezone\"\\).\"\\\\n\"; echo \"now\\(\\)=\".now\\(\\)->format\\(\"Y-m-d H:i:s\"\\).\"\\\\n\"; echo \"KST =\".now\\(\\)->timezone\\(\"Asia/Seoul\"\\)->format\\(\"Y-m-d H:i:s\"\\).\"\\\\n\";')",
+      "Bash(/e/xampp/htdocs/ndn/vendor/bin/pint /e/xampp/htdocs/ndn/app/Shared/Support/LocalTime.php /e/xampp/htdocs/ndn/app/Http/Controllers/Admin /e/xampp/htdocs/ndn/app/Domains/Support/Services/ChatService.php /e/xampp/htdocs/ndn/app/Domains/Reporting/Actions/GenerateMonthlyReportAction.php /e/xampp/htdocs/ndn/config/ndn.php)",
+      "Bash(git -C /e/xampp/htdocs/ndn add config/ndn.php app/Shared/Support/LocalTime.php app/Http/Controllers/Admin/AccessLogController.php app/Http/Controllers/Admin/SignupApprovalController.php app/Http/Controllers/Admin/InvitationController.php app/Http/Controllers/Admin/ConsoleController.php app/Http/Controllers/Admin/TicketGridController.php app/Domains/Support/Services/ChatService.php app/Domains/Reporting/Actions/GenerateMonthlyReportAction.php resources/views/admin/screens/worker_detail.blade.php resources/views/admin/screens/settlement.blade.php)",
+      "Bash(git -C /e/xampp/htdocs/ndn ls-files --error-unmatch app/Http/Middleware/EnsurePortalUser.php)",
+      "Bash(git -C /e/xampp/htdocs/ndn diff bootstrap/app.php)",
+      "Bash(git -C /e/xampp/htdocs/ndn diff --stat routes/web.php resources/views/site/layout.blade.php)",
+      "Bash(git -C /e/xampp/htdocs/ndn diff routes/web.php)",
+      "Bash(git -C /e/xampp/htdocs/ndn diff resources/views/site/layout.blade.php)",
+      "Bash(git -C /e/xampp/htdocs/ndn diff --cached bootstrap/app.php)",
+      "Bash(git -C /e/xampp/htdocs/ndn add app/Domains/Demand/Http/Controllers/DemandRequestController.php resources/views/demand/layout.blade.php resources/views/demand/index.blade.php resources/views/demand/create.blade.php resources/views/demand/show.blade.php resources/views/portal/index.blade.php routes/web.php tests/Feature/Demand/DemandRequestTest.php)",
+      "Bash(git -C /e/xampp/htdocs/ndn status --short)",
+      "Bash(git -C /e/xampp/htdocs/ndn add -A)",
+      "Bash(git -C /e/xampp/htdocs/ndn restore --staged .claude/settings.json)",
+      "Bash(git -C /e/xampp/htdocs/ndn add app database routes tests bootstrap)"
     ],
     "additionalDirectories": [
       "\\tmp"
