@@ -290,8 +290,25 @@ class ConsoleController extends Controller
         // 팝업(모달) 조회도 개인정보 열람이므로 동일하게 감사 로그를 남긴다.
         $worker->recordAccessBy(Auth::user(), 'console-detail');
 
-        // 상세 팝업용 JSON (민감 필드 여권번호·생년월일·전화번호는 §7 에 따라 제외)
+        // 상세 팝업/탭용 JSON (민감 필드 여권번호·생년월일·전화번호는 §7 에 따라 제외)
         if ($request->query('format') === 'json' || $request->wantsJson()) {
+            // 소속·입국·생활점검
+            $placement = $worker->placements()
+                ->where('status', PlacementStatus::Confirmed->value)
+                ->with(['farm.city', 'arrival'])->latest('id')->first();
+            $farm = $placement?->farm;
+            $arrival = $placement?->arrival;
+
+            $interviews = MonthlyInterview::where('worker_id', $worker->id)
+                ->latest('interviewed_on')->latest('id')->limit(24)->get()
+                ->map(fn (MonthlyInterview $iv) => [
+                    'date' => $iv->interviewed_on?->format('Y-m-d'),
+                    'source' => $iv->source?->label() ?? '—',
+                    'risk' => $iv->risk_level?->label() ?? '—',
+                    'risk_level' => $iv->risk_level?->value ?? 'low',
+                    'negatives' => collect(MonthlyInterview::ITEMS)->filter(fn ($it) => ! $iv->{$it})->count(),
+                ])->all();
+
             return response()->json([
                 'id' => $worker->id,
                 'name' => $worker->name,
@@ -299,6 +316,15 @@ class ConsoleController extends Controller
                 'locale' => $worker->locale,
                 'status' => $worker->status->value,
                 'created' => LocalTime::format($worker->created_at),
+                'city' => $farm?->city?->name,
+                'farm' => $farm?->name,
+                'arrival' => $arrival ? [
+                    'status' => $arrival->status->label(),
+                    'flight_no' => $arrival->flight_no,
+                    'airport' => $arrival->airport,
+                    'scheduled' => LocalTime::format($arrival->scheduled_arrival_at),
+                ] : null,
+                'interviews' => $interviews,
             ]);
         }
 
