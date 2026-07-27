@@ -32,7 +32,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [RecordAccessLog::class]);
 
         // 뷰어 타임존 쿠키는 JS(평문)로 심으므로 암호화 대상에서 제외 (LocalTime 이 읽음)
-        $middleware->encryptCookies(except: ['ndn_tz']);
+        // ndn_visitor 는 그 자체가 무작위 식별 토큰(비밀)이라 암호화 불필요 (SiteChatController)
+        $middleware->encryptCookies(except: ['ndn_tz', 'ndn_visitor']);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

@@ -8,6 +8,7 @@ use App\Domains\Recruitment\Models\Worker;
 use App\Domains\Support\Events\ChatMessageSent;
 use App\Domains\Support\Models\ChatConversation;
 use App\Domains\Support\Models\ChatMessage;
+use App\Domains\Support\Models\ChatVisitor;
 use App\Models\User;
 use App\Shared\Support\LocalTime;
 use App\Shared\Translation\GoogleTranslator;
@@ -41,6 +42,7 @@ class ChatService
     public const TYPE_LABEL = [
         'ndn' => 'NDN 관리자', 'city' => '시청', 'farm' => '농가',
         'worker' => '근로자', 'agency' => '해외 협력사', 'partner' => '제휴 대리점',
+        'visitor' => '홈페이지 방문자',
     ];
 
     /** 로그인 사용자 → party [type,id,lang] */
@@ -56,6 +58,12 @@ class ChatService
     public function partyForWorker(Worker $worker): array
     {
         return ['worker', $worker->id, $worker->locale ?: 'ko'];
+    }
+
+    /** 홈페이지 익명 방문자 → party (자국어는 사이트 선택 언어) */
+    public function partyForVisitor(ChatVisitor $visitor): array
+    {
+        return ['visitor', $visitor->id, $visitor->locale ?: 'ko'];
     }
 
     /** 두 참여자 사이 대화 조회/생성 */
@@ -280,6 +288,12 @@ class ChatService
     {
         if ($otherType === 'worker' && $c->worker) {
             return $c->worker->name.' · 근로자';
+        }
+        if ($otherType === 'visitor') {
+            $v = ChatVisitor::find($c->{$otherSide.'_id'});
+            $who = $v && filled($v->name) ? $v->name : '방문자 #'.$c->{$otherSide.'_id'};
+
+            return $who.' · 홈페이지 문의';
         }
         $label = self::TYPE_LABEL[$otherType] ?? $otherType;
         $id = $c->{$otherSide.'_id'};

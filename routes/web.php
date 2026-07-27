@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\WorkerGridController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\InvitationAcceptController;
 use App\Http\Controllers\PortalController;
+use App\Http\Controllers\SiteChatController;
 use App\Http\Controllers\SiteController;
 use Illuminate\Support\Facades\Route;
 
@@ -36,6 +37,12 @@ Route::get('/partners', [SiteController::class, 'page'])->defaults('key', 'partn
 Route::get('/contact', [SiteController::class, 'page'])->defaults('key', 'contact')->name('site.contact');
 // 경로는 프로젝트 루트의 물리 디렉터리(lang/)와 겹치지 않게 set-language 를 쓴다.
 Route::get('/set-language/{locale}', [SiteController::class, 'setLocale'])->name('site.lang');
+
+// 회사소개 사이트 우하단 "문의하기" 실시간 채팅 (익명 방문자 ↔ NDN 관리자, 로그인 불필요)
+Route::post('/site-chat/message', [SiteChatController::class, 'message'])
+    ->middleware('throttle:20,1')->name('site.chat.message');
+Route::get('/site-chat/poll', [SiteChatController::class, 'poll'])
+    ->middleware('throttle:120,1')->name('site.chat.poll');
 
 /*
 |--------------------------------------------------------------------------

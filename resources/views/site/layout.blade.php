@@ -16,6 +16,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="csrf-token" content="{{ csrf_token() }}">
 <title>@yield('title', 'N.D.N Korea — 외국인 계절근로자 통합관리')</title>
 <meta name="description" content="@yield('description', '주식회사 앤디앤(N.D.N Korea)은 외국인 계절근로자(E-8)의 전 주기를 하나의 체계로 운영합니다.')">
 <meta name="robots" content="noindex, nofollow">
@@ -121,6 +122,8 @@
         </div>
     </div>
 </footer>
+
+@include('partials.chat-widget')
 
 <script src="{{ asset('site/assets/js/main.js') }}"></script>
 </body>
