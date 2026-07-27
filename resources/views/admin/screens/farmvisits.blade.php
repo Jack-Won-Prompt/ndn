@@ -59,6 +59,10 @@
                 <input type="file" id="fv-photos" accept="image/*" multiple>
                 <div id="fv-preview" class="fv-preview"></div>
             </div>
+            <div class="fv-field fv-field--full">
+                <label>근로자 인터뷰 <span style="font-weight:400;color:var(--mv2-text-faint)">(6항목 · 체크=양호, 미체크=이상)</span></label>
+                <div id="fv-workers" class="fv-workers"><div class="fv-workers__empty">농가를 선택하면 배정 근로자가 표시됩니다.</div></div>
+            </div>
         </div>
         <div class="fv-actions">
             <button type="button" id="fv-save" class="fv-btn">방문 점검 저장</button>
@@ -151,6 +155,34 @@
         .fv-gallery{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;}
         .fv-gallery a{display:block;}
         .fv-gallery img{width:120px;height:120px;object-fit:cover;border-radius:10px;border:1px solid var(--mv2-border-soft);}
+        .fv-workers{display:flex;flex-direction:column;gap:8px;}
+        .fv-workers__empty{color:var(--mv2-text-faint);font-size:var(--mv2-fz-sm);padding:8px 0;}
+        .fv-worker{border:1px solid var(--mv2-border-soft);border-radius:8px;padding:10px 12px;background:var(--mv2-slate-25);}
+        .fv-worker__head{display:flex;align-items:center;gap:6px;margin-bottom:8px;}
+        .fv-worker__name{font-weight:700;font-size:var(--mv2-fz-sm);color:var(--mv2-text-strong);}
+        .fv-worker__nat{font-size:11px;color:var(--mv2-text-muted);font-weight:600;}
+        .fv-chks{display:flex;flex-wrap:wrap;gap:6px 14px;margin-bottom:8px;}
+        .fv-chk{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--mv2-text-strong);cursor:pointer;}
+        .fv-chk input{width:auto;}
+        .fv-worker__memo{width:100%;font-family:inherit;font-size:var(--mv2-fz-xs);padding:6px 9px;border:1px solid var(--mv2-border-default);border-radius:6px;}
+        .fv-ivs{margin-top:16px;}
+        .fv-ivs__title{font-size:var(--mv2-fz-sm);font-weight:700;color:var(--mv2-text-strong);margin:0 0 8px;}
+        .fv-iv{border:1px solid var(--mv2-border-soft);border-radius:8px;padding:10px 12px;margin-bottom:8px;}
+        .fv-iv__head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;}
+        .fv-iv__worker{font-weight:700;font-size:var(--mv2-fz-sm);}
+        .fv-iv__right{display:flex;align-items:center;gap:8px;}
+        .fv-iv__items{display:flex;flex-wrap:wrap;gap:5px;}
+        .fv-tag-ok{font-size:11px;padding:2px 7px;border-radius:100px;background:#E7F6EC;color:#1B7F43;}
+        .fv-tag-bad{font-size:11px;padding:2px 7px;border-radius:100px;background:var(--mv2-pill-err-bg);color:var(--mv2-pill-err-fg);}
+        .fv-risk{font-size:11px;font-weight:700;padding:2px 9px;border-radius:100px;}
+        .fv-risk--low{background:#E7F6EC;color:#1B7F43;}
+        .fv-risk--medium{background:#FEF3C7;color:#8a6d00;}
+        .fv-risk--high{background:var(--mv2-pill-err-bg);color:var(--mv2-pill-err-fg);}
+        .fv-histbtn{font-family:inherit;font-size:11px;font-weight:700;color:var(--mv2-primary-600);background:none;border:1px solid var(--mv2-border-default);border-radius:6px;padding:3px 9px;cursor:pointer;}
+        .fv-histbtn:hover{background:var(--mv2-primary-50,#E9F6F4);}
+        .fv-iv__memo{font-size:12px;color:var(--mv2-text-muted);margin-top:6px;}
+        .fv-hist{margin-top:8px;border-top:1px dashed var(--mv2-border-soft);padding-top:6px;}
+        .fv-hist__row{font-size:12px;color:var(--mv2-text-muted);padding:3px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
         @media (max-width:820px){.fv-grid{grid-template-columns:1fr;}}
     </style>
 @endsection
@@ -161,6 +193,37 @@
         var token = document.querySelector('meta[name="csrf-token"]').content;
         var BASE = '{{ url('admin/farm-visits') }}';
         var input = document.getElementById('fv-photos');
+        var ITEMS = @json($itemLabels);
+
+        function esc(s) { return (s == null ? '' : String(s)); }
+
+        // 농가 선택 → 배정 근로자별 인터뷰(6항목) 폼 로드
+        var farmSel = document.getElementById('fv-farm');
+        function loadWorkers() {
+            var box = document.getElementById('fv-workers');
+            if (!farmSel.value) { box.innerHTML = '<div class="fv-workers__empty">농가를 선택하세요.</div>'; return; }
+            box.innerHTML = '<div class="fv-workers__empty">불러오는 중…</div>';
+            fetch(BASE + '/farms/' + farmSel.value + '/workers', { headers: { 'Accept': 'application/json' } })
+                .then(function (r) { return r.json(); })
+                .then(function (j) {
+                    var ws = j.workers || [];
+                    if (!ws.length) { box.innerHTML = '<div class="fv-workers__empty">이 농가에 배정 확정된 근로자가 없습니다. (농가 정보만 등록됩니다)</div>'; return; }
+                    box.innerHTML = '';
+                    ws.forEach(function (w) {
+                        var chks = ITEMS.map(function (it) {
+                            return '<label class="fv-chk"><input type="checkbox" data-item="' + it.key + '" checked> ' + esc(it.label) + '</label>';
+                        }).join('');
+                        var card = document.createElement('div');
+                        card.className = 'fv-worker'; card.setAttribute('data-wid', w.id);
+                        card.innerHTML = '<div class="fv-worker__head"><span class="fv-worker__name">' + esc(w.name) + '</span><span class="fv-worker__nat">' + esc(w.nationality) + '</span></div>'
+                            + '<div class="fv-chks">' + chks + '</div>'
+                            + '<input type="text" class="fv-worker__memo" placeholder="인터뷰 메모(선택)">';
+                        box.appendChild(card);
+                    });
+                });
+        }
+        farmSel.addEventListener('change', loadWorkers);
+        loadWorkers();
 
         // 선택 사진 미리보기
         input.addEventListener('change', function () {
@@ -189,6 +252,15 @@
             });
             [].forEach.call(input.files, function (f) { fd.append('photos[]', f); });
 
+            // 근로자별 인터뷰 (체크=양호=1, 미체크=이상=0)
+            [].forEach.call(document.querySelectorAll('#fv-workers .fv-worker'), function (card) {
+                var wid = card.getAttribute('data-wid');
+                [].forEach.call(card.querySelectorAll('input[data-item]'), function (chk) {
+                    fd.append('interviews[' + wid + '][' + chk.getAttribute('data-item') + ']', chk.checked ? '1' : '0');
+                });
+                fd.append('interviews[' + wid + '][memo]', card.querySelector('.fv-worker__memo').value.trim());
+            });
+
             var btn = document.getElementById('fv-save'); btn.disabled = true; btn.textContent = '저장 중…';
             fetch(BASE, { method: 'POST', headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': token }, body: fd })
                 .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
@@ -204,7 +276,36 @@
         });
 
         // 상세 모달
-        function esc(s) { return (s == null ? '' : String(s)); }
+        function riskCls(v) { return 'fv-risk--' + (v || 'low'); }
+        function renderIv(iv) {
+            var items = iv.items.map(function (it) {
+                return '<span class="' + (it.ok ? 'fv-tag-ok' : 'fv-tag-bad') + '">' + esc(it.label) + '</span>';
+            }).join('');
+            return '<div class="fv-iv">'
+                + '<div class="fv-iv__head"><span class="fv-iv__worker">' + esc(iv.worker) + '</span>'
+                + '<span class="fv-iv__right"><span class="fv-risk ' + riskCls(iv.risk_level) + '">이탈 ' + esc(iv.risk) + '</span>'
+                + '<button type="button" class="fv-histbtn" data-hist="' + iv.worker_id + '">이력</button></span></div>'
+                + '<div class="fv-iv__items">' + items + '</div>'
+                + (iv.memo ? '<div class="fv-iv__memo">' + esc(iv.memo) + '</div>' : '')
+                + '<div class="fv-hist" data-histbox="' + iv.worker_id + '" style="display:none"></div>'
+                + '</div>';
+        }
+        function loadHistory(wid, box) {
+            if (box.getAttribute('data-loaded')) { box.style.display = (box.style.display === 'none') ? '' : 'none'; return; }
+            box.style.display = ''; box.innerHTML = '<div class="fv-hist__row">불러오는 중…</div>';
+            fetch(BASE + '/workers/' + wid + '/interviews', { headers: { 'Accept': 'application/json' } })
+                .then(function (r) { return r.json(); })
+                .then(function (j) {
+                    var rows = (j.history || []).map(function (h) {
+                        var neg = h.items.filter(function (i) { return !i.ok; }).length;
+                        return '<div class="fv-hist__row"><b>' + esc(h.date) + '</b>'
+                            + '<span class="fv-risk ' + riskCls(h.risk_level) + '">' + esc(h.risk) + '</span>'
+                            + '<span>' + esc(h.source) + (h.farm ? ' · ' + esc(h.farm) : '') + '</span>'
+                            + (neg ? '<span>이상 ' + neg + '항목</span>' : '<span>전항목 양호</span>') + '</div>';
+                    }).join('') || '<div class="fv-hist__row">이력이 없습니다.</div>';
+                    box.innerHTML = rows; box.setAttribute('data-loaded', '1');
+                });
+        }
         function openDetail(id) {
             fetch(BASE + '/' + id, { headers: { 'Accept': 'application/json' } })
                 .then(function (r) { return r.json(); })
@@ -225,12 +326,23 @@
                         d.photos.forEach(function (p) { html += '<a href="' + p.url + '" target="_blank"><img src="' + p.url + '" alt="' + esc(p.name) + '" loading="lazy"></a>'; });
                         html += '</div>';
                     }
+                    if (d.interviews && d.interviews.length) {
+                        html += '<div class="fv-ivs"><div class="fv-ivs__title">근로자 인터뷰 (' + d.interviews.length + '명)</div>';
+                        d.interviews.forEach(function (iv) { html += renderIv(iv); });
+                        html += '</div>';
+                    }
                     document.getElementById('fv-modal-body').innerHTML = html;
                     document.getElementById('fv-modal').classList.add('is-open');
                 });
         }
         document.getElementById('fv-table').addEventListener('dblclick', function (e) {
             var tr = e.target.closest('tr[data-id]'); if (tr) openDetail(tr.getAttribute('data-id'));
+        });
+        // 근로자 인터뷰 '이력' 토글 (모달 본문 위임)
+        document.getElementById('fv-modal-body').addEventListener('click', function (e) {
+            var b = e.target.closest('[data-hist]'); if (!b) return;
+            var box = document.querySelector('[data-histbox="' + b.getAttribute('data-hist') + '"]');
+            if (box) loadHistory(b.getAttribute('data-hist'), box);
         });
         document.getElementById('fv-modal-close').addEventListener('click', function () { document.getElementById('fv-modal').classList.remove('is-open'); });
         document.getElementById('fv-modal').addEventListener('click', function (e) { if (e.target.id === 'fv-modal') this.classList.remove('is-open'); });

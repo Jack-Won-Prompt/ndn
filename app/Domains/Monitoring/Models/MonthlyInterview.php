@@ -38,6 +38,7 @@ class MonthlyInterview extends Model
         'worker_id',
         'inspector_user_id',
         'inspection_checkin_id',
+        'farm_visit_id',
         'interviewed_on',
         'source',
         'pay_received',
@@ -83,5 +84,11 @@ class MonthlyInterview extends Model
     public function checkin(): BelongsTo
     {
         return $this->belongsTo(InspectionCheckin::class, 'inspection_checkin_id');
+    }
+
+    /** @return BelongsTo<FarmVisit, $this> 본사 방문 점검(있으면) */
+    public function farmVisit(): BelongsTo
+    {
+        return $this->belongsTo(FarmVisit::class, 'farm_visit_id');
     }
 }

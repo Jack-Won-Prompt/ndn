@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domains\Monitoring\Actions;
 
+use App\Domains\Monitoring\Enums\InterviewSource;
 use App\Domains\Monitoring\Enums\RiskLevel;
 use App\Domains\Monitoring\Models\MonthlyInterview;
 use App\Domains\Recruitment\Models\Worker;
@@ -27,6 +28,7 @@ class RecordMonthlyInterviewAction
         array $items,
         ?string $memo = null,
         ?int $checkinId = null,
+        ?int $farmVisitId = null,
     ): MonthlyInterview {
         $answers = [];
         $negatives = 0;
@@ -43,6 +45,8 @@ class RecordMonthlyInterviewAction
             'worker_id' => $worker->id,
             'inspector_user_id' => $inspector->id,
             'inspection_checkin_id' => $checkinId,
+            'farm_visit_id' => $farmVisitId,
+            'source' => InterviewSource::Inspector->value,  // 본사 점검자 방문 기록
             'interviewed_on' => $interviewedOn,
             ...$answers,
             'risk_score' => $negatives,

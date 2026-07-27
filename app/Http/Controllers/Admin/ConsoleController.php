@@ -127,6 +127,7 @@ class ConsoleController extends Controller
                 'rows' => FarmVisitController::rows(),
                 'farms' => FarmVisitController::farmOptions(),
                 'statuses' => FarmVisitController::statusOptions(),
+                'itemLabels' => FarmVisitController::itemLabels(),
             ]),
             'tickets' => $this->tickets($request),
             'chat' => view('admin.screens.chat', ['me' => app(ChatService::class)->partyForUser(Auth::user())]),

@@ -61,4 +61,10 @@ class FarmVisit extends Model
     {
         return $this->hasMany(FarmVisitPhoto::class)->orderBy('id');
     }
+
+    /** 이 방문에서 진행한 근로자별 인터뷰 @return HasMany<MonthlyInterview, $this> */
+    public function interviews(): HasMany
+    {
+        return $this->hasMany(MonthlyInterview::class, 'farm_visit_id')->orderBy('id');
+    }
 }

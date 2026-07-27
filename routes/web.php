@@ -126,6 +126,10 @@ Route::prefix('admin')->group(function () {
 
         // 농가 월별 방문 점검 (본사)
         Route::post('/farm-visits', [FarmVisitController::class, 'store'])->name('admin.farm-visits.store');
+        Route::get('/farm-visits/farms/{farm}/workers', [FarmVisitController::class, 'workers'])
+            ->whereNumber('farm')->name('admin.farm-visits.workers');
+        Route::get('/farm-visits/workers/{worker}/interviews', [FarmVisitController::class, 'workerHistory'])
+            ->whereNumber('worker')->name('admin.farm-visits.worker-history');
         Route::get('/farm-visits/{farmVisit}', [FarmVisitController::class, 'show'])
             ->whereNumber('farmVisit')->name('admin.farm-visits.show');
         Route::get('/farm-visits/{farmVisit}/photos/{photo}', [FarmVisitController::class, 'photo'])
