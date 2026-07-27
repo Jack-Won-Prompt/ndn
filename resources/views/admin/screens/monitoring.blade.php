@@ -21,8 +21,10 @@
         data: @json($rows),
         columns: [
             { header: '번호', name: 'id', width: 60, align: 'center', sortable: true },
-            { header: '근로자', name: 'worker', width: 130, sortable: true },
-            { header: '점검일', name: 'date', width: 110, align: 'center', sortable: true },
+            { header: '근로자', name: 'worker', width: 120, sortable: true },
+            { header: '시·군', name: 'city', width: 110, sortable: true },
+            { header: '농가', name: 'farm', width: 140, sortable: true },
+            { header: '점검일', name: 'date', width: 100, align: 'center', sortable: true },
             { header: '급여', name: 'pay', width: 80, align: 'center' },
             { header: '차별없음', name: 'discrim', width: 90, align: 'center' },
             { header: '규칙', name: 'rules', width: 80, align: 'center' },
@@ -36,7 +38,7 @@
                 title: '월별 점검 #' + row.id,
                 subtitle: row.worker + ' · ' + row.date,
                 rows: [
-                    ['근로자', row.worker], ['점검일', row.date],
+                    ['근로자', row.worker], ['소속', row.city + ' · ' + row.farm], ['점검일', row.date],
                     ['급여 수령', row.pay], ['차별 없음', row.discrim], ['생활 규칙', row.rules],
                     ['단체 생활', row.group], ['건강', row.health], ['이탈 징후', row.flight],
                     ['이탈 리스크', row.risk], ['메모', row.memo],

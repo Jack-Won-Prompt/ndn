@@ -8,6 +8,7 @@ use App\Domains\Demand\Enums\DemandStatus;
 use App\Domains\Demand\Models\City;
 use App\Domains\Demand\Models\DemandRequest;
 use App\Domains\Demand\Models\Farm;
+use App\Domains\Matching\Enums\PlacementStatus;
 use App\Domains\Monitoring\Models\MonthlyInterview;
 use App\Domains\Onboarding\Enums\OnboardingStatus;
 use App\Domains\Onboarding\Models\OnboardingSubmission;
@@ -166,22 +167,32 @@ class ConsoleController extends Controller
 
     private function monitoring(Request $request): View
     {
-        $rows = MonthlyInterview::with('worker')->latest('id')->limit(1000)->get()
-            ->map(fn (MonthlyInterview $iv) => [
-                'id' => $iv->id,
-                'worker' => $iv->worker?->name ?? '—',
-                'date' => $iv->interviewed_on?->format('Y-m-d'),
-                'pay' => $iv->pay_received ? '양호' : '이상',
-                'discrim' => $iv->no_discrimination ? '양호' : '이상',
-                'rules' => $iv->follows_rules ? '양호' : '이상',
-                'group' => $iv->adapts_group ? '양호' : '이상',
-                'health' => $iv->health_ok ? '양호' : '이상',
-                'flight' => $iv->no_flight_signs ? '양호' : '이상',
-                'risk' => match ($iv->risk_level->value) {
-                    'high' => '고위험', 'medium' => '주의', default => '낮음'
-                },
-                'memo' => $iv->memo,
-            ])->all();
+        // 근로자 소속(시·농가) = 확정 배정 → 농가 → 시. N+1 방지로 즉시 로딩.
+        $rows = MonthlyInterview::with(['worker.placements' => function ($q) {
+            $q->where('status', PlacementStatus::Confirmed->value)->latest('id')->with('farm.city');
+        }])->latest('id')->limit(1000)->get()
+            ->map(function (MonthlyInterview $iv) {
+                $placement = $iv->worker?->placements->first();
+                $farm = $placement?->farm;
+
+                return [
+                    'id' => $iv->id,
+                    'worker' => $iv->worker?->name ?? '—',
+                    'city' => $farm?->city?->name ?? '—',
+                    'farm' => $farm?->name ?? '—',
+                    'date' => $iv->interviewed_on?->format('Y-m-d'),
+                    'pay' => $iv->pay_received ? '양호' : '이상',
+                    'discrim' => $iv->no_discrimination ? '양호' : '이상',
+                    'rules' => $iv->follows_rules ? '양호' : '이상',
+                    'group' => $iv->adapts_group ? '양호' : '이상',
+                    'health' => $iv->health_ok ? '양호' : '이상',
+                    'flight' => $iv->no_flight_signs ? '양호' : '이상',
+                    'risk' => match ($iv->risk_level?->value) {
+                        'high' => '고위험', 'medium' => '주의', default => '낮음'
+                    },
+                    'memo' => $iv->memo,
+                ];
+            })->all();
 
         return view('admin.screens.monitoring', ['rows' => $rows]);
     }
