@@ -6,7 +6,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Domains\Recruitment\Enums\CandidateStatus;
 use App\Domains\Recruitment\Models\Candidate;
+use App\Domains\Recruitment\Models\InterviewEvaluation;
 use App\Http\Controllers\Controller;
+use App\Shared\Support\LocalTime;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -27,6 +29,36 @@ class CandidateGridController extends Controller
             'status' => $c->status->value,
             'queue_position' => $c->queue_position,
         ];
+    }
+
+    /** 후보자 상세 (이력·평가) — 상세 탭용 JSON. */
+    public function show(Candidate $candidate): JsonResponse
+    {
+        $candidate->load(['demandRequest.farm', 'evaluations.interviewer']);
+
+        return response()->json([
+            'id' => $candidate->id,
+            'name' => $candidate->name,
+            'nationality' => $candidate->nationality,
+            'age' => $candidate->age,
+            'gender' => match ($candidate->gender) {
+                'male' => '남성', 'female' => '여성', default => $candidate->gender ?? '—',
+            },
+            'status' => $candidate->status->label(),
+            'queue_position' => $candidate->queue_position,
+            'demand' => $candidate->demandRequest ? [
+                'farm' => $candidate->demandRequest->farm?->name,
+                'crop' => $candidate->demandRequest->crop,
+                'nationality' => $candidate->demandRequest->nationality,
+            ] : null,
+            'evaluations' => $candidate->evaluations->map(fn (InterviewEvaluation $e) => [
+                'total' => $e->total_score,
+                'result' => $e->result,
+                'comment' => $e->comment,
+                'at' => LocalTime::format($e->evaluated_at),
+                'by' => $e->interviewer?->name ?? '—',
+            ])->all(),
+        ]);
     }
 
     /** @return array<int, array<string,mixed>> */

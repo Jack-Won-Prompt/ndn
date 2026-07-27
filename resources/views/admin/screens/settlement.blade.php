@@ -19,7 +19,8 @@
                 </div>
                 <div class="kanban__body">
                     @forelse ($cards as $s)
-                        <div class="kcard {{ $s->isOverdue() ? 'kcard--overdue' : '' }}">
+                        <div class="kcard {{ $s->isOverdue() ? 'kcard--overdue' : '' }}"
+                             @if ($s->worker) data-worker="{{ $s->worker->id }}" @endif>
                             <div class="kcard__top">
                                 <span class="mv2-pill">{{ $s->type->label() }}</span>
                                 <span class="kcard__id">#{{ $s->id }}</span>
@@ -50,6 +51,8 @@
         .kanban__body { padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 60px; }
         .kanban__empty { text-align: center; color: var(--mv2-text-faint); font-size: 12px; padding: 8px 0; }
         .kcard { background: #fff; border: 1px solid var(--mv2-border-default); border-radius: var(--mv2-r-sm); padding: 10px; box-shadow: var(--mv2-shadow-xs); }
+        .kcard[data-worker] { cursor: pointer; transition: border-color .15s, box-shadow .15s; }
+        .kcard[data-worker]:hover { border-color: var(--mv2-primary-400); box-shadow: 0 2px 8px rgba(30,156,146,.15); }
         .kcard--overdue { border-color: #F1B4B4; background: #FEF6F6; }
         .kcard__top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
         .kcard__id { font-size: 11px; color: var(--mv2-text-faint); }
@@ -58,4 +61,33 @@
         .kcard__meta.is-overdue { color: #B42318; font-weight: 600; }
         @media (max-width: 1100px) { .kanban { grid-template-columns: repeat(2, 1fr); } }
     </style>
+@endsection
+
+@section('script')
+<script>
+    (function () {
+        document.querySelector('.kanban').addEventListener('click', function (e) {
+            var card = e.target.closest('.kcard[data-worker]');
+            if (!card) return;
+            var id = card.getAttribute('data-worker');
+            fetch('{{ url('admin/screen/workers') }}/' + id + '?format=json', { headers: { 'Accept': 'application/json' } })
+                .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+                .then(function (d) {
+                    var rows = [
+                        ['이름', d.name], ['국적', d.nationality], ['언어', d.locale],
+                        ['상태', d.status], ['소속', (d.city || '—') + ' · ' + (d.farm || '—')],
+                    ];
+                    if (d.arrival) { rows.push(['입국', d.arrival.status + (d.arrival.flight_no ? ' · ' + d.arrival.flight_no : '')]); }
+                    var ivs = d.interviews || [];
+                    rows.push(['생활 점검', ivs.length ? (ivs.length + '건 · 최근 ' + ivs[0].date + '(' + ivs[0].risk + ')') : '없음']);
+                    rows.push(['등록일', d.created || '—']);
+                    ndnDetailModal({
+                        title: '근로자 정보', subtitle: d.name + ' · ' + d.nationality, rows: rows,
+                        note: '개인정보 열람은 감사 로그에 기록됩니다.',
+                    });
+                })
+                .catch(function () { ndnToast('근로자 정보를 불러오지 못했습니다.', { type: 'error' }); });
+        });
+    })();
+</script>
 @endsection

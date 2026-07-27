@@ -112,6 +112,8 @@ Route::prefix('admin')->group(function () {
         // wwGrid CRUD — 후보자
         Route::post('/grid/candidates/save', [CandidateGridController::class, 'save'])->name('admin.grid.candidates.save');
         Route::post('/grid/candidates/import', [CandidateGridController::class, 'import'])->name('admin.grid.candidates.import');
+        Route::get('/candidates/{candidate}', [CandidateGridController::class, 'show'])
+            ->whereNumber('candidate')->name('admin.candidates.show');
         // wwGrid CRUD — 기준정보(농가·지자체)
         Route::post('/grid/cities/save', [BaseInfoGridController::class, 'citySave'])->name('admin.grid.cities.save');
         Route::post('/grid/farms/save', [BaseInfoGridController::class, 'farmSave'])->name('admin.grid.farms.save');
@@ -120,6 +122,8 @@ Route::prefix('admin')->group(function () {
         Route::post('/grid/tickets/save', [TicketGridController::class, 'save'])->name('admin.grid.tickets.save');
 
         // 근로자 가입 승인 (셀프 가입 승인 큐)
+        Route::get('/signups/{worker}', [SignupApprovalController::class, 'show'])
+            ->whereNumber('worker')->name('admin.signups.show');
         Route::post('/signups/{worker}/approve', [SignupApprovalController::class, 'approve'])
             ->whereNumber('worker')->name('admin.signups.approve');
         Route::post('/signups/{worker}/reject', [SignupApprovalController::class, 'reject'])

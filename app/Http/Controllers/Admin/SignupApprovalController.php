@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
+use App\Domains\Onboarding\Models\OnboardingSubmission;
 use App\Domains\Recruitment\Actions\ApproveWorkerAction;
 use App\Domains\Recruitment\Actions\RejectWorkerAction;
 use App\Domains\Recruitment\Enums\WorkerStatus;
@@ -13,6 +14,7 @@ use App\Shared\Support\LocalTime;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * 근로자 셀프 가입 승인 큐 (관리자 승인제).
@@ -35,6 +37,31 @@ class SignupApprovalController extends Controller
                 'locale' => $w->locale,
                 'registered' => LocalTime::format($w->created_at),
             ])->all();
+    }
+
+    /** 가입 신청 상세 (본인 정보 + 제출 서류) — 상세 탭용. 개인정보 열람 감사(§7-6). */
+    public function show(Worker $worker): JsonResponse
+    {
+        $worker->recordAccessBy(Auth::user(), 'signup-detail');
+
+        $sub = OnboardingSubmission::where('worker_id', $worker->id)->latest('id')->first();
+        $hasSig = $sub && filled($sub->signature_path) && Storage::disk('local')->exists($sub->signature_path);
+
+        return response()->json([
+            'id' => $worker->id,
+            'name' => $worker->name,
+            'email' => $worker->email,
+            'nationality' => $worker->nationality,
+            'locale' => $worker->locale,
+            'status' => $worker->status->value,
+            'registered' => LocalTime::format($worker->created_at),
+            'onboarding' => $sub ? [
+                'status' => $sub->status->label(),
+                'payload' => $sub->payload ?? [],
+                'has_signature' => $hasSig,
+                'signature_url' => $hasSig ? route('admin.onboarding.signature', $sub) : null,
+            ] : null,
+        ]);
     }
 
     public function approve(Request $request, Worker $worker, ApproveWorkerAction $action): JsonResponse
