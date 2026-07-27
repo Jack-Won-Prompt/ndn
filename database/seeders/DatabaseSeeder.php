@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
         //   php artisan db:seed --class=Database\\Seeders\\TestAccountsSeeder --force
         //   php artisan db:seed --class=Database\\Seeders\\DemoDataSeeder --force
         //   php artisan db:seed --class=Database\\Seeders\\IntegrityTestSeeder --force  // 정합성 검증 20건+파일
+        //   php artisan db:seed --class=Database\\Seeders\\ScreenDemoSeeder --force     // 로그인별 모든 화면 10건+파일
         if (app()->environment('production')) {
             return;
         }
