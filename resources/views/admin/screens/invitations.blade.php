@@ -9,6 +9,12 @@
         </div>
     </div>
 
+    <div class="screen-tabs">
+        <button type="button" class="screen-tab is-active" data-tab="list">목록</button>
+        <button type="button" class="screen-tab" data-tab="form">초대 발송</button>
+    </div>
+
+    <div data-tabpane="form" hidden>
     <div class="inv-send">
         <div class="inv-send__row">
             <div class="inv-field">
@@ -41,7 +47,9 @@
             </div>
         </div>
     </div>
+    </div>{{-- /탭:form --}}
 
+    <div data-tabpane="list">
     <div class="signup-wrap">
         <table class="signup-table" id="inv-table">
             <thead>
@@ -81,6 +89,7 @@
             </tbody>
         </table>
     </div>
+    </div>{{-- /탭:list --}}
 
     <style>
         .inv-send { border: 1px solid var(--mv2-border-default); border-radius: var(--mv2-r-lg); background: #fff; padding: 16px; margin-bottom: 14px; box-shadow: 0 1px 2px rgba(15,23,42,.04); }

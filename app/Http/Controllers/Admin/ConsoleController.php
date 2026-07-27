@@ -194,7 +194,11 @@ class ConsoleController extends Controller
                 ];
             })->all();
 
-        return view('admin.screens.monitoring', ['rows' => $rows]);
+        return view('admin.screens.monitoring', [
+            'rows' => $rows,
+            'workers' => MonitoringController::workerOptions(),
+            'itemLabels' => MonitoringController::itemLabels(),
+        ]);
     }
 
     private function tickets(Request $request): View

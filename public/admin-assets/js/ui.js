@@ -278,3 +278,32 @@
     window.ndnAlert = ndnAlert;
     window.ndnDetailModal = ndnDetailModal;
 })();
+
+/* ==========================================================================
+   화면 탭 — .screen-tabs 의 [data-tab] 버튼이 [data-tabpane] 을 전환한다.
+   각 임베디드 화면은 한 개의 탭 그룹만 가진다. window.ndnSwitchTab(key) 로도 전환 가능.
+   ========================================================================== */
+(function () {
+    'use strict';
+    function activate(key) {
+        var tabs = document.querySelector('.screen-tabs');
+        if (tabs) {
+            [].forEach.call(tabs.querySelectorAll('.screen-tab'), function (b) {
+                b.classList.toggle('is-active', b.getAttribute('data-tab') === key);
+            });
+        }
+        [].forEach.call(document.querySelectorAll('[data-tabpane]'), function (p) {
+            p.hidden = p.getAttribute('data-tabpane') !== key;
+        });
+    }
+    function init() {
+        var tabs = document.querySelector('.screen-tabs');
+        if (!tabs) return;
+        tabs.addEventListener('click', function (e) {
+            var b = e.target.closest('.screen-tab');
+            if (b) activate(b.getAttribute('data-tab'));
+        });
+        window.ndnSwitchTab = activate;
+    }
+    if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { init(); }
+})();

@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\ConsoleController;
 use App\Http\Controllers\Admin\DemandGridController;
 use App\Http\Controllers\Admin\FarmVisitController;
 use App\Http\Controllers\Admin\InvitationController;
+use App\Http\Controllers\Admin\MonitoringController;
 use App\Http\Controllers\Admin\SignupApprovalController;
 use App\Http\Controllers\Admin\TicketGridController;
 use App\Http\Controllers\Admin\WorkerGridController;
@@ -123,6 +124,9 @@ Route::prefix('admin')->group(function () {
             ->whereNumber('worker')->name('admin.signups.approve');
         Route::post('/signups/{worker}/reject', [SignupApprovalController::class, 'reject'])
             ->whereNumber('worker')->name('admin.signups.reject');
+
+        // 월별 점검 — 본사 직접 입력
+        Route::post('/monitoring/interviews', [MonitoringController::class, 'store'])->name('admin.monitoring.store');
 
         // 농가 월별 방문 점검 (본사)
         Route::post('/farm-visits', [FarmVisitController::class, 'store'])->name('admin.farm-visits.store');

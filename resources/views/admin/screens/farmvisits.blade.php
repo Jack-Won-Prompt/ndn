@@ -9,7 +9,13 @@
         </div>
     </div>
 
-    {{-- 등록 폼 --}}
+    <div class="screen-tabs">
+        <button type="button" class="screen-tab is-active" data-tab="list">목록</button>
+        <button type="button" class="screen-tab" data-tab="form">방문 등록</button>
+    </div>
+
+    {{-- 등록 폼 (탭) --}}
+    <div data-tabpane="form" hidden>
     <div class="fv-form">
         <div class="fv-grid">
             <div class="fv-field">
@@ -68,8 +74,10 @@
             <button type="button" id="fv-save" class="fv-btn">방문 점검 저장</button>
         </div>
     </div>
+    </div>{{-- /탭:form --}}
 
-    {{-- 목록 --}}
+    {{-- 목록 (탭) --}}
+    <div data-tabpane="list">
     <div class="fv-listwrap">
         <table class="fv-table" id="fv-table">
             <thead>
@@ -104,6 +112,7 @@
             </tbody>
         </table>
     </div>
+    </div>{{-- /탭:list --}}
 
     {{-- 상세 모달 --}}
     <div class="fv-modal" id="fv-modal">
