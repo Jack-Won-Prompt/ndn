@@ -123,6 +123,7 @@
     </div>
 </footer>
 
+@include('partials.app-install-widget')
 @include('partials.chat-widget')
 
 <script src="{{ asset('site/assets/js/main.js') }}"></script>
