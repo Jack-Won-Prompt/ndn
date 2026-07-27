@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\Admin\FieldWorkAdminController;
 use App\Http\Controllers\Api\Admin\MatchingAdminController;
 use App\Http\Controllers\Api\Admin\SosAdminController;
 use App\Http\Controllers\Api\Admin\WorkerAdminController;
+use App\Http\Controllers\Api\AppVersionController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -30,6 +31,16 @@ use Illuminate\Support\Facades\Route;
 | prefix /api/v1, Sanctum 토큰 인증, worker 미들웨어로 본인 리소스만 접근.
 | 엔드포인트는 URL 에 worker_id 를 받지 않고 인증된 Worker 본인에서 파생한다.
 */
+
+/*
+|--------------------------------------------------------------------------
+| 앱 버전 확인 (사이드로딩 배포)
+|--------------------------------------------------------------------------
+| 플레이스토어를 거치지 않아 자동 업데이트가 없다. 앱이 시작·복귀할 때 최신
+| 버전을 물어본다. **인증 밖**에 둔다 — 강제 업데이트 대상 구버전은 로그인
+| 자체가 실패할 수 있는데 그 상태에서도 안내는 띄워야 하기 때문이다.
+*/
+Route::get('v1/app/version', AppVersionController::class)->middleware('throttle:60,1');
 
 // 로그인은 토큰 발급 전이므로 인증 미들웨어 밖에 둔다. 무차별 대입 방지로 throttle 적용.
 Route::prefix('v1')->group(function () {

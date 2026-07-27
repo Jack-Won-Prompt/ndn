@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NDN 근로자 앱 설치</title>
+<!--
+  앱 설치 안내 페이지 (플레이스토어 미경유 · 링크 설치).
+  Laravel public/app/ 에 두면 https://ndnkorea.co.kr/app/ 로 열린다.
+  정적 페이지라 서버 코드에 의존하지 않는다.
+-->
+<style>
+  :root {
+    --bg: #0a0a0a; --fg: #ffffff; --muted: #a1a1a1;
+    --accent: #57d870; --card: #161616; --line: #262626;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+      "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    line-height: 1.6; -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 680px; margin: 0 auto; padding: 40px 20px 64px; }
+  header { text-align: center; margin-bottom: 36px; }
+  .logo { font-size: 34px; font-weight: 800; letter-spacing: 1px; }
+  .logo .dot { color: var(--accent); }
+  .tag { color: var(--muted); font-size: 15px; margin-top: 6px; }
+  .ver {
+    display: inline-block; margin-top: 12px; padding: 4px 12px;
+    border: 1px solid var(--line); border-radius: 999px;
+    color: var(--muted); font-size: 13px;
+  }
+  .card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 18px; padding: 22px; margin-bottom: 16px;
+  }
+  h2 { font-size: 17px; margin: 0 0 14px; }
+  .btn {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; padding: 16px 18px; margin-bottom: 10px;
+    background: var(--accent); color: #062b10; font-weight: 700;
+    border-radius: 14px; text-decoration: none; font-size: 16px;
+  }
+  .btn.alt { background: #1f1f1f; color: var(--fg); border: 1px solid var(--line); }
+  .btn small { font-weight: 500; opacity: .75; font-size: 13px; }
+  ol { margin: 0; padding-left: 20px; }
+  ol li { margin-bottom: 10px; }
+  .qr { text-align: center; }
+  .qr img {
+    width: 200px; height: 200px; background: #fff;
+    border-radius: 14px; padding: 10px;
+  }
+  .note {
+    font-size: 13px; color: var(--muted);
+    border-left: 3px solid var(--line); padding-left: 12px; margin-top: 14px;
+  }
+  code {
+    background: #000; padding: 2px 6px; border-radius: 5px;
+    font-size: 12px; word-break: break-all; color: var(--accent);
+  }
+  footer { text-align: center; color: var(--muted); font-size: 13px; margin-top: 34px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="logo">N<span class="dot">.</span>D<span class="dot">.</span>N KOREA</div>
+    <div class="tag">외국인 계절근로자 통합관리</div>
+    <div class="ver">근로자 앱 v1.0.0 · Android</div>
+  </header>
+
+  <div class="card">
+    <h2>1. 앱 내려받기</h2>
+    <a class="btn" href="ndn-worker-1.0.0-universal.apk">
+      <span>기본 설치 파일</span>
+      <small>57MB · 모든 기기</small>
+    </a>
+    <a class="btn alt" href="ndn-worker-1.0.0-arm64.apk">
+      <span>arm64 (최신 기기)</span>
+      <small>21MB</small>
+    </a>
+    <a class="btn alt" href="ndn-worker-1.0.0-arm32.apk">
+      <span>arm32 (구형 기기)</span>
+      <small>19MB</small>
+    </a>
+    <p class="note">
+      어떤 것을 받을지 모르겠다면 <b>기본 설치 파일</b>을 받으세요. 모든 기기에서 동작합니다.
+      arm64/arm32 는 용량이 절반이지만 기기에 맞아야 합니다.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>2. 설치하기</h2>
+    <ol>
+      <li>내려받은 파일을 엽니다.</li>
+      <li><b>"출처를 알 수 없는 앱"</b> 경고가 나오면 <b>설정 → 허용</b>을 누릅니다.
+          (플레이스토어를 거치지 않는 사내 배포라 나오는 정상 안내입니다.)</li>
+      <li><b>설치</b>를 누릅니다.</li>
+      <li>앱을 열고 발급받은 계정으로 로그인합니다.</li>
+    </ol>
+    <p class="note">
+      이후 새 버전이 나오면 <b>앱이 알아서 알려줍니다.</b> 이 페이지에 다시 올 필요 없이
+      앱 안에서 바로 업데이트할 수 있습니다.
+    </p>
+  </div>
+
+  <div class="card qr">
+    <h2>휴대폰으로 열기</h2>
+    <img src="install-qr.png" alt="설치 페이지 QR 코드">
+    <p class="note" style="border:0; padding:0; margin-top:12px; text-align:center;">
+      PC 화면이라면 이 QR 을 휴대폰 카메라로 찍으세요.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>파일 무결성 (선택)</h2>
+    <p class="note" style="border:0; padding:0; margin:0 0 10px;">
+      받은 파일이 원본과 같은지 확인하려면 SHA-256 값을 비교하세요.
+    </p>
+    <p style="margin:0"><code>ndn-worker-1.0.0-universal.apk</code><br>
+      <code>fc8c953f84579b00a2b3f06152d25b44f85507248323ea344c484af05001b6d3</code></p>
+    <p style="margin:10px 0 0"><code>ndn-worker-1.0.0-arm64.apk</code><br>
+      <code>99f4163623daa5879ecac4eac92545f128e9aa6569cf221605af1eac14f892f7</code></p>
+    <p style="margin:10px 0 0"><code>ndn-worker-1.0.0-arm32.apk</code><br>
+      <code>cc58b55ed1ce7a3db197401e87b1aec12c300b9c926de021ff9756d0edf80373</code></p>
+  </div>
+
+  <footer>
+    문의는 앱 안의 <b>메시지</b> 또는 담당자에게 연락해 주세요.<br>
+    &copy; NDN Co., Ltd.
+  </footer>
+
+</div>
+</body>
+</html>

@@ -219,7 +219,20 @@
       "Bash(git -C /e/xampp/htdocs/ndn log --oneline -1)",
       "Bash(./vendor/bin/pint app/Http/Controllers/SiteChatController.php app/Domains/Support/Models/ChatVisitor.php app/Domains/Support/Services/ChatService.php database/migrations/2026_07_27_130000_create_chat_visitors_table.php)",
       "Bash(./vendor/bin/pest --filter=SiteChat)",
-      "Bash(./vendor/bin/pint app/Http/Controllers/SiteChatController.php bootstrap/app.php tests/Feature/Support/SiteChatTest.php resources/views)"
+      "Bash(./vendor/bin/pint app/Http/Controllers/SiteChatController.php bootstrap/app.php tests/Feature/Support/SiteChatTest.php resources/views)",
+      "Bash(php /tmp/trtest.php)",
+      "Bash(php -r \"echo 'GD:'.\\(extension_loaded\\('gd'\\)?'O':'X'\\).' Imagick:'.\\(extension_loaded\\('imagick'\\)?'O':'X'\\).PHP_EOL;\")",
+      "Bash(grep -n \"use App\\\\\\\\\\\\\\\\Models\\\\\\\\\\\\\\\\User\\\\|use Illuminate\\\\\\\\\\\\\\\\Support\\\\\\\\\\\\\\\\Facades\\\\\\\\\\\\\\\\Notification\" app/Http/Controllers/Admin/ConsoleController.php)",
+      "Bash(grep -n \"^use \\\\|AssignSettlementAction\\\\|UserRole\\\\|use App\\\\\\\\\\\\\\\\Models\\\\\\\\\\\\\\\\User\" app/Http/Controllers/Admin/ConsoleController.php)",
+      "Bash(./vendor/bin/pint app/Domains/Settlement app/Http/Controllers/Portal app/Http/Controllers/Admin/ConsoleController.php app/Domains/Support/Services/ChatService.php app/Providers/AppServiceProvider.php database/migrations/2026_07_27_14* routes/web.php)",
+      "Bash(./vendor/bin/pest --filter=\"PartnerSettlement|PersonalDataInNotification\")",
+      "Bash(./vendor/bin/pint app/ tests/ resources/views database/migrations)",
+      "Bash(./vendor/bin/pest --filter=\"PartnerSettlement\")",
+      "Bash(./vendor/bin/pint app/ tests/ resources routes bootstrap database/migrations)",
+      "Bash(grep -n \"WorkerStatus\\\\|use App\\\\\\\\\\\\\\\\Domains\\\\\\\\\\\\\\\\Recruitment\" app/Http/Controllers/Admin/ConsoleController.php)",
+      "Bash(./vendor/bin/pest --filter=\"InquiryAndAlert\")",
+      "Bash(./vendor/bin/pest --filter=AppVersion)",
+      "Bash(./vendor/bin/pint app/Http/Controllers/Api/AppVersionController.php config/mobile.php tests/Feature/Api/AppVersionTest.php routes/api.php)"
     ],
     "additionalDirectories": [
       "\\tmp"
