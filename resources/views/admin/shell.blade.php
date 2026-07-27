@@ -15,6 +15,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="csrf-token" content="{{ csrf_token() }}">
 <title>N.D.N Korea 운영 콘솔</title>
 @include('partials.tz-cookie')
 <link rel="icon" type="image/svg+xml" href="{{ asset('site/assets/favicon.svg') }}">
@@ -23,6 +24,9 @@
 <link rel="preload" href="{{ asset('site/assets/fonts/PretendardVariable.woff2') }}" as="font" type="font/woff2" crossorigin>
 <style>
     @font-face{font-family:"Pretendard Variable";src:url("{{ asset('site/assets/fonts/PretendardVariable.woff2') }}") format("woff2-variations");font-weight:45 920;font-display:swap;}
+    .nav-item{position:relative;}
+    .nav-badge{margin-left:auto;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#E5484D;color:#fff;font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;line-height:1;}
+    .nav-badge[hidden]{display:none;}
 </style>
 <link rel="stylesheet" href="{{ asset('admin-assets/css/ui.css') }}?v={{ @filemtime(public_path('admin-assets/css/ui.css')) }}">
 <link rel="stylesheet" href="{{ asset('admin-assets/css/admin.css') }}?v={{ @filemtime(public_path('admin-assets/css/admin.css')) }}">
@@ -40,12 +44,14 @@
                         <div class="nav-group__label">{{ $group['group'] }}</div>
                     @endif
                     @foreach ($group['items'] as $item)
+                        @php $bc = ($badges ?? [])[$item['key']] ?? 0; @endphp
                         <button type="button" class="nav-item"
                                 data-screen="{{ $item['key'] }}"
                                 data-title="{{ $item['label'] }}">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
                                  stroke-linecap="round" stroke-linejoin="round">{!! $icons[$item['icon']] ?? '' !!}</svg>
                             <span>{{ $item['label'] }}</span>
+                            <span class="nav-badge" data-badge-for="{{ $item['key'] }}" {{ $bc > 0 ? '' : 'hidden' }}>{{ $bc }}</span>
                         </button>
                     @endforeach
                 </div>
@@ -76,10 +82,51 @@
         base: @json(rtrim(parse_url(config('app.url'), PHP_URL_PATH) ?? '', '/')),
         screenUrl: @json(url('admin/screen')),
         titles: @json($titles),
+        pusherKey: @json(config('broadcasting.connections.pusher.key')),
+        pusherCluster: @json(config('broadcasting.connections.pusher.options.cluster')),
+        broadcastAuth: @json(url('broadcasting/auth')),
     };
 </script>
 <script src="{{ asset('admin-assets/js/ui.js') }}?v={{ @filemtime(public_path('admin-assets/js/ui.js')) }}"></script>
 <script src="{{ asset('admin-assets/js/admin.js') }}?v={{ @filemtime(public_path('admin-assets/js/admin.js')) }}"></script>
+<script src="{{ asset('admin-assets/vendor/pusher/pusher.min.js') }}"></script>
+<script>
+    // 사이드바 메뉴 배지 유틸 + Pusher 실시간 알림 (주요 이벤트)
+    (function () {
+        function setBadge(key, n) {
+            var el = document.querySelector('.nav-badge[data-badge-for="' + key + '"]');
+            if (!el) return;
+            if (n > 0) { el.textContent = n; el.hidden = false; } else { el.hidden = true; }
+        }
+        function bumpBadge(key) {
+            var el = document.querySelector('.nav-badge[data-badge-for="' + key + '"]');
+            if (!el) return;
+            setBadge(key, (parseInt(el.textContent, 10) || 0) + 1);
+        }
+        window.ndnSetBadge = setBadge;
+
+        // 화면(iframe)에서 "읽음" 처리 시 배지를 0으로 내릴 수 있도록 메시지 수신
+        window.addEventListener('message', function (e) {
+            if (e.data && e.data.ndnBadge) setBadge(e.data.ndnBadge.key, e.data.ndnBadge.count);
+        });
+
+        var A = window.NDN_ADMIN;
+        if (!A.pusherKey || typeof Pusher === 'undefined') return;   // Pusher 미설정 → 서버 렌더 배지만 사용
+        var token = document.querySelector('meta[name="csrf-token"]').content;
+        try {
+            var pusher = new Pusher(A.pusherKey, {
+                cluster: A.pusherCluster,
+                forceTLS: true,
+                authEndpoint: A.broadcastAuth,
+                auth: { headers: { 'X-CSRF-TOKEN': token } },
+            });
+            pusher.subscribe('private-admin.alerts').bind('admin.alert', function (data) {
+                if (window.ndnToast) ndnToast(data.message, { type: data.kind === 'sos' ? 'error' : 'info' });
+                if (data.screen) bumpBadge(data.screen);
+            });
+        } catch (err) { /* 실시간 실패해도 콘솔은 정상 동작 */ }
+    })();
+</script>
 <script>
     // 로그아웃 확인 — 커스텀 모달
     (function () {

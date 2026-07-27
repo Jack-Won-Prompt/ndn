@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Support\Actions;
 
 use App\Domains\Recruitment\Models\Worker;
+use App\Domains\Support\Events\AdminAlertBroadcast;
 use App\Domains\Support\Models\SosAlert;
 
 /**
@@ -17,12 +18,21 @@ class CreateSosAlertAction
 {
     public function execute(Worker $worker, ?float $lat = null, ?float $lng = null): SosAlert
     {
-        return SosAlert::create([
+        $alert = SosAlert::create([
             'worker_id' => $worker->id,
             'lat' => $lat,
             'lng' => $lng,
             'alerted_at' => now(),
             'status' => 'open',
         ]);
+
+        // 관리자 콘솔 실시간 긴급 알림 (개인정보 없이, §7-3). 실패해도 무시.
+        try {
+            broadcast(new AdminAlertBroadcast('sos', '긴급 SOS가 접수되었습니다.', 'tickets'));
+        } catch (\Throwable $e) {
+            // Pusher 미설정/실패 시 무시
+        }
+
+        return $alert;
     }
 }

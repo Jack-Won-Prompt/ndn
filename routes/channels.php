@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domains\Support\Services\ChatService;
+use App\Shared\Enums\UserRole;
 use Illuminate\Support\Facades\Broadcast;
 
 /*
@@ -13,4 +14,11 @@ Broadcast::channel('chat.party.{type}.{id}', function ($user, string $type, stri
     [$mt, $mi] = app(ChatService::class)->partyForUser($user);
 
     return $mt === $type && (string) ($mi ?? 0) === $id;
+});
+
+/*
+| 관리자 콘솔 실시간 알림 채널 — ndn_admin 전원. 새 문의·가입 대기·SOS 등 주요 이벤트.
+*/
+Broadcast::channel('admin.alerts', function ($user) {
+    return $user->hasRole(UserRole::NdnAdmin->value);
 });

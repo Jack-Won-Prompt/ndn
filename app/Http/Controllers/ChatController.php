@@ -36,10 +36,14 @@ class ChatController extends Controller
         return $this->chat->partyForUser(Auth::user());
     }
 
-    /** 내 대화 목록 */
+    /** 내 대화 목록 (홈페이지 방문자 문의는 별도 '문의하기' 화면에서 다루므로 제외) */
     public function conversations(): JsonResponse
     {
-        return response()->json(['conversations' => $this->chat->conversationsFor($this->me())]);
+        $list = $this->chat->conversationsFor($this->me())
+            ->reject(fn ($c) => $c['other_type'] === 'visitor')
+            ->values();
+
+        return response()->json(['conversations' => $list]);
     }
 
     /** 조직 상대 연락처 + (근로자는 검색) */

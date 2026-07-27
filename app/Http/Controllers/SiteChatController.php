@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Domains\Support\Events\AdminAlertBroadcast;
 use App\Domains\Support\Models\ChatConversation;
 use App\Domains\Support\Models\ChatVisitor;
 use App\Domains\Support\Services\ChatService;
@@ -64,6 +65,15 @@ class SiteChatController extends Controller
             $this->chat->send($conv, $me, $data['body']);
         } catch (\RuntimeException $e) {
             return response()->json(['ok' => false, 'message' => $e->getMessage()], 422);
+        }
+
+        // 관리자 콘솔 실시간 알림 (개인정보 없이 건수 안내만, §7-3). 실패해도 무시.
+        try {
+            broadcast(new AdminAlertBroadcast(
+                'inquiry', '새 홈페이지 문의가 도착했습니다.', 'inquiries',
+            ));
+        } catch (\Throwable $e) {
+            // Pusher 미설정/실패 시 폴링으로 폴백
         }
 
         $response = response()->json([

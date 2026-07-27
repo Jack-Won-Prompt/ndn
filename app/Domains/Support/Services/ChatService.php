@@ -264,6 +264,26 @@ class ChatService
         $type === 'ndn' ? $q->whereNull("{$p}_id") : $q->where("{$p}_id", $id);
     }
 
+    /**
+     * 홈페이지 방문자 문의 중 관리자(ndn)가 아직 안 읽은 대화 수.
+     * visitor 는 항상 side a, ndn 은 side b → b_last_read_at 이후 방문자(a) 메시지가 있으면 미읽음.
+     */
+    public function unreadInquiryCount(): int
+    {
+        return ChatConversation::where('a_type', 'visitor')
+            ->whereExists(function ($q) {
+                $q->from('chat_messages')
+                    ->whereColumn('chat_messages.conversation_id', 'chat_conversations.id')
+                    ->where('sender_side', 'a')
+                    ->whereNull('deleted_at')
+                    ->where(function ($w) {
+                        $w->whereNull('chat_conversations.b_last_read_at')
+                            ->orWhereColumn('chat_messages.created_at', '>', 'chat_conversations.b_last_read_at');
+                    });
+            })
+            ->count();
+    }
+
     /** 대화 요약(목록 카드용) */
     public function summarize(ChatConversation $c, array $me): array
     {

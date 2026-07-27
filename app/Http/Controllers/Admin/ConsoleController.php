@@ -12,6 +12,7 @@ use App\Domains\Matching\Enums\PlacementStatus;
 use App\Domains\Monitoring\Models\MonthlyInterview;
 use App\Domains\Onboarding\Enums\OnboardingStatus;
 use App\Domains\Onboarding\Models\OnboardingSubmission;
+use App\Domains\Recruitment\Enums\WorkerStatus;
 use App\Domains\Recruitment\Models\Worker;
 use App\Domains\Reporting\Actions\GenerateMonthlyReportAction;
 use App\Domains\Settlement\Actions\AssignSettlementAction;
@@ -87,6 +88,7 @@ class ConsoleController extends Controller
                     ['key' => 'monitoring', 'label' => '월별 점검', 'icon' => 'clipboard'],
                     ['key' => 'farmvisits', 'label' => '농가 방문 점검', 'icon' => 'clipboard'],
                     ['key' => 'tickets', 'label' => '민원', 'icon' => 'inbox'],
+                    ['key' => 'inquiries', 'label' => '문의하기', 'icon' => 'inbox'],
                     ['key' => 'chat', 'label' => '채팅', 'icon' => 'inbox'],
                 ],
             ],
@@ -107,7 +109,21 @@ class ConsoleController extends Controller
         return view('admin.shell', [
             'menu' => self::menu(),
             'user' => Auth::user(),
+            'badges' => self::badgeCounts(),
         ]);
+    }
+
+    /**
+     * 사이드바 메뉴 배지 카운트 (조치 필요 건). 실시간 갱신은 Pusher(admin.alerts)가 담당.
+     *
+     * @return array<string, int>
+     */
+    public static function badgeCounts(): array
+    {
+        return [
+            'inquiries' => app(ChatService::class)->unreadInquiryCount(),
+            'signups' => Worker::where('status', WorkerStatus::Pending->value)->count(),
+        ];
     }
 
     /** 임베디드 화면 디스패치 */
@@ -134,6 +150,7 @@ class ConsoleController extends Controller
                 'itemLabels' => FarmVisitController::itemLabels(),
             ]),
             'tickets' => $this->tickets($request),
+            'inquiries' => view('admin.screens.inquiries'),
             'chat' => view('admin.screens.chat', ['me' => app(ChatService::class)->partyForUser(Auth::user())]),
             'settings' => $this->settingsForm(),
             'accesslog' => view('admin.screens.accesslog', [

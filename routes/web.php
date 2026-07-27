@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\CandidateGridController;
 use App\Http\Controllers\Admin\ConsoleController;
 use App\Http\Controllers\Admin\DemandGridController;
 use App\Http\Controllers\Admin\FarmVisitController;
+use App\Http\Controllers\Admin\InquiryController;
 use App\Http\Controllers\Admin\InvitationController;
 use App\Http\Controllers\Admin\MonitoringController;
 use App\Http\Controllers\Admin\SignupApprovalController;
@@ -141,6 +142,13 @@ Route::prefix('admin')->group(function () {
         // 정착 처리보드 — 대리점 배정(§7-4 동의 없으면 거부)
         Route::post('/settlements/{settlement}/assign', [ConsoleController::class, 'assignSettlement'])
             ->whereNumber('settlement')->name('admin.settlements.assign');
+
+        // 홈페이지 문의하기 (방문자 대화 — 채팅과 분리된 별도 화면)
+        Route::get('/inquiries/conversations', [InquiryController::class, 'conversations'])->name('admin.inquiries.conversations');
+        Route::get('/inquiries/{conversation}/messages', [InquiryController::class, 'messages'])
+            ->whereNumber('conversation')->name('admin.inquiries.messages');
+        Route::post('/inquiries/{conversation}/messages', [InquiryController::class, 'send'])
+            ->whereNumber('conversation')->name('admin.inquiries.send');
 
         // 근로자 가입 승인 (셀프 가입 승인 큐)
         Route::get('/signups/{worker}', [SignupApprovalController::class, 'show'])

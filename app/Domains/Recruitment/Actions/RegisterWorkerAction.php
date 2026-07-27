@@ -6,6 +6,7 @@ namespace App\Domains\Recruitment\Actions;
 
 use App\Domains\Recruitment\Enums\WorkerStatus;
 use App\Domains\Recruitment\Models\Worker;
+use App\Domains\Support\Events\AdminAlertBroadcast;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -35,7 +36,7 @@ class RegisterWorkerAction
             ]);
         }
 
-        return Worker::create([
+        $worker = Worker::create([
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => $data['password'],          // hashed cast
@@ -46,5 +47,16 @@ class RegisterWorkerAction
             'birth_date' => $data['birth_date'] ?? null,
             'phone_home_country' => $data['phone_home_country'] ?? null,
         ]);
+
+        // 관리자 콘솔 실시간 알림 (개인정보 없이 건수 안내만, §7-3). 실패해도 무시.
+        try {
+            broadcast(new AdminAlertBroadcast(
+                'signup', '새 근로자 가입 신청이 접수되었습니다.', 'signups',
+            ));
+        } catch (\Throwable $e) {
+            // Pusher 미설정/실패 시 무시
+        }
+
+        return $worker;
     }
 }
