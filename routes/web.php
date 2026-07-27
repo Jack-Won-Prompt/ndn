@@ -8,10 +8,10 @@ use App\Http\Controllers\Admin\BaseInfoGridController;
 use App\Http\Controllers\Admin\CandidateGridController;
 use App\Http\Controllers\Admin\ConsoleController;
 use App\Http\Controllers\Admin\DemandGridController;
+use App\Http\Controllers\Admin\InvitationController;
 use App\Http\Controllers\Admin\SignupApprovalController;
 use App\Http\Controllers\Admin\TicketGridController;
 use App\Http\Controllers\Admin\WorkerGridController;
-use App\Http\Controllers\Admin\InvitationController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\InvitationAcceptController;
 use App\Http\Controllers\PortalController;
@@ -43,7 +43,8 @@ Route::get('/set-language/{locale}', [SiteController::class, 'setLocale'])->name
 */
 Route::middleware('auth')->group(function () {
     Route::get('/demand', [DemandRequestController::class, 'index'])->name('demand.index');
-    Route::get('/demand/{demand}', [DemandRequestController::class, 'show'])->name('demand.show');
+    Route::get('/demand/create', [DemandRequestController::class, 'create'])->name('demand.create');
+    Route::get('/demand/{demand}', [DemandRequestController::class, 'show'])->whereNumber('demand')->name('demand.show');
     Route::post('/farms/{farm}/demand', [DemandRequestController::class, 'store'])->name('demand.store');
     Route::post('/demand/{demand}/submit', [DemandRequestController::class, 'submit'])->name('demand.submit');
 });

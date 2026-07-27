@@ -18,6 +18,11 @@
     .portal-user form{margin:0;}
     .portal-logout{font-family:inherit;font-size:13px;color:#6B7280;background:none;border:1px solid #E3E6EA;border-radius:6px;padding:6px 12px;cursor:pointer;}
     .portal-logout:hover{color:#1B1E24;border-color:#9AA1AC;}
+    .portal-nav{display:flex;align-items:center;gap:6px;margin-left:26px;}
+    .portal-nav a{font-size:14px;color:#4B5563;text-decoration:none;padding:7px 14px;border-radius:8px;font-weight:600;}
+    .portal-nav a:hover{background:#EEF1F4;color:#1B1E24;}
+    .portal-nav a.is-active{background:#1E9C92;color:#fff;}
+    .portal-left{display:flex;align-items:center;}
     .portal-body{padding:22px;}
 </style>
 <link rel="stylesheet" href="{{ asset('admin-assets/css/embed.css') }}?v={{ @filemtime(public_path('admin-assets/css/embed.css')) }}">
@@ -26,7 +31,15 @@
 </head>
 <body>
     <header class="portal-top">
-        <div class="portal-brand"><b>N.D.N</b><span>협력 포털</span></div>
+        <div class="portal-left">
+            <div class="portal-brand"><b>N.D.N</b><span>협력 포털</span></div>
+            <nav class="portal-nav">
+                @if ($user->isRole(\App\Shared\Enums\UserRole::FarmOwner))
+                    <a href="{{ route('demand.index') }}">수요 신청</a>
+                @endif
+                <a href="{{ route('portal.index') }}" class="is-active">채팅</a>
+            </nav>
+        </div>
         <div class="portal-user">
             <span>{{ $user->name }}</span>
             <form method="POST" action="{{ route('portal.logout') }}">

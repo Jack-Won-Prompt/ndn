@@ -15,6 +15,7 @@ use Database\Seeders\RoleSeeder;
 use Illuminate\Support\Facades\Event;
 
 use function Pest\Laravel\actingAs;
+use function Pest\Laravel\get;
 use function Pest\Laravel\post;
 
 beforeEach(function () {
@@ -93,4 +94,69 @@ it('송출기관 역할은 수요 신청을 생성할 수 없다', function () {
     ])->assertForbidden();
 
     expect(DemandRequest::count())->toBe(0);
+});
+
+it('농가는 목록에서 본인 농가의 수요만 본다', function () {
+    $owner = User::factory()->create();
+    $owner->assignRole(UserRole::FarmOwner->value);
+    $mine = Farm::factory()->create(['owner_user_id' => $owner->id, 'name' => '내농장']);
+    $other = Farm::factory()->create(['name' => '남의농장']);
+
+    DemandRequest::factory()->create(['farm_id' => $mine->id]);
+    DemandRequest::factory()->create(['farm_id' => $other->id]);
+
+    actingAs($owner);
+
+    get(route('demand.index'))->assertOk()
+        ->assertSee('내농장')
+        ->assertDontSee('남의농장');
+});
+
+it('농가는 자기 소유가 아닌 농가로 수요를 신청할 수 없다', function () {
+    $owner = User::factory()->create();
+    $owner->assignRole(UserRole::FarmOwner->value);
+    Farm::factory()->create(['owner_user_id' => $owner->id]); // 본인 농가
+    $other = Farm::factory()->create();                        // 남의 농가
+
+    actingAs($owner);
+
+    post(route('demand.store', $other), [
+        'nationality' => 'VN',
+        'headcount' => 3,
+        'gender' => Gender::Any->value,
+        'crop' => '오이',
+        'period_start' => '2026-09-01',
+        'period_end' => '2027-02-01',
+    ])->assertForbidden();
+
+    expect(DemandRequest::where('farm_id', $other->id)->count())->toBe(0);
+});
+
+it('농가는 수요 신청 폼을 볼 수 있다', function () {
+    $owner = User::factory()->create();
+    $owner->assignRole(UserRole::FarmOwner->value);
+    Farm::factory()->create(['owner_user_id' => $owner->id]);
+
+    actingAs($owner);
+
+    get(route('demand.create'))->assertOk()->assertSee('새 수요 신청');
+});
+
+it('NDN 관리자(본사)는 임의 농가로 수요를 신청할 수 있다', function () {
+    $admin = User::factory()->create();
+    $admin->assignRole(UserRole::NdnAdmin->value);
+    $farm = Farm::factory()->create();
+
+    actingAs($admin);
+
+    post(route('demand.store', $farm), [
+        'nationality' => 'VN',
+        'headcount' => 4,
+        'gender' => Gender::Any->value,
+        'crop' => '상추',
+        'period_start' => '2026-09-01',
+        'period_end' => '2027-02-01',
+    ])->assertRedirect();
+
+    expect(DemandRequest::where('farm_id', $farm->id)->count())->toBe(1);
 });
