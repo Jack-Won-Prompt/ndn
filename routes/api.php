@@ -11,6 +11,7 @@ use App\Domains\Recruitment\Http\Controllers\Api\DashboardController;
 use App\Domains\Recruitment\Http\Controllers\Api\WorkerProfileController;
 use App\Domains\Settlement\Http\Controllers\Api\SettlementController;
 use App\Domains\Support\Http\Controllers\Api\ChatController;
+use App\Domains\Support\Http\Controllers\Api\NoticeController as WorkerNoticeController;
 use App\Domains\Support\Http\Controllers\Api\SosController;
 use App\Domains\Support\Http\Controllers\Api\TicketController;
 use App\Http\Controllers\Api\Admin\AdminAuthController;
@@ -92,6 +93,9 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'worker'])->group(function () {
     // 민원 (문제신고/문의/연장/조기귀국)
     Route::get('/tickets', [TicketController::class, 'index']);
     Route::post('/tickets', [TicketController::class, 'store']);
+
+    // 공지사항 목록 (본인이 대상인 공지, 근로자 언어로 번역)
+    Route::get('/notices', [WorkerNoticeController::class, 'index']);
 
     // 채팅 (근로자 ↔ NDN·시청·농가) — 자국어 작성, 자동 번역
     Route::get('/chat/conversations', [ChatController::class, 'conversations']);

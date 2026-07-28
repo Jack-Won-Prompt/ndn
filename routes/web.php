@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\FarmVisitController;
 use App\Http\Controllers\Admin\InquiryController;
 use App\Http\Controllers\Admin\InvitationController;
 use App\Http\Controllers\Admin\MonitoringController;
+use App\Http\Controllers\Admin\NoticeController;
 use App\Http\Controllers\Admin\SignupApprovalController;
 use App\Http\Controllers\Admin\TicketGridController;
 use App\Http\Controllers\Admin\WorkerGridController;
@@ -155,6 +156,9 @@ Route::prefix('admin')->group(function () {
         // 계정 삭제 요청 처리 (Google Play 데이터 삭제 정책)
         Route::post('/account-deletions/{accountDeletionRequest}/process', [AccountDeletionAdminController::class, 'process'])
             ->whereNumber('accountDeletionRequest')->name('admin.account-deletions.process');
+
+        // 근로자 공지사항 발송 (FCM 푸시 + 인앱)
+        Route::post('/notices', [NoticeController::class, 'store'])->name('admin.notices.store');
 
         // 홈페이지 문의하기 (방문자 대화 — 채팅과 분리된 별도 화면)
         Route::get('/inquiries/conversations', [InquiryController::class, 'conversations'])->name('admin.inquiries.conversations');
