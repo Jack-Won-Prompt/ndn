@@ -24,6 +24,7 @@ use App\Http\Controllers\Portal\PartnerSettlementController;
 use App\Http\Controllers\PortalController;
 use App\Http\Controllers\SiteChatController;
 use App\Http\Controllers\SiteController;
+use App\Models\Setting;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -42,6 +43,14 @@ Route::get('/partners', [SiteController::class, 'page'])->defaults('key', 'partn
 Route::get('/contact', [SiteController::class, 'page'])->defaults('key', 'contact')->name('site.contact');
 // 경로는 프로젝트 루트의 물리 디렉터리(lang/)와 겹치지 않게 set-language 를 쓴다.
 Route::get('/set-language/{locale}', [SiteController::class, 'setLocale'])->name('site.lang');
+
+// 앱 다운로드 — 관리자 설정(app.play_store_url)이 있으면 플레이스토어로, 없으면 홈페이지로.
+// QR·설치 링크가 이 고정 주소를 가리켜, 등록 후 목적지만 바뀌고 QR 은 그대로 쓴다.
+Route::get('/get-app', function () {
+    $url = Setting::get('app.play_store_url');
+
+    return redirect()->away(filled($url) ? $url : route('site.home'));
+})->name('app.download');
 
 // 법적 고지 (플레이스토어 제출용 — 공개·비로그인). 개인정보처리방침·이용약관·계정 삭제 요청
 Route::get('/privacy', [SiteController::class, 'page'])->defaults('key', 'privacy')->name('site.privacy');

@@ -61,6 +61,15 @@ class Setting extends Model
                     ['key' => 'contact.hours',   'label' => '운영 시간', 'ph' => '평일 09:00–18:00'],
                 ],
             ],
+            [
+                'group' => '모바일 앱',
+                'fields' => [
+                    // 비우면 앱 다운로드(QR·설치 링크)가 홈페이지로 연결된다.
+                    // 플레이스토어 등록 후 전체 URL 을 넣으면 자동으로 플레이스토어로 연결된다.
+                    ['key' => 'app.play_store_url', 'label' => '플레이스토어 URL', 'type' => 'url',
+                        'ph' => 'https://play.google.com/store/apps/details?id=...'],
+                ],
+            ],
         ];
     }
 

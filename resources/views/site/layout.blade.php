@@ -107,7 +107,7 @@
             <div>
                 <h4>근로자</h4>
                 <ul>
-                    <li><a href="{{ url('/app/') }}">모바일 앱 설치</a></li>
+                    <li><a href="{{ route('app.download') }}">모바일 앱 설치</a></li>
                     <li><a href="{{ route('site.worker') }}">입국 전 준비</a></li>
                     <li><a href="{{ route('site.worker') }}#living">한국 생활 안내</a></li>
                     <li><a href="{{ route('site.worker') }}#faq">자주 묻는 질문</a></li>
