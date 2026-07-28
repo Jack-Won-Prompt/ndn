@@ -117,8 +117,9 @@
         <div class="footer__bottom">
             <span>&copy; {{ date('Y') }} 주식회사 앤디앤 (N.D.N Korea)</span>
             <nav aria-label="약관">
-                <a href="#">개인정보처리방침</a>
-                <a href="#">이용약관</a>
+                <a href="{{ route('site.privacy') }}">개인정보처리방침</a>
+                <a href="{{ route('site.terms') }}">이용약관</a>
+                <a href="{{ route('legal.account-deletion') }}">계정 삭제</a>
             </nav>
         </div>
     </div>

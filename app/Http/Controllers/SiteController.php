@@ -25,6 +25,9 @@ class SiteController extends Controller
         'worker' => ['site.worker', 'worker'],
         'partners' => ['site.partners', 'partners'],
         'contact' => ['site.contact', 'contact'],
+        // 법적 고지 페이지 (플레이스토어 제출용 — 공개·비로그인·자동번역)
+        'privacy' => ['site.privacy', ''],
+        'terms' => ['site.terms', ''],
     ];
 
     public function page(Request $request, SiteTranslator $translator): Response

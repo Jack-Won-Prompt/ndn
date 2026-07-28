@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Domains\Demand\Http\Controllers\DemandRequestController;
+use App\Http\Controllers\AccountDeletionController;
+use App\Http\Controllers\Admin\AccountDeletionAdminController;
 use App\Http\Controllers\Admin\AuthController as AdminAuthController;
 use App\Http\Controllers\Admin\BaseInfoGridController;
 use App\Http\Controllers\Admin\CandidateGridController;
@@ -39,6 +41,13 @@ Route::get('/partners', [SiteController::class, 'page'])->defaults('key', 'partn
 Route::get('/contact', [SiteController::class, 'page'])->defaults('key', 'contact')->name('site.contact');
 // 경로는 프로젝트 루트의 물리 디렉터리(lang/)와 겹치지 않게 set-language 를 쓴다.
 Route::get('/set-language/{locale}', [SiteController::class, 'setLocale'])->name('site.lang');
+
+// 법적 고지 (플레이스토어 제출용 — 공개·비로그인). 개인정보처리방침·이용약관·계정 삭제 요청
+Route::get('/privacy', [SiteController::class, 'page'])->defaults('key', 'privacy')->name('site.privacy');
+Route::get('/terms', [SiteController::class, 'page'])->defaults('key', 'terms')->name('site.terms');
+Route::get('/account-deletion', [AccountDeletionController::class, 'show'])->name('legal.account-deletion');
+Route::post('/account-deletion', [AccountDeletionController::class, 'store'])
+    ->middleware('throttle:10,1')->name('legal.account-deletion.store');
 
 // 회사소개 사이트 우하단 "문의하기" 실시간 채팅 (익명 방문자 ↔ NDN 관리자, 로그인 불필요)
 Route::post('/site-chat/message', [SiteChatController::class, 'message'])
@@ -142,6 +151,10 @@ Route::prefix('admin')->group(function () {
         // 정착 처리보드 — 대리점 배정(§7-4 동의 없으면 거부)
         Route::post('/settlements/{settlement}/assign', [ConsoleController::class, 'assignSettlement'])
             ->whereNumber('settlement')->name('admin.settlements.assign');
+
+        // 계정 삭제 요청 처리 (Google Play 데이터 삭제 정책)
+        Route::post('/account-deletions/{accountDeletionRequest}/process', [AccountDeletionAdminController::class, 'process'])
+            ->whereNumber('accountDeletionRequest')->name('admin.account-deletions.process');
 
         // 홈페이지 문의하기 (방문자 대화 — 채팅과 분리된 별도 화면)
         Route::get('/inquiries/conversations', [InquiryController::class, 'conversations'])->name('admin.inquiries.conversations');

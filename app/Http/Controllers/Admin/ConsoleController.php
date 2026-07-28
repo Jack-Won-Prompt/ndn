@@ -20,6 +20,7 @@ use App\Domains\Settlement\Enums\SettlementStatus;
 use App\Domains\Settlement\Models\SettlementRequest;
 use App\Domains\Support\Actions\UpdateTicketStatusAction;
 use App\Domains\Support\Enums\TicketStatus;
+use App\Domains\Support\Models\AccountDeletionRequest;
 use App\Domains\Support\Models\SosAlert;
 use App\Domains\Support\Models\SupportTicket;
 use App\Domains\Support\Services\ChatService;
@@ -96,6 +97,7 @@ class ConsoleController extends Controller
                 'group' => '설정',
                 'items' => [
                     ['key' => 'invitations', 'label' => '조직 초대', 'icon' => 'users'],
+                    ['key' => 'account-deletions', 'label' => '계정 삭제 요청', 'icon' => 'inbox'],
                     ['key' => 'settings', 'label' => '사이트 설정', 'icon' => 'cog'],
                     ['key' => 'accesslog', 'label' => '접속 로그', 'icon' => 'inbox'],
                 ],
@@ -123,6 +125,7 @@ class ConsoleController extends Controller
         return [
             'inquiries' => app(ChatService::class)->unreadInquiryCount(),
             'signups' => Worker::where('status', WorkerStatus::Pending->value)->count(),
+            'account-deletions' => AccountDeletionRequest::where('status', AccountDeletionRequest::STATUS_PENDING)->count(),
         ];
     }
 
@@ -150,6 +153,7 @@ class ConsoleController extends Controller
                 'itemLabels' => FarmVisitController::itemLabels(),
             ]),
             'tickets' => $this->tickets($request),
+            'account-deletions' => view('admin.screens.account-deletions', ['rows' => AccountDeletionAdminController::rows()]),
             'inquiries' => view('admin.screens.inquiries'),
             'chat' => view('admin.screens.chat', ['me' => app(ChatService::class)->partyForUser(Auth::user())]),
             'settings' => $this->settingsForm(),
