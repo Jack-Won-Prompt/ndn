@@ -13,6 +13,9 @@ class DatabaseSeeder extends Seeder
         // 역할 6종 먼저 (계정에 부여하기 전). 운영·로컬 공통으로 항상 필요.
         $this->call(RoleSeeder::class);
 
+        // 회사(사업자) 기본 정보 — 운영·로컬 공통. 값이 없을 때만 채운다(관리자 수정값 보존).
+        $this->call(CompanyInfoSeeder::class);
+
         // 운영(production)에서는 테스트 계정·데모 데이터를 만들지 않는다.
         // 관리자 계정은 별도로 생성한다: php artisan ndn:create-admin ...
         // 운영에서 테스트가 필요하면 아래 시더를 명시적으로 실행:
