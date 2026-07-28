@@ -23,6 +23,10 @@
              경로가 route() 에 섞이면 테스트 라우트 매칭이 어긋나므로 여기서 덮어쓴다. -->
         <env name="APP_URL" value="http://localhost"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
+        <!-- 테스트는 외부로 나가지 않는다. 브로드캐스트를 null 로 고정해 실제 Pusher
+             HTTP 호출(ShouldBroadcastNow)이 네트워크를 타는 것을 막는다. 이벤트 발송
+             자체는 Event::fake 로 검증한다. -->
+        <env name="BROADCAST_CONNECTION" value="null"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="CACHE_STORE" value="array"/>
         <env name="DB_CONNECTION" value="sqlite"/>
