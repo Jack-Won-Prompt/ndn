@@ -6,6 +6,7 @@ namespace App\Domains\Recruitment\Actions;
 
 use App\Domains\Recruitment\Enums\WorkerStatus;
 use App\Domains\Recruitment\Models\Worker;
+use App\Domains\Recruitment\Notifications\WorkerApprovedNotification;
 use App\Models\User;
 
 /**
@@ -32,6 +33,10 @@ class ApproveWorkerAction
             ->causedBy($admin)
             ->withProperties(['action' => 'approve'])
             ->log('근로자 가입 승인');
+
+        // 승인 전에는 로그인이 막혀 있어 근로자가 앱에서 결과를 볼 수 없다.
+        // 푸시가 사실상 유일한 통지 수단이라 승인 직후에 보낸다.
+        $worker->notify(new WorkerApprovedNotification($worker->locale ?? 'ko'));
 
         return $worker;
     }

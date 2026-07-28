@@ -43,3 +43,7 @@ yarn-error.log
 
 # 사용 매뉴얼 문서 (git 관리 제외 — 별도 배포)
 /docs/
+
+# Firebase 서비스 계정 키 (FCM 발송용) — 절대 커밋 금지.
+# 이 키 하나로 프로젝트의 모든 기기에 푸시를 보낼 수 있다.
+/storage/app/firebase/*.json

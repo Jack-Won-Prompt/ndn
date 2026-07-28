@@ -6,6 +6,7 @@ namespace App\Domains\Recruitment\Actions;
 
 use App\Domains\Recruitment\Enums\WorkerStatus;
 use App\Domains\Recruitment\Models\Worker;
+use App\Domains\Recruitment\Notifications\WorkerRejectedNotification;
 use App\Models\User;
 
 /**
@@ -28,6 +29,9 @@ class RejectWorkerAction
             ->causedBy($admin)
             ->withProperties(['action' => 'reject', 'reason' => $reason])
             ->log('근로자 가입 거절');
+
+        // 사유는 싣지 않는다 — 잠금화면에 뜨므로 담당자 문의로만 안내한다(§7-3).
+        $worker->notify(new WorkerRejectedNotification($worker->locale ?? 'ko'));
 
         return $worker;
     }

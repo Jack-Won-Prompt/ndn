@@ -6,6 +6,7 @@ namespace App\Domains\Onboarding\Actions;
 
 use App\Domains\Onboarding\Enums\OnboardingStatus;
 use App\Domains\Onboarding\Models\OnboardingSubmission;
+use App\Domains\Onboarding\Notifications\OnboardingReviewedNotification;
 use App\Domains\Onboarding\Support\OnboardingProfile;
 use App\Models\User;
 use InvalidArgumentException;
@@ -47,6 +48,16 @@ class ReviewOnboardingAction
         // 대조(§4)에 쓰이므로 payload 에만 두면 안 된다.
         if ($decision === OnboardingStatus::Approved) {
             $this->promoteProfile($submission, $reviewer);
+        }
+
+        // 검수 결과는 근로자가 기다리는 값이라 바로 알린다. 반려 사유는 싣지 않고
+        // 앱을 열어 보게 한다(§7-3 — 사유에 개인 사정이 담기기 쉽다).
+        $worker = $submission->worker;
+        if ($worker !== null) {
+            $worker->notify(new OnboardingReviewedNotification(
+                approved: $decision === OnboardingStatus::Approved,
+                workerLocale: $worker->locale ?? 'ko',
+            ));
         }
 
         return $submission;

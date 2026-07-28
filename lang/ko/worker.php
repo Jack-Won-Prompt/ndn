@@ -15,4 +15,18 @@ return [
     'register_pending' => '가입 신청이 접수되었습니다. 관리자 승인 후 로그인할 수 있습니다.',
     'pending_approval' => '아직 승인되지 않은 계정입니다. 관리자 승인을 기다려 주세요.',
     'passport_taken' => '이미 등록된 여권번호입니다. 담당자에게 문의하세요.',
+
+    // 푸시 알림 — 잠금화면에 그대로 뜨므로 개인정보를 넣지 않는다.
+    'push_approved_title' => '가입이 승인되었습니다',
+    'push_approved_body' => '이제 앱에 로그인할 수 있습니다.',
+    'push_rejected_title' => '가입 신청 결과 안내',
+    'push_rejected_body' => '자세한 내용은 담당자에게 문의하세요.',
+    'push_onboarding_approved_title' => '서류 검수가 완료되었습니다',
+    'push_onboarding_rejected_title' => '서류를 다시 확인해 주세요',
+    'push_onboarding_body' => '앱에서 확인하세요.',
+    'push_placement_title' => '배정이 확정되었습니다',
+    'push_placement_body' => '앱에서 배정 내용을 확인하세요.',
+    'push_message_title' => '새 메시지가 도착했습니다',
+    'push_message_body' => '앱에서 확인하세요.',
+    'push_ticket_title' => '민원 처리 상태가 바뀌었습니다',
 ];

@@ -11,10 +11,13 @@ use App\Domains\Onboarding\Policies\OnboardingSubmissionPolicy;
 use App\Domains\Settlement\Models\SettlementRequest;
 use App\Domains\Settlement\Policies\SettlementRequestPolicy;
 use App\Models\Setting;
+use App\Shared\Notifications\Channels\FcmChannel;
 use App\Support\Livewire\BasePathHandleRequests;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Notifications\ChannelManager;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
@@ -72,5 +75,10 @@ class AppServiceProvider extends ServiceProvider
         if ($basePath !== '') {
             config(['livewire.asset_url' => $basePath.'/livewire/livewire.js']);
         }
+
+        // 알림 via() 에 'fcm' 을 쓰면 이 채널이 잡는다 (푸시 발송).
+        Notification::resolved(function (ChannelManager $manager) {
+            $manager->extend('fcm', fn ($app) => $app->make(FcmChannel::class));
+        });
     }
 }

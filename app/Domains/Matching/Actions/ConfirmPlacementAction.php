@@ -9,6 +9,7 @@ use App\Domains\Arrival\Enums\ArrivalStatus;
 use App\Domains\Arrival\Models\ArrivalRecord;
 use App\Domains\Matching\Enums\PlacementStatus;
 use App\Domains\Matching\Models\Placement;
+use App\Domains\Matching\Notifications\PlacementConfirmedNotification;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -32,7 +33,7 @@ class ConfirmPlacementAction
             );
         }
 
-        return DB::transaction(function () use ($placement, $actor) {
+        $placement = DB::transaction(function () use ($placement, $actor) {
             $placement->forceFill([
                 'status' => PlacementStatus::Confirmed,
                 'confirmed_at' => now(),
@@ -55,5 +56,14 @@ class ConfirmPlacementAction
 
             return $placement->refresh();
         });
+
+        // 알림은 트랜잭션 밖에서 보낸다 — 커밋되지 않은 확정을 알리면
+        // 롤백됐을 때 근로자에게 거짓 통지가 남는다.
+        $worker = $placement->worker;
+        if ($worker !== null) {
+            $worker->notify(new PlacementConfirmedNotification($worker->locale ?? 'ko'));
+        }
+
+        return $placement;
     }
 }

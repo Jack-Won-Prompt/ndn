@@ -24,6 +24,7 @@ use App\Http\Controllers\Api\Admin\MatchingAdminController;
 use App\Http\Controllers\Api\Admin\SosAdminController;
 use App\Http\Controllers\Api\Admin\WorkerAdminController;
 use App\Http\Controllers\Api\AppVersionController;
+use App\Shared\Notifications\Http\Controllers\DeviceTokenController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -59,6 +60,10 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'worker'])->group(function () {
 
     // 홈 대시보드 — 배정·입국·평가·진행 건수 요약 (로그인 후 첫 화면)
     Route::get('/dashboard', DashboardController::class);
+
+    // 푸시 수신 기기 등록·해제 (FCM). 소유자는 인증된 근로자에서 파생한다.
+    Route::post('/device-tokens', [DeviceTokenController::class, 'store']);
+    Route::delete('/device-tokens', [DeviceTokenController::class, 'destroy']);
 
     // 근로 생활 평가 (월별 점검 6항목) — 본인 이력 조회 + 자가 평가 제출
     Route::get('/interviews', [MonthlyInterviewController::class, 'index']);
@@ -119,6 +124,10 @@ Route::prefix('v1/admin')->middleware(['auth:sanctum', 'portal'])->group(functio
 
     // 대시보드 — 긴급(SOS)·할 일·현황 집계 (로그인 후 첫 화면)
     Route::get('/dashboard', DashboardAdminController::class);
+
+    // 푸시 수신 기기 등록·해제 (FCM). 근로자와 같은 컨트롤러, 소유자만 다르다.
+    Route::post('/device-tokens', [DeviceTokenController::class, 'store']);
+    Route::delete('/device-tokens', [DeviceTokenController::class, 'destroy']);
 
     // 근로자 — 목록·상세·가입 승인·재직 상태
     Route::get('/workers', [WorkerAdminController::class, 'index']);

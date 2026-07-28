@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
 /**
@@ -35,7 +36,8 @@ use Laravel\Sanctum\HasApiTokens;
 class Worker extends Model implements AuthenticatableContract
 {
     // 근로자 앱은 Sanctum 토큰으로 인증하므로 Authenticatable 을 구현한다(비밀번호 미사용).
-    use Authenticatable, HasApiTokens, HasFactory, LogsPersonalDataAccess, MasksSensitiveData, SoftDeletes;
+    // Notifiable — 푸시·앱 알림함 수신자가 된다(승인 결과·검수 결과·배정 확정 등).
+    use Authenticatable, HasApiTokens, HasFactory, LogsPersonalDataAccess, MasksSensitiveData, Notifiable, SoftDeletes;
 
     /**
      * 로그·toArray 에서 가릴 민감 속성 (MasksSensitiveData).
