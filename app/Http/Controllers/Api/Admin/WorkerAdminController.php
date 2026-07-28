@@ -59,6 +59,8 @@ class WorkerAdminController extends Controller
                 'current_page' => $page->currentPage(),
                 'last_page' => $page->lastPage(),
                 'statuses' => $this->statusOptions(),
+                // 필터와 무관한 상태별 총 건수 — 목록 상단 요약 띠에 쓴다.
+                'counts' => $this->statusCounts(PortalScope::workers(Worker::query(), $actor)),
                 'can_decide' => PortalScope::canDecide($actor),
             ],
         ]);

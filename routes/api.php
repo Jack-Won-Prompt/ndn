@@ -7,6 +7,7 @@ use App\Domains\Monitoring\Http\Controllers\Api\MonthlyInterviewController;
 use App\Domains\Onboarding\Http\Controllers\Api\ConsentController;
 use App\Domains\Onboarding\Http\Controllers\Api\OnboardingController;
 use App\Domains\Recruitment\Http\Controllers\Api\AuthController;
+use App\Domains\Recruitment\Http\Controllers\Api\DashboardController;
 use App\Domains\Recruitment\Http\Controllers\Api\WorkerProfileController;
 use App\Domains\Settlement\Http\Controllers\Api\SettlementController;
 use App\Domains\Support\Http\Controllers\Api\ChatController;
@@ -17,6 +18,7 @@ use App\Http\Controllers\Api\Admin\ArrivalAdminController;
 use App\Http\Controllers\Api\Admin\CandidateAdminController;
 use App\Http\Controllers\Api\Admin\CaseworkAdminController;
 use App\Http\Controllers\Api\Admin\ChatAdminController;
+use App\Http\Controllers\Api\Admin\DashboardAdminController;
 use App\Http\Controllers\Api\Admin\FieldWorkAdminController;
 use App\Http\Controllers\Api\Admin\MatchingAdminController;
 use App\Http\Controllers\Api\Admin\SosAdminController;
@@ -54,6 +56,9 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'worker'])->group(function () {
 
     // 본인 프로필
     Route::get('/me', [WorkerProfileController::class, 'show']);
+
+    // 홈 대시보드 — 배정·입국·평가·진행 건수 요약 (로그인 후 첫 화면)
+    Route::get('/dashboard', DashboardController::class);
 
     // 근로 생활 평가 (월별 점검 6항목) — 본인 이력 조회 + 자가 평가 제출
     Route::get('/interviews', [MonthlyInterviewController::class, 'index']);
@@ -111,6 +116,9 @@ Route::prefix('v1/admin')->group(function () {
 Route::prefix('v1/admin')->middleware(['auth:sanctum', 'portal'])->group(function () {
     Route::get('/me', [AdminAuthController::class, 'me']);
     Route::post('/auth/logout', [AdminAuthController::class, 'logout']);
+
+    // 대시보드 — 긴급(SOS)·할 일·현황 집계 (로그인 후 첫 화면)
+    Route::get('/dashboard', DashboardAdminController::class);
 
     // 근로자 — 목록·상세·가입 승인·재직 상태
     Route::get('/workers', [WorkerAdminController::class, 'index']);

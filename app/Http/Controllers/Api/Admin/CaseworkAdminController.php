@@ -64,7 +64,12 @@ class CaseworkAdminController extends Controller
                 'review_note' => $s->review_note,
                 'payload' => $s->payload,
             ])->all(),
-            'meta' => $this->listMeta($page, $actor, OnboardingStatus::cases()),
+            'meta' => $this->listMeta(
+                $page,
+                $actor,
+                OnboardingStatus::cases(),
+                PortalScope::byWorker(OnboardingSubmission::query(), $actor),
+            ),
         ]);
     }
 
@@ -126,7 +131,12 @@ class CaseworkAdminController extends Controller
                 'status_label' => $t->status->label(),
                 'created' => $t->created_at?->toIso8601String(),
             ])->all(),
-            'meta' => $this->listMeta($page, $actor, TicketStatus::cases()),
+            'meta' => $this->listMeta(
+                $page,
+                $actor,
+                TicketStatus::cases(),
+                PortalScope::byWorker(SupportTicket::query(), $actor),
+            ),
         ]);
     }
 
@@ -188,7 +198,12 @@ class CaseworkAdminController extends Controller
                 'status_label' => $s->status->label(),
                 'created' => $s->created_at?->toIso8601String(),
             ])->all(),
-            'meta' => $this->listMeta($page, $actor, SettlementStatus::cases()),
+            'meta' => $this->listMeta(
+                $page,
+                $actor,
+                SettlementStatus::cases(),
+                PortalScope::byWorker(SettlementRequest::query(), $actor),
+            ),
         ]);
     }
 
@@ -218,7 +233,7 @@ class CaseworkAdminController extends Controller
      *
      * @param  list<\BackedEnum>  $statuses
      */
-    private function listMeta($page, $actor, array $statuses): array
+    private function listMeta($page, $actor, array $statuses, $countBase = null): array
     {
         return [
             'total' => $page->total(),
@@ -228,6 +243,8 @@ class CaseworkAdminController extends Controller
                 fn ($s) => ['value' => $s->value, 'label' => $s->label()],
                 $statuses,
             ),
+            // 필터와 무관한 상태별 총 건수 — 목록 상단 요약 띠에 쓴다.
+            'counts' => $countBase === null ? [] : $this->statusCounts($countBase),
             'can_decide' => PortalScope::canDecide($actor),
         ];
     }

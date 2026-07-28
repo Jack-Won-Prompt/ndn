@@ -75,6 +75,11 @@ class ArrivalAdminController extends Controller
                     ],
                     ArrivalDocument::cases(),
                 ),
+                // 필터와 무관한 상태별 총 건수 — 목록 상단 요약 띠에 쓴다.
+                'counts' => $this->statusCounts(
+                    ArrivalRecord::query()
+                        ->whereHas('placement', fn ($p) => PortalScope::placements($p, $actor)),
+                ),
                 'can_decide' => PortalScope::canDecide($actor),
             ],
         ]);

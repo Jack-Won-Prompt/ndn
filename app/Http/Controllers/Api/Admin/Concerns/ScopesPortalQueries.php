@@ -68,4 +68,25 @@ trait ScopesPortalQueries
     {
         return min(max((int) $request->integer('per_page', 30), 1), 100);
     }
+
+    /**
+     * 상태별 건수 — 목록 화면 상단 요약 띠에 쓴다.
+     *
+     * **필터가 걸리기 전의** 스코프 쿼리를 넘겨야 한다. '대기 3건' 을 보려고
+     * 필터를 걸었더니 그 숫자까지 3으로 바뀌면 요약이 쓸모없기 때문이다.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<*>  $scoped
+     * @return array<string, int>
+     */
+    protected function statusCounts($scoped): array
+    {
+        return $scoped
+            ->reorder()
+            ->select('status')
+            ->selectRaw('count(*) as aggregate_count')
+            ->groupBy('status')
+            ->pluck('aggregate_count', 'status')
+            ->map(fn ($n) => (int) $n)
+            ->all();
+    }
 }
