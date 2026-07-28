@@ -27,10 +27,10 @@ return [
     'android' => [
 
         /** 최신 버전의 versionCode (pubspec.yaml 의 version 뒤 +숫자). */
-        'latest_version' => (int) env('APP_ANDROID_LATEST_VERSION', 1),
+        'latest_version' => (int) env('APP_ANDROID_LATEST_VERSION', 2),
 
         /** 사용자에게 보여줄 버전명. */
-        'latest_version_name' => env('APP_ANDROID_LATEST_VERSION_NAME', '1.0.0'),
+        'latest_version_name' => env('APP_ANDROID_LATEST_VERSION_NAME', '1.1.0'),
 
         /**
          * 이 값 **미만**의 versionCode 는 강제 업데이트(앱 사용 차단).
@@ -41,18 +41,18 @@ return [
         /** 설치 파일 주소. 기기 ABI 를 몰라도 되는 universal 을 기본으로 준다. */
         'download_url' => env(
             'APP_ANDROID_DOWNLOAD_URL',
-            'https://ndnkorea.co.kr/app/ndn-worker-1.0.0-universal.apk'
+            'https://ndnkorea.co.kr/app/ndn-app-1.1.0-universal.apk'
         ),
 
         /** ABI 별 주소(앱이 자기 기기에 맞는 것을 골라 받는다 — 용량 절반). */
         'download_urls' => [
             'arm64-v8a' => env(
                 'APP_ANDROID_DOWNLOAD_URL_ARM64',
-                'https://ndnkorea.co.kr/app/ndn-worker-1.0.0-arm64.apk'
+                'https://ndnkorea.co.kr/app/ndn-app-1.1.0-arm64.apk'
             ),
             'armeabi-v7a' => env(
                 'APP_ANDROID_DOWNLOAD_URL_ARM32',
-                'https://ndnkorea.co.kr/app/ndn-worker-1.0.0-arm32.apk'
+                'https://ndnkorea.co.kr/app/ndn-app-1.1.0-arm32.apk'
             ),
         ],
 
