@@ -40,3 +40,6 @@ yarn-error.log
 
 # 앱 설치 파일 (수십 MB — 서버에 직접 업로드, git 으로 옮기지 않음)
 /public/app/*.apk
+
+# 사용 매뉴얼 문서 (git 관리 제외 — 별도 배포)
+/docs/
