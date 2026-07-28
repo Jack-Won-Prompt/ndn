@@ -15,8 +15,8 @@
 
     <p class="aiw-title">모바일 앱 설치</p>
 
-    <a class="aiw-qr" href="{{ route('app.download') }}">
-        <img src="{{ asset('app/install-qr.svg') }}" alt="앱 설치 QR 코드" width="132" height="132">
+    <a class="aiw-qr" href="https://ndnkorea.co.kr">
+        <img src="{{ asset('app/install-qr.svg') }}" alt="홈페이지 QR 코드" width="132" height="132">
     </a>
     <p class="aiw-hint">휴대폰으로 찍으세요</p>
 </aside>
