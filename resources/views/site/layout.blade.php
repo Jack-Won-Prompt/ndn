@@ -125,7 +125,12 @@
     </div>
 </footer>
 
-@include('partials.app-install-widget')
+{{-- 앱 안(WebView)에서 볼 때는 설치 안내를 띄우지 않는다 —
+     이미 설치한 사람에게 "앱 설치" QR 을 보여 줄 이유가 없다.
+     앱은 User-Agent 에 NDNApp 을 붙여 자신을 알린다. --}}
+@unless (request()->userAgent() && str_contains(request()->userAgent(), 'NDNApp'))
+    @include('partials.app-install-widget')
+@endunless
 @include('partials.chat-widget')
 
 <script src="{{ asset('site/assets/js/main.js') }}"></script>
