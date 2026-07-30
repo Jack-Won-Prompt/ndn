@@ -15,8 +15,11 @@
 
     <p class="aiw-title">모바일 앱 설치</p>
 
-    <a class="aiw-qr" href="https://ndnkorea.co.kr">
-        <img src="{{ asset('app/install-qr.svg') }}" alt="홈페이지 QR 코드" width="132" height="132">
+    {{-- QR 과 링크는 같은 곳을 가리켜야 한다. 둘이 어긋나면 PC 에서 누른 사람과
+         휴대폰으로 찍은 사람이 서로 다른 데로 간다. --}}
+    @php $storeUrl = 'https://play.google.com/store/apps/details?id=kr.co.ndn.ndn_worker&hl=ko'; @endphp
+    <a class="aiw-qr" href="{{ $storeUrl }}" target="_blank" rel="noopener">
+        <img src="{{ asset('app/install-qr.svg') }}" alt="플레이스토어 QR 코드" width="132" height="132">
     </a>
     <p class="aiw-hint">휴대폰으로 찍으세요</p>
 </aside>
