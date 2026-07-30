@@ -27,6 +27,11 @@ class SiteContentSeeder extends Seeder
 
             $page = SitePage::firstOrCreate(['key' => $data['key']], $data);
 
+            // 탭 라벨은 나중에 추가된 칸이라, 기존 페이지에도 채워 준다.
+            if (blank($page->nav_label)) {
+                $page->forceFill(['nav_label' => $data['nav_label']])->save();
+            }
+
             // 이미 채워진 페이지는 그대로 둔다 — 관리자가 고친 내용을 덮으면 안 된다.
             if ($page->sections()->exists()) {
                 continue;
@@ -49,6 +54,7 @@ class SiteContentSeeder extends Seeder
         return [
             [
                 'key' => 'home',
+                'nav_label' => '홈',
                 'title' => '모집부터 귀국까지 하나의 데이터로 관리합니다',
                 'lead' => '농가 수요 신청, 송출국 모집과 현지 면접, 입국과 배치, 정착 서비스, 월별 사후관리까지. 흩어져 있던 계절근로자 행정을 N.D.N Korea가 하나의 흐름으로 잇습니다.',
                 'hero_image' => 'site/assets/img/hero_greenhouse.jpg',
@@ -198,6 +204,7 @@ class SiteContentSeeder extends Seeder
             ],
             [
                 'key' => 'about',
+                'nav_label' => '회사소개',
                 'title' => '회사소개',
                 'lead' => '제도와 현장 사이에서, 양쪽 말을 모두 알아듣는 회사가 필요했습니다.',
                 'hero_image' => 'site/assets/img/landscape.jpg',
@@ -276,6 +283,7 @@ class SiteContentSeeder extends Seeder
             ],
             [
                 'key' => 'services',
+                'nav_label' => '서비스',
                 'title' => '서비스',
                 'lead' => '모집에서 사후관리까지, 단계마다 무엇을 하는지 구체적으로 적었습니다.',
                 'hero_image' => 'site/assets/img/hero_interior.jpg',
@@ -407,6 +415,7 @@ class SiteContentSeeder extends Seeder
             ],
             [
                 'key' => 'worker',
+                'nav_label' => '근로자 지원',
                 'title' => '근로자 지원',
                 'lead' => '한국에 오기 전에 알아 두면 좋은 것들을 정리했습니다.',
                 'hero_image' => 'site/assets/img/harvest.jpg',
@@ -535,6 +544,7 @@ class SiteContentSeeder extends Seeder
             ],
             [
                 'key' => 'partners',
+                'nav_label' => '협력기관',
                 'title' => '협력기관',
                 'lead' => '혼자 할 수 있는 일이 아닙니다. 국내외 기관과 함께 움직입니다.',
                 'hero_image' => 'site/assets/img/partnership_meeting.jpg',
@@ -625,6 +635,7 @@ class SiteContentSeeder extends Seeder
             ],
             [
                 'key' => 'contact',
+                'nav_label' => '문의',
                 'title' => '문의',
                 'lead' => '지자체 담당자, 농가, 송출기관, 제휴사 모두 환영합니다.',
                 'icon' => 'mail_rounded',

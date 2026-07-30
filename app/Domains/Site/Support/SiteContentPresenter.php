@@ -45,6 +45,8 @@ class SiteContentPresenter
             $data = $pages->map(fn (SitePage $page) => [
                 'key' => $page->key,
                 'title' => $page->title,
+                // 하단 탭에 쓸 짧은 이름. 없으면 제목을 쓴다.
+                'nav_label' => $page->nav_label ?: $page->title,
                 'lead' => $page->lead,
                 'icon' => $page->icon,
                 'hero_image' => $this->url($page->hero_image),

@@ -11,6 +11,7 @@ use App\Domains\Recruitment\Http\Controllers\Api\DashboardController;
 use App\Domains\Recruitment\Http\Controllers\Api\WorkerProfileController;
 use App\Domains\Settlement\Http\Controllers\Api\SettlementController;
 use App\Domains\Site\Http\Controllers\Api\SiteContentController;
+use App\Domains\Site\Http\Controllers\Api\SiteInquiryController;
 use App\Domains\Support\Http\Controllers\Api\ChatController;
 use App\Domains\Support\Http\Controllers\Api\NoticeController as WorkerNoticeController;
 use App\Domains\Support\Http\Controllers\Api\SosController;
@@ -54,6 +55,10 @@ Route::get('v1/app/version', AppVersionController::class)->middleware('throttle:
 | 로그인 전에 그리는 화면이라 **인증 밖**에 둔다. 공개 사이트와 같은 내용이다.
 */
 Route::get('v1/site/pages', SiteContentController::class)->middleware('throttle:60,1');
+
+// 앱에서 보내는 문의 — 홈페이지 문의와 같은 곳(관리자 콘솔 '문의')으로 들어간다.
+// 계정이 없는 농가·지자체가 쓰는 창구라 인증 밖이다. 도배 방지로 throttle.
+Route::post('v1/site/inquiry', SiteInquiryController::class)->middleware('throttle:5,1');
 
 // 로그인은 토큰 발급 전이므로 인증 미들웨어 밖에 둔다. 무차별 대입 방지로 throttle 적용.
 Route::prefix('v1')->group(function () {

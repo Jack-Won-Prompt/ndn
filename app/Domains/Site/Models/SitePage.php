@@ -16,7 +16,7 @@ class SitePage extends Model
     use HasFactory;
 
     protected $fillable = [
-        'key', 'title', 'lead', 'hero_image', 'position', 'in_app_nav', 'icon',
+        'key', 'title', 'nav_label', 'lead', 'hero_image', 'position', 'in_app_nav', 'icon',
     ];
 
     protected function casts(): array
