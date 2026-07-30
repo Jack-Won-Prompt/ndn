@@ -35,7 +35,10 @@
 </div>
 
 <style>
-    .cw { position: fixed; right: 20px; bottom: 20px; z-index: 9999; font-family: inherit; }
+    /* 아래 여백은 변수로 둔다 — 패널 높이가 이 값에 맞춰 줄어들어야
+       위로 올렸을 때 머리말(닫기 버튼)이 화면 밖으로 밀리지 않는다.
+       앱 안에서는 레이아웃이 이 변수를 키워 로그인 버튼을 피한다. */
+    .cw { position: fixed; right: 20px; --cw-bottom: 20px; bottom: var(--cw-bottom); z-index: 9999; font-family: inherit; }
     .cw-launch { display: inline-flex; align-items: center; gap: 8px; border: 0; cursor: pointer;
         background: #1E9C92; color: #fff; font-family: inherit; font-size: 15px; font-weight: 700;
         padding: 12px 18px; border-radius: 999px; box-shadow: 0 8px 24px rgba(15,23,42,.22); transition: transform .15s, box-shadow .15s; }
@@ -45,7 +48,7 @@
 
     .cw-panel[hidden] { display: none; }
     .cw-panel { position: absolute; right: 0; bottom: 0; width: 360px; max-width: calc(100vw - 32px);
-        height: 520px; max-height: calc(100vh - 40px); background: #fff; border-radius: 16px;
+        height: 520px; max-height: calc(100dvh - var(--cw-bottom) - 20px); background: #fff; border-radius: 16px;
         box-shadow: 0 20px 60px rgba(15,23,42,.28); display: flex; flex-direction: column; overflow: hidden;
         animation: cw-pop .18s ease; }
     @keyframes cw-pop { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: none; } }
@@ -78,8 +81,10 @@
     .cw-send:disabled { opacity: .5; cursor: default; }
 
     @media (max-width: 480px) {
-        .cw { right: 12px; bottom: 12px; }
-        .cw-panel { width: calc(100vw - 24px); height: calc(100vh - 24px); }
+        .cw { right: 12px; --cw-bottom: 12px; }
+        /* dvh 를 쓴다 — 모바일 브라우저는 주소창이 접히고 펴지며 vh 가 실제
+           보이는 높이보다 커서, vh 로 잡으면 패널 위아래가 잘린다. */
+        .cw-panel { width: calc(100vw - 24px); height: calc(100dvh - var(--cw-bottom) - 12px); }
     }
 </style>
 

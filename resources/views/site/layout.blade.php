@@ -168,8 +168,8 @@
          있으면 그 버튼과 겹치므로 위로 올린다. 순서상 위젯 스타일 뒤에 와야
          모바일 미디어쿼리(bottom:12px)까지 덮는다. --}}
     <style>
-        .cw { bottom: 92px; }
-        @media (max-width: 640px) { .cw { bottom: 84px; } }
+        .cw { --cw-bottom: 92px; }
+        @media (max-width: 640px) { .cw { --cw-bottom: 84px; } }
     </style>
 @endif
 
