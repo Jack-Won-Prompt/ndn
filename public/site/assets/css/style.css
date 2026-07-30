@@ -251,7 +251,7 @@ h1, h2, h3, h4 {
         rgba(15, 12, 9, 0) 72%);
 }
 
-.hero__inner { position: relative; z-index: 2; padding: 90px 0; }
+.hero__inner { position: relative; z-index: 2; padding-block: 90px; }
 .hero__content { max-width: 660px; }
 
 .hero__tag {
@@ -705,7 +705,7 @@ body.flags-off .bg-flag { display: none; }
     .split--reverse .split__media { order: 0; }
 
     .hero { min-height: 520px; }
-    .hero__inner { padding: 64px 0; }
+    .hero__inner { padding-block: 64px; }
 
     .footer__grid { grid-template-columns: 1fr; gap: 32px; }
     .footer__bottom { flex-direction: column; align-items: flex-start; }

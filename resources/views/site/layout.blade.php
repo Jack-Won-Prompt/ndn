@@ -2,6 +2,10 @@
 @php
     // 활성 메뉴 키 (라우트에서 ['active' => '...'] 로 주입). 없으면 빈 문자열.
     $active ??= '';
+
+    // 모바일 앱의 WebView 안에서 보고 있는지. 앱이 User-Agent 에 NDNApp 을 붙인다.
+    // 앱에는 자체 버튼이 떠 있어 화면 아래쪽 배치가 달라진다.
+    $inApp = str_contains((string) request()->userAgent(), 'NDNApp');
     $nav = [
         'home'    => ['route' => 'site.home',    'label' => '홈'],
         'about'   => ['route' => 'site.about',   'label' => '회사소개'],
@@ -153,12 +157,21 @@
 </footer>
 
 {{-- 앱 안(WebView)에서 볼 때는 설치 안내를 띄우지 않는다 —
-     이미 설치한 사람에게 "앱 설치" QR 을 보여 줄 이유가 없다.
-     앱은 User-Agent 에 NDNApp 을 붙여 자신을 알린다. --}}
-@unless (request()->userAgent() && str_contains(request()->userAgent(), 'NDNApp'))
+     이미 설치한 사람에게 "앱 설치" QR 을 보여 줄 이유가 없다. --}}
+@unless ($inApp)
     @include('partials.app-install-widget')
 @endunless
 @include('partials.chat-widget')
+
+@if ($inApp)
+    {{-- 앱은 오른쪽 아래에 '로그인' 버튼을 띄운다. 문의 위젯이 기본 위치에
+         있으면 그 버튼과 겹치므로 위로 올린다. 순서상 위젯 스타일 뒤에 와야
+         모바일 미디어쿼리(bottom:12px)까지 덮는다. --}}
+    <style>
+        .cw { bottom: 92px; }
+        @media (max-width: 640px) { .cw { bottom: 84px; } }
+    </style>
+@endif
 
 <script src="{{ asset('site/assets/js/main.js') }}"></script>
 </body>
