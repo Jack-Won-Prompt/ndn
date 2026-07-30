@@ -26,11 +26,13 @@
 <link rel="preload" href="{{ asset('site/assets/fonts/PretendardVariable.woff2') }}" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="{{ asset('site/assets/css/style.css') }}">
 <style>
-    .lang-switch{display:flex;gap:6px;align-items:center;margin-left:16px;flex-wrap:nowrap;flex:0 0 auto;}
-    .lang-switch__flag{display:inline-flex;line-height:0;border-radius:4px;overflow:hidden;padding:0;border:1px solid rgba(15,23,42,.12);opacity:.6;transition:opacity .15s,box-shadow .15s;}
-    .lang-switch__flag img{display:block;width:26px;height:19px;object-fit:cover;}
-    .lang-switch__flag:hover{opacity:1;}
-    .lang-switch__flag.is-active{opacity:1;border-color:#1E9C92;box-shadow:0 0 0 2px rgba(30,156,146,.35);}
+    /* 언어 선택 — 국기가 아니라 언어 이름을 그 언어 문자로 보여 준다.
+       국기는 언어가 아니다(영어를 쓰는 나라가 여럿이고, 방문자가 자기 국기를
+       못 찾으면 고를 수 없다). 자기 언어 이름은 누구나 알아본다. */
+    .lang-switch{display:flex;gap:2px;align-items:center;margin-left:16px;flex-wrap:wrap;flex:0 0 auto;}
+    .lang-switch__item{display:inline-block;padding:4px 8px;border-radius:6px;font-size:13px;line-height:1.3;white-space:nowrap;color:#5B6472;text-decoration:none;transition:color .15s,background-color .15s;}
+    .lang-switch__item:hover{color:#1A140F;background:rgba(15,23,42,.05);}
+    .lang-switch__item.is-active{color:#0F7B4F;background:rgba(30,156,146,.12);font-weight:700;}
     /* 번역으로 라벨이 길어져도 상단 메뉴는 항상 한 줄 유지(데스크톱). 넘치면 가로 스크롤. */
     @media (min-width:821px){
         .header__inner{gap:16px;flex-wrap:nowrap;}
@@ -57,15 +59,14 @@
                 <a href="{{ route($item['route']) }}" @if ($active === $key) aria-current="page" @endif>{{ $item['label'] }}</a>
             @endforeach
         </nav>
-        {{-- 언어 선택기 — 국가 국기 아이콘 한 줄 (번역 제외) --}}
+        {{-- 언어 선택기 — 언어 이름을 그 언어 문자로 (번역 제외) --}}
         <div class="lang-switch" data-no-translate>
             @php $curLocale = session('site_locale', 'ko'); @endphp
             @foreach (\App\Shared\Translation\SiteTranslator::NATIVE as $lc => $native)
                 <a href="{{ route('site.lang', $lc) }}"
-                   class="lang-switch__flag @if ($curLocale === $lc) is-active @endif"
-                   hreflang="{{ $lc }}" title="{{ $native }}" aria-label="{{ $native }}">
-                    <img src="{{ asset('site/assets/flags/'.$lc.'.svg') }}" alt="{{ $native }}" width="26" height="19" loading="lazy">
-                </a>
+                   class="lang-switch__item @if ($curLocale === $lc) is-active @endif"
+                   hreflang="{{ $lc }}" lang="{{ $lc }}"
+                   @if ($curLocale === $lc) aria-current="true" @endif>{{ $native }}</a>
             @endforeach
         </div>
         <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav">
