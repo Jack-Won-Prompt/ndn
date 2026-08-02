@@ -9,6 +9,7 @@ use App\Domains\Matching\Notifications\PlacementConfirmedNotification;
 use App\Domains\Onboarding\Actions\ReviewOnboardingAction;
 use App\Domains\Onboarding\Enums\OnboardingStatus;
 use App\Domains\Onboarding\Models\OnboardingSubmission;
+use App\Domains\Onboarding\Notifications\OnboardingReviewedNotification;
 use App\Domains\Recruitment\Actions\ApproveWorkerAction;
 use App\Domains\Recruitment\Actions\RejectWorkerAction;
 use App\Domains\Recruitment\Enums\WorkerStatus;
@@ -205,8 +206,8 @@ it('푸시 문구에 개인정보 패턴이 없다 (5개 언어 전부)', functi
         $notifications[] = new WorkerApprovedNotification($locale);
         $notifications[] = new WorkerRejectedNotification($locale);
         $notifications[] = new PlacementConfirmedNotification($locale);
-        $notifications[] = new \App\Domains\Onboarding\Notifications\OnboardingReviewedNotification(true, $locale);
-        $notifications[] = new \App\Domains\Onboarding\Notifications\OnboardingReviewedNotification(false, $locale);
+        $notifications[] = new OnboardingReviewedNotification(true, $locale);
+        $notifications[] = new OnboardingReviewedNotification(false, $locale);
     }
     $notifications[] = new SosAlertedNotification;
 
@@ -262,7 +263,7 @@ it('온보딩 검수 결과가 근로자에게 간다', function () {
 
     Notification::assertSentTo(
         $worker,
-        \App\Domains\Onboarding\Notifications\OnboardingReviewedNotification::class,
+        OnboardingReviewedNotification::class,
     );
 });
 

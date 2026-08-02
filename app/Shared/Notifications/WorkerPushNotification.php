@@ -25,10 +25,15 @@ abstract class WorkerPushNotification extends Notification implements PersonalDa
     use Queueable;
 
     /**
+     * readonly 를 쓰지 않는다. 이 알림은 ShouldQueue 라 큐에서 역직렬화되는데,
+     * SerializesModels 는 자식 클래스 스코프에서 리플렉션으로 값을 되돌린다.
+     * PHP 8.2 는 부모에 선언된 readonly 속성을 자식 스코프에서 초기화하지 못해
+     * "Cannot initialize readonly property" 로 잡을 자체가 실패한다(운영 런타임 8.2).
+     *
      * @param  string  $workerLocale  근로자 언어(§6). 부모 Notification 의 $locale 과
      *                                이름이 겹쳐 별도 이름을 쓴다.
      */
-    public function __construct(public readonly string $workerLocale = 'ko') {}
+    public function __construct(public string $workerLocale = 'ko') {}
 
     /** 알림 제목 번역 키 (worker.* ) */
     abstract protected function titleKey(): string;
