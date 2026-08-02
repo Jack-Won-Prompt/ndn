@@ -41,6 +41,7 @@ class RegisterWorkerAction
             'email' => $data['email'],
             'password' => $data['password'],          // hashed cast
             'nationality' => strtoupper((string) $data['nationality']),
+            'city_id' => $data['city_id'] ?? null,    // 지원 지자체 (지역별 모집)
             'locale' => $locale,
             'status' => WorkerStatus::Pending,        // 승인 대기
             'passport_no' => $data['passport_no'],    // encrypted cast + blind index

@@ -8,6 +8,7 @@ use App\Domains\Recruitment\Actions\EvaluateCandidateAction;
 use App\Domains\Recruitment\Actions\PromoteFromWaitlistAction;
 use App\Domains\Recruitment\Enums\CandidateStatus;
 use App\Domains\Recruitment\Models\Candidate;
+use App\Domains\Recruitment\Models\EvaluationItem;
 use App\Http\Controllers\Api\Admin\Concerns\ScopesPortalQueries;
 use App\Http\Controllers\Controller;
 use App\Shared\Support\PortalScope;
@@ -27,16 +28,8 @@ class CandidateAdminController extends Controller
 {
     use ScopesPortalQueries;
 
-    /** 평가 항목 — 앱이 시트를 그리는 기준. 서버가 정의를 내려준다. */
-    public const CRITERIA = [
-        'health' => '건강 상태',
-        'attitude' => '근로 의욕·태도',
-        'experience' => '농업 경험',
-        'communication' => '의사소통',
-    ];
-
-    /** 항목당 만점 */
-    public const MAX_SCORE = 25;
+    // 평가 항목은 콘솔에서 관리한다(EvaluationItem). 앱은 index 응답의 criteria 로
+    // 시트를 그리므로 항목을 바꿔도 앱 배포가 필요 없다.
 
     public function index(Request $request): JsonResponse
     {
@@ -72,16 +65,15 @@ class CandidateAdminController extends Controller
                     fn (CandidateStatus $s) => ['value' => $s->value, 'label' => $s->label()],
                     CandidateStatus::cases(),
                 ),
-                // 평가 시트 정의 — 앱에 항목을 하드코딩하지 않는다
-                'criteria' => array_map(
-                    fn (string $key, string $label) => [
-                        'key' => $key,
-                        'label' => $label,
-                        'max' => self::MAX_SCORE,
-                    ],
-                    array_keys(self::CRITERIA),
-                    self::CRITERIA,
-                ),
+                // 평가 시트 정의 — 앱에 항목을 하드코딩하지 않는다(콘솔에서 관리)
+                'criteria' => EvaluationItem::sheet()
+                    ->map(fn (EvaluationItem $i) => [
+                        'key' => $i->key,
+                        'label' => $i->label,
+                        'hint' => $i->hint,
+                        'max' => $i->max_score,
+                    ])->all(),
+                'total_max_score' => EvaluationItem::totalMaxScore(),
                 'waitlist_count' => Candidate::query()->waitlist()->count(),
                 'can_decide' => PortalScope::canDecide($actor),
             ],
@@ -96,15 +88,24 @@ class CandidateAdminController extends Controller
         $model = Candidate::find($candidate);
         abort_if($model === null, 404, '해당 후보자를 찾을 수 없습니다.');
 
+        // 시트 항목·배점은 콘솔에서 바뀔 수 있으므로 매번 DB 에서 읽어 규칙을 만든다.
+        $items = EvaluationItem::sheet();
+
+        if ($items->isEmpty()) {
+            return response()->json([
+                'message' => '평가 항목이 없습니다. 콘솔에서 평가 항목을 먼저 등록하세요.',
+            ], 422);
+        }
+
         $rules = ['comment' => ['nullable', 'string', 'max:1000']];
-        foreach (array_keys(self::CRITERIA) as $key) {
-            $rules["scores.{$key}"] = ['required', 'integer', 'min:0', 'max:'.self::MAX_SCORE];
+        foreach ($items as $item) {
+            $rules["scores.{$item->key}"] = ['required', 'integer', 'min:0', 'max:'.$item->max_score];
         }
         $request->validate($rules);
 
         // 중첩 규칙은 validated() 에서 잘려 나가므로 원본에서 항목만 추려 쓴다.
         $scores = collect((array) $request->input('scores', []))
-            ->only(array_keys(self::CRITERIA))
+            ->only($items->pluck('key')->all())
             ->map(fn ($v) => (int) $v)
             ->all();
 

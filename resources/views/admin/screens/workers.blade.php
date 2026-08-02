@@ -37,7 +37,8 @@
                     + '<dt>국적</dt><dd>' + wkEsc(d.nationality) + '</dd>'
                     + '<dt>언어</dt><dd>' + wkEsc(d.locale) + '</dd>'
                     + '<dt>상태</dt><dd>' + wkEsc(d.status) + '</dd>'
-                    + '<dt>소속</dt><dd>' + wkEsc((d.city || '—') + ' · ' + (d.farm || '—')) + '</dd>'
+                    + '<dt>지원 지역</dt><dd>' + wkEsc(d.applied_city || '—') + '</dd>'
+                    + '<dt>배치</dt><dd>' + wkEsc((d.city || '—') + ' · ' + (d.farm || '—')) + '</dd>'
                     + '<dt>등록일</dt><dd>' + wkEsc(d.created) + '</dd></dl>';
 
                 html += '<div class="dtl-sec"><div class="dtl-sec__title">입국·이송</div>';
@@ -73,13 +74,16 @@
         title: '근로자',
         saveUrl: '{{ route('admin.grid.workers.save') }}',
         importUrl: '{{ route('admin.grid.workers.import') }}',
-        newRow: { nationality: 'BD', locale: 'bn', status: 'active' },
+        newRow: { nationality: 'BD', city_id: null, locale: 'bn', status: 'active' },
         data: @json($rows),
         columns: [
             { header: '번호', name: 'id', width: 64, align: 'center', sortable: true },
             { header: '이름', name: 'name', width: 160, editor: 'text', sortable: true },
             { header: '국적', name: 'nationality', width: 100, editor: 'combo', align: 'center',
               options: [{value:'BD',label:'방글라'},{value:'LA',label:'라오스'},{value:'LK',label:'스리랑카'},{value:'VN',label:'베트남'}] },
+            // 지원 지자체 — 가입 시 근로자가 고른 지역. 이전 가입자는 여기서 채운다.
+            { header: '지원 지역', name: 'city_id', width: 150, editor: 'combo', align: 'center',
+              options: @json($cityOptions) },
             { header: '언어', name: 'locale', width: 100, editor: 'combo', align: 'center',
               options: [{value:'ko',label:'한국어'},{value:'bn',label:'벵골어'},{value:'lo',label:'라오어'},{value:'si',label:'싱할라어'},{value:'vi',label:'베트남어'}] },
             { header: '상태', name: 'status', width: 110, editor: 'combo', align: 'center',

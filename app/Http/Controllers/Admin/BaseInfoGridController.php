@@ -21,7 +21,25 @@ class BaseInfoGridController extends Controller
     public static function cityRows(): array
     {
         return City::orderBy('name')->get()
-            ->map(fn (City $c) => ['id' => $c->id, 'name' => $c->name, 'region' => $c->region])->all();
+            ->map(fn (City $c) => [
+                'id' => $c->id,
+                'name' => $c->name,
+                'region' => $c->region,
+                // 지역별 모집 조건 — 정원이 차면 그 지역 가입이 막힌다(City::isOpenForSignup)
+                'quota' => $c->quota,
+                'recruiting' => $c->recruiting ? 1 : 0,
+            ])->all();
+    }
+
+    /** 지자체 행 검증 규칙 (신규·수정 공통) */
+    private function cityRules(): array
+    {
+        return [
+            'name' => ['required', 'string', 'max:50'],
+            'region' => ['nullable', 'string', 'max:50'],
+            'quota' => ['nullable', 'integer', 'min:0', 'max:100000'],
+            'recruiting' => ['boolean'],
+        ];
     }
 
     public function citySave(Request $request): JsonResponse
@@ -39,12 +57,12 @@ class BaseInfoGridController extends Controller
                         continue;
                     }
                     $f = $this->cityFields($cur);
-                    $this->check($f, ['name' => ['required', 'string', 'max:50'], 'region' => ['nullable', 'string', 'max:50']], "지자체 수정 {$i}행");
+                    $this->check($f, $this->cityRules(), "지자체 수정 {$i}행");
                     City::whereKey($cur['id'])->update($f);
                 }
                 foreach ($payload['added'] ?? [] as $i => $a) {
                     $f = $this->cityFields($a);
-                    $this->check($f, ['name' => ['required', 'string', 'max:50'], 'region' => ['nullable', 'string', 'max:50']], "지자체 신규 {$i}행");
+                    $this->check($f, $this->cityRules(), "지자체 신규 {$i}행");
                     City::create($f);
                 }
             });
@@ -60,6 +78,9 @@ class BaseInfoGridController extends Controller
         return [
             'name' => isset($r['name']) ? trim((string) $r['name']) : null,
             'region' => isset($r['region']) ? trim((string) $r['region']) : null,
+            // 빈 칸 = 정원 제한 없음
+            'quota' => filled($r['quota'] ?? null) ? (int) $r['quota'] : null,
+            'recruiting' => (bool) ($r['recruiting'] ?? true),
         ];
     }
 

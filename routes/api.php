@@ -2,10 +2,12 @@
 
 declare(strict_types=1);
 
+use App\Domains\Demand\Http\Controllers\Api\CityController;
 use App\Domains\Matching\Http\Controllers\Api\MyPlacementController;
 use App\Domains\Monitoring\Http\Controllers\Api\MonthlyInterviewController;
 use App\Domains\Onboarding\Http\Controllers\Api\ConsentController;
 use App\Domains\Onboarding\Http\Controllers\Api\OnboardingController;
+use App\Domains\Onboarding\Http\Controllers\Api\RequiredDocumentController;
 use App\Domains\Recruitment\Http\Controllers\Api\AuthController;
 use App\Domains\Recruitment\Http\Controllers\Api\DashboardController;
 use App\Domains\Recruitment\Http\Controllers\Api\WorkerProfileController;
@@ -60,6 +62,9 @@ Route::get('v1/site/pages', SiteContentController::class)->middleware('throttle:
 // 계정이 없는 농가·지자체가 쓰는 창구라 인증 밖이다. 도배 방지로 throttle.
 Route::post('v1/site/inquiry', SiteInquiryController::class)->middleware('throttle:5,1');
 
+// 가입 화면의 지역 선택지 — 로그인 전에 그리므로 인증 밖이다.
+Route::get('v1/cities', CityController::class)->middleware('throttle:60,1');
+
 // 로그인은 토큰 발급 전이므로 인증 미들웨어 밖에 둔다. 무차별 대입 방지로 throttle 적용.
 Route::prefix('v1')->group(function () {
     // 셀프 가입 (관리자 승인제) — 무차별 대입 방지로 throttle
@@ -67,12 +72,26 @@ Route::prefix('v1')->group(function () {
     Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:10,1');
 });
 
+/*
+|--------------------------------------------------------------------------
+| 필수 확인·동의 문서 (근로자 의무사항·표준근로계약서·상해보험 약정서 등)
+|--------------------------------------------------------------------------
+| 동의 게이트(docs.agreed) **밖**에 둔다 — 안에 두면 미동의 상태에서 동의 화면
+| 자체를 열 수 없어 앱이 잠긴다. 로그인 직후 이 목록을 먼저 부르면 된다.
+*/
 Route::prefix('v1')->middleware(['auth:sanctum', 'worker'])->group(function () {
+    Route::get('/required-documents', [RequiredDocumentController::class, 'index']);
+    Route::post('/required-documents/agree', [RequiredDocumentController::class, 'agree']);
+
+    // 로그아웃도 게이트 밖 — 동의하지 않아도 나갈 수는 있어야 한다.
     Route::post('/auth/logout', [AuthController::class, 'logout']);
 
-    // 본인 프로필
+    // 본인 프로필 — 동의 화면에도 이름·언어가 필요해 게이트 밖에 둔다.
     Route::get('/me', [WorkerProfileController::class, 'show']);
+});
 
+// 아래는 필수 문서에 모두 동의해야 통과한다(§업무흐름: 의무 확인 후 진행).
+Route::prefix('v1')->middleware(['auth:sanctum', 'worker', 'docs.agreed'])->group(function () {
     // 홈 대시보드 — 배정·입국·평가·진행 건수 요약 (로그인 후 첫 화면)
     Route::get('/dashboard', DashboardController::class);
 
@@ -153,6 +172,8 @@ Route::prefix('v1/admin')->middleware(['auth:sanctum', 'portal'])->group(functio
     Route::post('/workers/{worker}/approve', [WorkerAdminController::class, 'approve'])->whereNumber('worker');
     Route::post('/workers/{worker}/reject', [WorkerAdminController::class, 'reject'])->whereNumber('worker');
     Route::post('/workers/{worker}/status', [WorkerAdminController::class, 'updateStatus'])->whereNumber('worker');
+    // 지원 지역 지정 — 이 기능 도입 전 가입자는 비어 있어 관리자가 채운다
+    Route::post('/workers/{worker}/city', [WorkerAdminController::class, 'updateCity'])->whereNumber('worker');
 
     // 현지 면접 평가 (업무흐름 §2) — 모바일 평가 시트 + 보류 대기열
     Route::get('/candidates', [CandidateAdminController::class, 'index']);

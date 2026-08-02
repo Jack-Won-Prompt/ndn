@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
+use App\Domains\Demand\Models\City;
 use App\Domains\Recruitment\Models\Worker;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
@@ -32,6 +33,8 @@ class WorkerGridController extends Controller
             'id' => $w->id,
             'name' => $w->name,
             'nationality' => $w->nationality,
+            // 지원 지자체 — 가입 시 근로자가 고르며, 이전 가입자는 여기서 채운다
+            'city_id' => $w->city_id,
             'locale' => $w->locale,
             'status' => $w->status->value,
         ];
@@ -49,6 +52,7 @@ class WorkerGridController extends Controller
         return [
             'name' => ['required', 'string', 'max:100'],
             'nationality' => ['required', 'string', 'size:2'],
+            'city_id' => ['nullable', 'integer', 'exists:cities,id'],
             'locale' => ['required', 'in:'.implode(',', self::LOCALES)],
             'status' => ['nullable', 'string', 'max:20'],
         ];
@@ -60,6 +64,8 @@ class WorkerGridController extends Controller
         return [
             'name' => isset($row['name']) ? trim((string) $row['name']) : null,
             'nationality' => isset($row['nationality']) ? strtoupper(trim((string) $row['nationality'])) : null,
+            // 빈 문자열(미선택)은 null 로 — exists 검증에 걸리지 않게 한다
+            'city_id' => filled($row['city_id'] ?? null) ? (int) $row['city_id'] : null,
             'locale' => $row['locale'] ?? 'ko',
             'status' => $row['status'] ?? 'active',
         ];
@@ -125,9 +131,12 @@ class WorkerGridController extends Controller
         $map = [
             '이름' => 'name', '성명' => 'name',
             '국적' => 'nationality', '언어' => 'locale', '상태' => 'status',
+            '지역' => 'city', '지자체' => 'city', '시군' => 'city',
             '여권번호' => 'passport_no', '생년월일' => 'birth_date', '본국전화' => 'phone_home_country', '전화' => 'phone_home_country',
         ];
         $natMap = ['방글라데시' => 'BD', '방글라' => 'BD', '라오스' => 'LA', '스리랑카' => 'LK', '베트남' => 'VN'];
+        // 지역명(예: 당진시) → city_id. 없는 이름은 무시하고 미지정으로 둔다.
+        $cityMap = City::pluck('id', 'name');
 
         try {
             $ext = strtolower($request->file('file')->getClientOriginalExtension());
@@ -135,7 +144,7 @@ class WorkerGridController extends Controller
             $reader->open($request->file('file')->getPathname());
 
             $created = 0;
-            DB::transaction(function () use ($reader, $map, $natMap, &$created) {
+            DB::transaction(function () use ($reader, $map, $natMap, $cityMap, &$created) {
                 $header = null;
                 foreach ($reader->getSheetIterator() as $sheet) {
                     foreach ($sheet->getRowIterator() as $r) {
@@ -158,6 +167,7 @@ class WorkerGridController extends Controller
                         Worker::create([
                             'name' => $row['name'],
                             'nationality' => $natMap[$nat] ?? strtoupper($nat),
+                            'city_id' => $cityMap[trim($row['city'] ?? '')] ?? null,
                             'locale' => in_array($row['locale'] ?? '', self::LOCALES, true) ? $row['locale'] : 'ko',
                             'status' => ($row['status'] ?? '') ?: 'active',
                             // 민감필드: 있으면 암호화 cast 로 저장됨

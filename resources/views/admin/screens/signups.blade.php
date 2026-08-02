@@ -23,6 +23,7 @@
                         <th>이름</th>
                         <th>이메일</th>
                         <th style="width:80px">국적</th>
+                        <th style="width:110px">지원 지역</th>
                         <th style="width:90px">언어</th>
                         <th style="width:150px">신청일시</th>
                         <th style="width:170px">처리</th>
@@ -35,6 +36,7 @@
                             <td>{{ $r['name'] }}</td>
                             <td>{{ $r['email'] }}</td>
                             <td class="c">{{ $r['nationality'] }}</td>
+                            <td class="c">{{ $r['city'] ?? '—' }}</td>
                             <td class="c">{{ $r['locale'] }}</td>
                             <td class="c">{{ $r['registered'] }}</td>
                             <td class="c">
@@ -43,7 +45,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr id="su-empty"><td colspan="7" class="su-empty">승인 대기 중인 가입 신청이 없습니다.</td></tr>
+                        <tr id="su-empty"><td colspan="8" class="su-empty">승인 대기 중인 가입 신청이 없습니다.</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -93,7 +95,7 @@
             if (tr) tr.parentNode.removeChild(tr);
             var tbody = document.querySelector('#signup-table tbody');
             if (!tbody.querySelector('tr[data-id]')) {
-                tbody.innerHTML = '<tr id="su-empty"><td colspan="7" class="su-empty">승인 대기 중인 가입 신청이 없습니다.</td></tr>';
+                tbody.innerHTML = '<tr id="su-empty"><td colspan="8" class="su-empty">승인 대기 중인 가입 신청이 없습니다.</td></tr>';
             }
         }
 
@@ -142,6 +144,7 @@
                         + '<dt>이름</dt><dd>' + esc(w.name) + '</dd>'
                         + '<dt>이메일(로그인 ID)</dt><dd>' + esc(w.email) + '</dd>'
                         + '<dt>국적</dt><dd>' + esc(w.nationality) + '</dd>'
+                        + '<dt>지원 지역</dt><dd>' + esc(w.city || '—') + '</dd>'
                         + '<dt>언어</dt><dd>' + esc(w.locale) + '</dd>'
                         + '<dt>상태</dt><dd>승인 대기</dd>'
                         + '<dt>신청일시</dt><dd>' + esc(w.registered) + '</dd></dl>';

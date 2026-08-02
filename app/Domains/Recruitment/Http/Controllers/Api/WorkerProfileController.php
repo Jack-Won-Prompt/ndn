@@ -19,6 +19,8 @@ class WorkerProfileController extends Controller
     {
         /** @var Worker $worker */
         $worker = $request->user();
+        // 지원 지자체는 응답에 포함되므로 명시적으로 읽는다 (§11: preventLazyLoading).
+        $worker->loadMissing('city');
 
         return (new WorkerResource($worker))
             ->additional(['meta' => ['locale' => $worker->locale]]);

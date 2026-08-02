@@ -13,6 +13,7 @@ use App\Domains\Monitoring\Models\MonthlyInterview;
 use App\Domains\Onboarding\Enums\OnboardingStatus;
 use App\Domains\Onboarding\Models\OnboardingSubmission;
 use App\Domains\Recruitment\Enums\WorkerStatus;
+use App\Domains\Recruitment\Models\EvaluationItem;
 use App\Domains\Recruitment\Models\Worker;
 use App\Domains\Reporting\Actions\GenerateMonthlyReportAction;
 use App\Domains\Settlement\Actions\AssignSettlementAction;
@@ -66,6 +67,7 @@ class ConsoleController extends Controller
                 'items' => [
                     ['key' => 'demand', 'label' => '수요 신청', 'icon' => 'clipboard'],
                     ['key' => 'baseinfo', 'label' => '농가·지자체', 'icon' => 'users'],
+                    ['key' => 'regions', 'label' => '지역별 모집·배치', 'icon' => 'grid'],
                 ],
             ],
             [
@@ -80,6 +82,7 @@ class ConsoleController extends Controller
                     ['key' => 'workers', 'label' => '근로자', 'icon' => 'users'],
                     ['key' => 'signups', 'label' => '가입 승인', 'icon' => 'inbox'],
                     ['key' => 'onboarding', 'label' => '온보딩 검수', 'icon' => 'inbox'],
+                    ['key' => 'required-documents', 'label' => '필수 동의 문서', 'icon' => 'clipboard'],
                 ],
             ],
             [
@@ -137,6 +140,7 @@ class ConsoleController extends Controller
             'dashboard' => $this->dashboard(),
             'demand' => $this->demand($request),
             'baseinfo' => $this->baseinfo(),
+            'regions' => view('admin.screens.regions', ['rows' => RegionController::rows()]),
             'candidates' => $this->candidates($request),
             'workers' => $this->workers($request),
             'signups' => view('admin.screens.signups', ['rows' => SignupApprovalController::rows()]),
@@ -155,6 +159,13 @@ class ConsoleController extends Controller
             ]),
             'tickets' => $this->tickets($request),
             'account-deletions' => view('admin.screens.account-deletions', ['rows' => AccountDeletionAdminController::rows()]),
+            'required-documents' => view('admin.screens.required-documents', [
+                'rows' => RequiredDocumentAdminController::rows(),
+            ]),
+            'service-requests' => view('admin.screens.service-requests', [
+                'rows' => ServiceRequestController::rows(),
+                'statuses' => ServiceRequestController::statusOptions(),
+            ]),
             'notices' => view('admin.screens.notices', ['rows' => NoticeController::rows()]),
             'inquiries' => view('admin.screens.inquiries'),
             'chat' => view('admin.screens.chat', ['me' => app(ChatService::class)->partyForUser(Auth::user())]),
@@ -169,7 +180,12 @@ class ConsoleController extends Controller
 
     private function candidates(Request $request): View
     {
-        return view('admin.screens.candidates', ['rows' => CandidateGridController::rows()]);
+        return view('admin.screens.candidates', [
+            'rows' => CandidateGridController::rows(),
+            // 평가 체크리스트 항목 — 같은 화면의 [평가 항목] 탭에서 편집한다
+            'itemRows' => EvaluationItemGridController::rows(),
+            'itemsTotal' => EvaluationItem::totalMaxScore(),
+        ]);
     }
 
     private function baseinfo(): View
@@ -343,7 +359,13 @@ class ConsoleController extends Controller
 
     private function workers(Request $request): View
     {
-        return view('admin.screens.workers', ['rows' => WorkerGridController::rows()]);
+        return view('admin.screens.workers', [
+            'rows' => WorkerGridController::rows(),
+            // 지원 지자체 선택지 (그리드 콤보). 지역별 모집·배치를 나눠 보기 위한 값이다.
+            'cityOptions' => City::orderBy('region')->orderBy('name')->get()
+                ->map(fn (City $c) => ['value' => $c->id, 'label' => trim(($c->region ?? '').' '.$c->name)])
+                ->all(),
+        ]);
     }
 
     /** 근로자 상세 — 개인정보 열람 감사 로그 (CLAUDE.md §7-6) */
@@ -351,6 +373,9 @@ class ConsoleController extends Controller
     {
         // 팝업(모달) 조회도 개인정보 열람이므로 동일하게 감사 로그를 남긴다.
         $worker->recordAccessBy(Auth::user(), 'console-detail');
+
+        // 지원 지자체는 상세에 표시된다 — 명시적으로 읽는다(§11: preventLazyLoading).
+        $worker->loadMissing('city');
 
         // 상세 팝업/탭용 JSON (민감 필드 여권번호·생년월일·전화번호는 §7 에 따라 제외)
         if ($request->query('format') === 'json' || $request->wantsJson()) {
@@ -378,6 +403,8 @@ class ConsoleController extends Controller
                 'locale' => $worker->locale,
                 'status' => $worker->status->value,
                 'created' => LocalTime::format($worker->created_at),
+                // 지원 지역(가입 시 선택) 과 실제 배치 지역은 다를 수 있어 따로 보여준다
+                'applied_city' => $worker->city?->name,
                 'city' => $farm?->city?->name,
                 'farm' => $farm?->name,
                 'arrival' => $arrival ? [

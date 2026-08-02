@@ -27,13 +27,16 @@ class SignupApprovalController extends Controller
     /** 승인 대기(pending) 근로자 목록. */
     public static function rows(): array
     {
-        return Worker::where('status', WorkerStatus::Pending->value)
+        return Worker::with('city:id,name')
+            ->where('status', WorkerStatus::Pending->value)
             ->latest('id')->limit(500)->get()
             ->map(fn (Worker $w) => [
                 'id' => $w->id,
                 'name' => $w->name,
                 'email' => $w->email,
                 'nationality' => $w->nationality,
+                // 지역별로 모집 정원이 다르므로 승인 판단에 필요하다
+                'city' => $w->city?->name,
                 'locale' => $w->locale,
                 'registered' => LocalTime::format($w->created_at),
             ])->all();
@@ -43,6 +46,7 @@ class SignupApprovalController extends Controller
     public function show(Worker $worker): JsonResponse
     {
         $worker->recordAccessBy(Auth::user(), 'signup-detail');
+        $worker->loadMissing('city');
 
         $sub = OnboardingSubmission::where('worker_id', $worker->id)->latest('id')->first();
         $hasSig = $sub && filled($sub->signature_path) && Storage::disk('local')->exists($sub->signature_path);
@@ -52,6 +56,7 @@ class SignupApprovalController extends Controller
             'name' => $worker->name,
             'email' => $worker->email,
             'nationality' => $worker->nationality,
+            'city' => $worker->city?->name,
             'locale' => $worker->locale,
             'status' => $worker->status->value,
             'registered' => LocalTime::format($worker->created_at),

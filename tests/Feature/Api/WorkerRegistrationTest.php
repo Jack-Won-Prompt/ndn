@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domains\Demand\Models\City;
 use App\Domains\Recruitment\Actions\ApproveWorkerAction;
 use App\Domains\Recruitment\Actions\RejectWorkerAction;
 use App\Domains\Recruitment\Enums\WorkerStatus;
@@ -19,6 +20,8 @@ function registerPayload(array $overrides = []): array
         'password' => 'password123',
         'password_confirmation' => 'password123',
         'nationality' => 'vn',
+        // 지원 지자체 — 지역별 모집이라 가입 시 필수로 고른다.
+        'city_id' => City::factory()->create()->id,
         'locale' => 'vi',
         'passport_no' => 'C1234567',
     ], $overrides);
@@ -36,6 +39,40 @@ it('셀프 가입하면 승인 대기 상태로 생성되고 토큰은 발급하
     expect($worker)->not->toBeNull();
     expect($worker->status)->toBe(WorkerStatus::Pending);
     expect($worker->nationality)->toBe('VN');           // 대문자 정규화
+});
+
+it('가입 시 고른 지원 지자체가 저장된다', function () {
+    $city = City::factory()->create(['name' => '당진시', 'region' => '충청남도']);
+
+    $this->postJson('/api/v1/auth/register', registerPayload(['city_id' => $city->id]))
+        ->assertStatus(201);
+
+    $worker = Worker::where('email', 'applicant@ndn.test')->firstOrFail();
+    expect($worker->city_id)->toBe($city->id);
+    expect($worker->city->name)->toBe('당진시');
+});
+
+it('지역을 고르지 않거나 없는 지역이면 가입에 실패한다', function () {
+    $payload = registerPayload();
+    unset($payload['city_id']);
+
+    $this->postJson('/api/v1/auth/register', $payload)
+        ->assertStatus(422)->assertJsonValidationErrorFor('city_id');
+
+    $this->postJson('/api/v1/auth/register', registerPayload(['city_id' => 999999]))
+        ->assertStatus(422)->assertJsonValidationErrorFor('city_id');
+});
+
+it('가입 화면용 지역 목록을 인증 없이 조회할 수 있다', function () {
+    City::factory()->create(['name' => '당진시', 'region' => '충청남도']);
+    City::factory()->create(['name' => '여주시', 'region' => '경기도']);
+
+    $res = $this->getJson('/api/v1/cities')->assertOk();
+
+    expect($res->json('meta.count'))->toBe(2);
+    // region → name 순 정렬: 경기도 여주시가 먼저
+    expect($res->json('data.0.label'))->toBe('경기도 여주시');
+    expect($res->json('data.1.label'))->toBe('충청남도 당진시');
 });
 
 it('가입 응답 본문에 비밀번호·여권번호가 노출되지 않는다', function () {

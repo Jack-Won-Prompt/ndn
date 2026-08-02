@@ -34,6 +34,10 @@
                 <label for="password">비밀번호</label>
                 <input id="password" name="password" type="password" autocomplete="current-password" required>
             </div>
+            <label class="login-remember">
+                <input type="checkbox" name="remember" value="1" {{ old('remember') ? 'checked' : '' }}>
+                로그인 상태 유지
+            </label>
             <button type="submit" class="login-btn">로그인</button>
         </form>
 

@@ -25,6 +25,12 @@ class WorkerResource extends JsonResource
             'nationality' => $this->nationality,
             'locale' => $this->locale,
             'status' => $this->status->value,
+            // 지원 지자체 (가입 시 선택). 미지정이면 null.
+            'city' => $this->whenLoaded('city', fn () => [
+                'id' => $this->city->id,
+                'name' => $this->city->name,
+                'region' => $this->city->region,
+            ]),
         ];
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domains\Recruitment\Models;
 
+use App\Domains\Demand\Models\City;
 use App\Domains\Matching\Enums\PlacementStatus;
 use App\Domains\Matching\Models\Placement;
 use App\Domains\Onboarding\Models\ConsentRecord;
@@ -19,6 +20,7 @@ use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Notifications\Notifiable;
@@ -51,6 +53,7 @@ class Worker extends Model implements AuthenticatableContract
         'email',
         'password',
         'nationality',
+        'city_id',
         'gender',
         'locale',
         'status',
@@ -113,6 +116,16 @@ class Worker extends Model implements AuthenticatableContract
     public function scopeWherePassport(Builder $query, string $passportNo): void
     {
         $query->where('passport_no_bidx', BlindIndex::hash($passportNo));
+    }
+
+    /**
+     * 지원한 지자체 (가입 시 선택). 실제 배치 지역은 currentPlacement()->farm->city 다.
+     *
+     * @return BelongsTo<City, $this>
+     */
+    public function city(): BelongsTo
+    {
+        return $this->belongsTo(City::class);
     }
 
     /** @return HasMany<ConsentRecord, $this> */

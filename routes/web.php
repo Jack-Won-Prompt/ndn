@@ -10,11 +10,15 @@ use App\Http\Controllers\Admin\BaseInfoGridController;
 use App\Http\Controllers\Admin\CandidateGridController;
 use App\Http\Controllers\Admin\ConsoleController;
 use App\Http\Controllers\Admin\DemandGridController;
+use App\Http\Controllers\Admin\EvaluationItemGridController;
 use App\Http\Controllers\Admin\FarmVisitController;
 use App\Http\Controllers\Admin\InquiryController;
 use App\Http\Controllers\Admin\InvitationController;
 use App\Http\Controllers\Admin\MonitoringController;
 use App\Http\Controllers\Admin\NoticeController;
+use App\Http\Controllers\Admin\RegionController;
+use App\Http\Controllers\Admin\RequiredDocumentAdminController;
+use App\Http\Controllers\Admin\ServiceRequestController;
 use App\Http\Controllers\Admin\SignupApprovalController;
 use App\Http\Controllers\Admin\TicketGridController;
 use App\Http\Controllers\Admin\WorkerGridController;
@@ -151,6 +155,9 @@ Route::prefix('admin')->group(function () {
         Route::post('/grid/candidates/import', [CandidateGridController::class, 'import'])->name('admin.grid.candidates.import');
         Route::get('/candidates/{candidate}', [CandidateGridController::class, 'show'])
             ->whereNumber('candidate')->name('admin.candidates.show');
+        // wwGrid CRUD — 면접 평가 체크리스트 항목 (운영 중 조정)
+        Route::post('/grid/evaluation-items/save', [EvaluationItemGridController::class, 'save'])
+            ->name('admin.grid.evaluation-items.save');
         // wwGrid CRUD — 기준정보(농가·지자체)
         Route::post('/grid/cities/save', [BaseInfoGridController::class, 'citySave'])->name('admin.grid.cities.save');
         Route::post('/grid/farms/save', [BaseInfoGridController::class, 'farmSave'])->name('admin.grid.farms.save');
@@ -184,6 +191,26 @@ Route::prefix('admin')->group(function () {
         Route::post('/signups/{worker}/reject', [SignupApprovalController::class, 'reject'])
             ->whereNumber('worker')->name('admin.signups.reject');
 
+        // 필수 확인·동의 문서 — 언어별 본문 편집 + 버전 관리
+        Route::get('/required-documents/{requiredDocument}', [RequiredDocumentAdminController::class, 'show'])
+            ->whereNumber('requiredDocument')->name('admin.required-documents.show');
+        Route::post('/required-documents/{requiredDocument}', [RequiredDocumentAdminController::class, 'update'])
+            ->whereNumber('requiredDocument')->name('admin.required-documents.update');
+
+        // 지역별 모집·배치 — 시군 드릴다운(농가별 배치 인원)
+        Route::get('/regions/{city}', [RegionController::class, 'show'])
+            ->whereNumber('city')->name('admin.regions.show');
+
+        // SR(Service Request) — 콘솔 상단 SR 버튼. 등록 → 담당자 답글 → 상태 관리.
+        Route::post('/service-requests', [ServiceRequestController::class, 'store'])
+            ->name('admin.service-requests.store');
+        Route::get('/service-requests/{serviceRequest}', [ServiceRequestController::class, 'show'])
+            ->whereNumber('serviceRequest')->name('admin.service-requests.show');
+        Route::post('/service-requests/{serviceRequest}/replies', [ServiceRequestController::class, 'reply'])
+            ->whereNumber('serviceRequest')->name('admin.service-requests.reply');
+        Route::post('/service-requests/{serviceRequest}/status', [ServiceRequestController::class, 'updateStatus'])
+            ->whereNumber('serviceRequest')->name('admin.service-requests.status');
+
         // 월별 점검 — 본사 직접 입력
         Route::post('/monitoring/interviews', [MonitoringController::class, 'store'])->name('admin.monitoring.store');
 
@@ -209,7 +236,8 @@ Route::prefix('admin')->group(function () {
             ->whereNumber('submission')->name('admin.onboarding.detail');
         Route::get('/onboarding/{submission}/signature', [ConsoleController::class, 'onboardingSignature'])
             ->whereNumber('submission')->name('admin.onboarding.signature');
+        // 하이픈 포함 — account-deletions, service-requests 같은 키가 있다.
         Route::get('/screen/{key}', [ConsoleController::class, 'screen'])
-            ->where('key', '[a-z_]+')->name('admin.screen');
+            ->where('key', '[a-z_-]+')->name('admin.screen');
     });
 });

@@ -16,6 +16,12 @@ class DatabaseSeeder extends Seeder
         // 회사(사업자) 기본 정보 — 운영·로컬 공통. 값이 없을 때만 채운다(관리자 수정값 보존).
         $this->call(CompanyInfoSeeder::class);
 
+        // 필수 확인·동의 문서 5종의 틀 — 본문은 콘솔에서 입력한다(운영·로컬 공통).
+        $this->call(RequiredDocumentSeeder::class);
+
+        // 면접 평가 체크리스트 초안 6항목 — 콘솔에서 조정한다(운영·로컬 공통).
+        $this->call(EvaluationItemSeeder::class);
+
         // 운영(production)에서는 테스트 계정·데모 데이터를 만들지 않는다.
         // 관리자 계정은 별도로 생성한다: php artisan ndn:create-admin ...
         // 운영에서 테스트가 필요하면 아래 시더를 명시적으로 실행:

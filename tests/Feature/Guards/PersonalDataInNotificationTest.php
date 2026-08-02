@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Domains\Settlement\Notifications\SettlementAssignedNotification;
 use App\Domains\Support\Notifications\NewNoticeNotification;
 use App\Domains\Support\Notifications\NoticeNotification;
+use App\Domains\Support\Notifications\ServiceRequestCompletedNotification;
 use App\Notifications\InvitationNotification;
 use App\Shared\Notifications\Contracts\PersonalDataFreeChannel;
 
@@ -43,6 +44,8 @@ it('근로자 알림 본문에 개인정보 패턴이 없다', function () {
         new SettlementAssignedNotification(count: 1, typeLabel: '보험'),
         // 공지사항 — 관리자 작성 텍스트(발송 전 개인정보 패턴 차단). 정상 샘플 검사
         new NoticeNotification(noticeId: 1, noticeTitle: '안전 교육 안내', noticeBody: '이번 주 안전 교육이 있습니다.'),
+        // SR 적용 완료 메일 — SR 번호 + 콘솔 링크만. 자유 입력인 제목·본문은 싣지 않는다.
+        new ServiceRequestCompletedNotification(serviceRequestId: 12, consoleUrl: 'http://localhost/ndn/admin'),
     ];
 
     foreach ($notifications as $notification) {

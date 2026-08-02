@@ -32,11 +32,15 @@
         editable: true,
         title: '지자체',
         saveUrl: '{{ route('admin.grid.cities.save') }}',
-        newRow: { name: '', region: '' },
+        newRow: { name: '', region: '', quota: '', recruiting: 1 },
         data: @json($cityRows),
         columns: [
             { header: '지자체명', name: 'name', width: 180, editor: 'text', sortable: true },
             { header: '광역/도', name: 'region', width: 180, editor: 'text' },
+            // 지역별 모집 조건 — 정원이 차거나 모집을 끄면 그 지역 가입이 막힌다
+            { header: '모집 정원', name: 'quota', width: 110, editor: 'text', align: 'center' },
+            { header: '모집 여부', name: 'recruiting', width: 110, editor: 'combo', align: 'center',
+              options: [{value:1,label:'모집 중'},{value:0,label:'중지'}] },
         ],
     });
 

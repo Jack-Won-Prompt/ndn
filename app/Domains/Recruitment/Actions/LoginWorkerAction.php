@@ -23,7 +23,8 @@ class LoginWorkerAction
      */
     public function execute(string $email, string $password, ?string $deviceName = null): array
     {
-        $worker = Worker::where('email', $email)->first();
+        // city 는 응답(WorkerResource)에 실리므로 함께 읽는다 — preventLazyLoading (§11).
+        $worker = Worker::with('city')->where('email', $email)->first();
 
         // 계정 존재 여부가 응답 차이로 새어나가지 않도록 동일한 오류로 처리한다.
         if ($worker === null || $worker->password === null || ! Hash::check($password, $worker->password)) {

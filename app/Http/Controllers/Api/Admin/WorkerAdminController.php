@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\Admin;
 
+use App\Domains\Demand\Models\City;
 use App\Domains\Recruitment\Actions\ApproveWorkerAction;
 use App\Domains\Recruitment\Actions\RejectWorkerAction;
 use App\Domains\Recruitment\Enums\WorkerStatus;
@@ -31,7 +32,7 @@ class WorkerAdminController extends Controller
         $actor = $this->actor($request);
 
         $query = PortalScope::workers(Worker::query(), $actor)
-            ->with(['placements.farm:id,name,city_id'])
+            ->with(['placements.farm:id,name,city_id', 'city:id,name,region'])
             ->when(
                 $request->filled('status'),
                 fn ($q) => $q->where('status', $request->string('status')->value()),
@@ -39,6 +40,11 @@ class WorkerAdminController extends Controller
             ->when(
                 $request->filled('nationality'),
                 fn ($q) => $q->where('nationality', $request->string('nationality')->value()),
+            )
+            // 지원 지자체 필터 — 지역별로 나눠 보기 위한 것(§업무흐름: 지역별 모집·배치)
+            ->when(
+                $request->filled('city_id'),
+                fn ($q) => $q->where('city_id', $request->integer('city_id')),
             )
             // 이름 검색만 지원한다. 여권번호는 암호문이라 LIKE 가 불가능하고,
             // blind index 는 완전일치만 되므로 별도 처리한다(§7-1).
@@ -59,6 +65,13 @@ class WorkerAdminController extends Controller
                 'current_page' => $page->currentPage(),
                 'last_page' => $page->lastPage(),
                 'statuses' => $this->statusOptions(),
+                // 지역 필터 선택지 (지자체 수는 수십 건 규모라 매번 내려도 부담이 없다)
+                'cities' => City::query()->orderBy('region')->orderBy('name')
+                    ->get(['id', 'name', 'region'])
+                    ->map(fn (City $c) => [
+                        'id' => $c->id,
+                        'label' => trim(($c->region ?? '').' '.$c->name),
+                    ])->all(),
                 // 필터와 무관한 상태별 총 건수 — 목록 상단 요약 띠에 쓴다.
                 'counts' => $this->statusCounts(PortalScope::workers(Worker::query(), $actor)),
                 'can_decide' => PortalScope::canDecide($actor),
@@ -72,7 +85,7 @@ class WorkerAdminController extends Controller
         $actor = $this->actor($request);
 
         $model = PortalScope::workers(Worker::query()->whereKey($worker), $actor)
-            ->with(['placements.farm:id,name,city_id'])
+            ->with(['placements.farm:id,name,city_id', 'city:id,name,region'])
             ->first();
 
         abort_if($model === null, 404, '해당 근로자를 찾을 수 없습니다.');
@@ -116,6 +129,34 @@ class WorkerAdminController extends Controller
         } catch (RuntimeException $e) {
             return response()->json(['message' => $e->getMessage()], 422);
         }
+
+        return response()->json(['data' => $this->summary($model->refresh())]);
+    }
+
+    /**
+     * 지원 지자체 지정·변경.
+     *
+     * 이 기능 도입 전에 가입한 근로자는 city_id 가 비어 있어 지역별 집계에서 빠진다.
+     * 관리자가 채워 넣을 수 있게 한다. 변경 이력은 감사 로그에 남긴다(§7-6).
+     */
+    public function updateCity(Request $request, int $worker): JsonResponse
+    {
+        $actor = $this->authorizeDecision($request);
+        $model = $this->findInScope($actor, $worker);
+
+        $data = $request->validate([
+            'city_id' => ['required', 'integer', 'exists:cities,id'],
+        ]);
+
+        $from = $model->city_id;
+        $model->city_id = $data['city_id'];
+        $model->save();
+
+        activity('worker-account')
+            ->performedOn($model)
+            ->causedBy($actor)
+            ->withProperties(['from_city_id' => $from, 'to_city_id' => $model->city_id])
+            ->log('근로자 지원 지역 변경');
 
         return response()->json(['data' => $this->summary($model->refresh())]);
     }
@@ -171,6 +212,9 @@ class WorkerAdminController extends Controller
      */
     private function summary(Worker $worker): array
     {
+        // 목록은 index 에서 이미 eager load 되어 no-op 이고, 상세·승인 응답에서만 1회 읽는다(§11).
+        $worker->loadMissing('city');
+
         $placement = $worker->currentPlacement();
 
         return [
@@ -182,6 +226,9 @@ class WorkerAdminController extends Controller
             'status_label' => $worker->status->label(),
             'farm' => $placement?->farm?->name,
             'farm_id' => $placement?->farm_id,
+            // 지원 지자체(가입 시 선택). 배치 지역과 다를 수 있어 따로 내려준다.
+            'city_id' => $worker->city_id,
+            'city' => $worker->city?->name,
         ];
     }
 

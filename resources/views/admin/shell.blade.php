@@ -9,6 +9,8 @@
     ];
     $titles = [];
     foreach ($menu as $g) { foreach ($g['items'] as $it) { $titles[$it['key']] = $it['label']; } }
+    // 사이드바에 없고 상단 버튼으로만 여는 화면 — 탭 복원 시 제목이 키로 나오지 않게 등록한다.
+    $titles['service-requests'] = 'SR';
 @endphp
 <!DOCTYPE html>
 <html lang="ko">
@@ -27,6 +29,13 @@
     .nav-item{position:relative;}
     .nav-badge{margin-left:auto;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#E5484D;color:#fff;font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;line-height:1;}
     .nav-badge[hidden]{display:none;}
+    /* 상단 SR 버튼 — 어느 화면에서든 서비스 요청을 열 수 있게 한다 */
+    .topbar__sr{display:inline-flex;align-items:center;gap:6px;margin-right:14px;padding:5px 11px;
+        font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;
+        background:#fff;color:var(--mv2-text-strong,#0F172A);
+        border:1px solid var(--mv2-border-default,#D9DEE7);border-radius:100px;}
+    .topbar__sr:hover{background:var(--mv2-slate-25,#F6F8FB);}
+    .topbar__sr svg{width:16px;height:16px;}
 </style>
 <link rel="stylesheet" href="{{ asset('admin-assets/css/ui.css') }}?v={{ @filemtime(public_path('admin-assets/css/ui.css')) }}">
 <link rel="stylesheet" href="{{ asset('admin-assets/css/admin.css') }}?v={{ @filemtime(public_path('admin-assets/css/admin.css')) }}">
@@ -63,6 +72,14 @@
         <header class="topbar">
             <div class="topbar__crumbs">N.D.N Korea 계절근로자 통합관리</div>
             <div class="topbar__user">
+                {{-- SR(서비스 요청) — 시스템 개선·오류 요청 창구. 어느 화면에서든 바로 열 수 있게 상단에 둔다. --}}
+                <button type="button" class="topbar__sr" id="sr-open" title="SR · 서비스 요청">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+                         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M12 3a9 9 0 0 0-9 9v4.5A2.5 2.5 0 0 0 5.5 19H7v-6H5v-1a7 7 0 0 1 14 0v1h-2v6h1.5A2.5 2.5 0 0 0 21 16.5V12a9 9 0 0 0-9-9z"/>
+                    </svg>
+                    <span>SR</span>
+                </button>
                 <span class="topbar__avatar">{{ mb_substr($user->name, 0, 1) }}</span>
                 <span>{{ $user->name }}</span>
                 <form method="POST" action="{{ route('admin.logout') }}" style="margin:0" id="logout-form">
@@ -125,6 +142,18 @@
                 if (data.screen) bumpBadge(data.screen);
             });
         } catch (err) { /* 실시간 실패해도 콘솔은 정상 동작 */ }
+    })();
+</script>
+<script>
+    // 상단 SR 버튼 → SR 화면을 탭으로 연다.
+    // admin.js 의 openTab 은 모듈 안에 있어 직접 부를 수 없으므로, iframe 화면들이 쓰는
+    // 같은 postMessage 경로를 자기 자신에게 보낸다.
+    (function () {
+        var btn = document.getElementById('sr-open');
+        if (!btn) return;
+        btn.addEventListener('click', function () {
+            window.postMessage({ ndnOpenTab: true, key: 'service-requests', title: 'SR' }, '*');
+        });
     })();
 </script>
 <script>

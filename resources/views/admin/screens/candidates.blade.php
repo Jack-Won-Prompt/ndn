@@ -12,6 +12,7 @@
     <div class="screen-tabs">
         <button type="button" class="screen-tab is-active" data-tab="list">목록</button>
         <button type="button" class="screen-tab" data-tab="detail" id="cd-detail-tab">상세</button>
+        <button type="button" class="screen-tab" data-tab="items">평가 항목</button>
     </div>
 
     <div data-tabpane="list">
@@ -19,6 +20,14 @@
     </div>
     <div data-tabpane="detail" hidden>
         <div id="cd-detail" class="dtl"><div class="dtl-empty">목록에서 <b>번호 열</b>을 더블클릭하면 후보자 상세·평가가 표시됩니다.</div></div>
+    </div>
+    <div data-tabpane="items" hidden>
+        <p class="screen__sub" style="margin:0 0 10px">
+            면접 체크리스트 항목입니다. 추가·수정·삭제할 수 있고, 판정은 <strong>만점 대비 비율</strong>(합격 70% · 보류 50%)이라 배점을 바꿔도 기준이 어긋나지 않습니다.
+            현재 시트 만점 <strong id="ei-total">{{ $itemsTotal }}</strong>점.
+            <br><b>키</b>는 점수 저장용 식별자라 영문 소문자·숫자·밑줄만 쓰고, 한번 쓰기 시작하면 바꾸지 마세요.
+        </p>
+        <div id="grid-eval-items"></div>
     </div>
 @endsection
 
@@ -84,6 +93,31 @@
             { header: '대기 순번', name: 'queue_position', width: 100, editor: 'number', min: 1 },
         ],
         onRowDblClick: function (row) { if (row.id) openCandidate(row.id); },
+    });
+
+    // 평가 항목 그리드 — 숨김 탭에서 초기화하면 폭이 0으로 깨지므로 탭이 처음 보일 때 만든다.
+    var evalItemsReady = false;
+    document.querySelector('.screen-tab[data-tab="items"]').addEventListener('click', function () {
+        if (evalItemsReady) return;
+        evalItemsReady = true;
+        wwConsole({
+            el: 'grid-eval-items',
+            editable: true,
+            title: '평가 항목',
+            saveUrl: '{{ route('admin.grid.evaluation-items.save') }}',
+            newRow: { key: '', label: '', hint: '', max_score: 20, sort_order: 99, active: 1 },
+            data: @json($itemRows),
+            columns: [
+                { header: '번호', name: 'id', width: 64, align: 'center' },
+                { header: '키(영문)', name: 'key', width: 160, editor: 'text' },
+                { header: '항목명', name: 'label', width: 200, editor: 'text' },
+                { header: '판단 기준', name: 'hint', width: 320, editor: 'text' },
+                { header: '배점', name: 'max_score', width: 90, editor: 'number', min: 1, align: 'center' },
+                { header: '순서', name: 'sort_order', width: 80, editor: 'number', min: 0, align: 'center' },
+                { header: '사용', name: 'active', width: 90, editor: 'combo', align: 'center',
+                  options: [{value:1,label:'사용'},{value:0,label:'미사용'}] },
+            ],
+        });
     });
 </script>
 @endsection

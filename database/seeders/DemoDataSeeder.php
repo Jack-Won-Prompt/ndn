@@ -39,8 +39,10 @@ class DemoDataSeeder extends Seeder
             'city_id' => $cities->random()->id,
         ]));
 
-        // 근로자 40명
-        $workers = Worker::factory()->count(40)->create();
+        // 근로자 40명 — 지원 지자체를 분산해 지역별 집계 화면에 실제 분포가 생기게 한다
+        $workers = collect(range(1, 40))->map(fn ($i) => Worker::factory()->create([
+            'city_id' => $cities->random()->id,
+        ]));
 
         // 수요 신청 14건 (대부분 제출/취합 상태로)
         $farms->take(14)->each(function ($farm) use ($cities) {

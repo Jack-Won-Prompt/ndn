@@ -145,6 +145,8 @@ class TestAccountsSeeder extends Seeder
                     'name' => $name,
                     'password' => $password,          // hashed cast 가 해시 처리
                     'nationality' => $nationality,
+                    // 지원 지자체 — 테스트 농가와 같은 지역으로 맞춘다(지역별 화면 확인용)
+                    'city_id' => $farm?->city_id,
                     'locale' => $locale,
                     'passport_no' => $passport,       // encrypted cast + blind index
                     'status' => WorkerStatus::Active, // 승인 완료 — 앱 로그인 가능

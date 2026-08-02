@@ -12,6 +12,8 @@ return [
     'register_pending' => 'Đơn đăng ký của bạn đã được tiếp nhận. Bạn có thể đăng nhập sau khi quản trị viên phê duyệt.',
     'pending_approval' => 'Tài khoản của bạn chưa được phê duyệt. Vui lòng chờ quản trị viên phê duyệt.',
     'passport_taken' => 'Số hộ chiếu này đã được đăng ký. Vui lòng liên hệ người phụ trách.',
+    'city_closed' => 'Khu vực bạn chọn hiện đã ngừng tuyển. Vui lòng chọn khu vực khác.',
+    'documents_required' => 'Bạn phải đồng ý tất cả các mục bắt buộc trước khi tiếp tục.',
 
     // 푸시 알림 — 잠금화면에 그대로 뜨므로 개인정보를 넣지 않는다.
     'push_approved_title' => 'Đăng ký đã được duyệt',

@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Domains\Recruitment\Http\Requests;
 
+use App\Domains\Demand\Models\City;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 /**
  * 근로자 셀프 가입 요청 검증 (CLAUDE.md §9, §11: 입력 검증은 Form Request).
@@ -27,10 +29,39 @@ class RegisterWorkerRequest extends FormRequest
             'email' => ['required', 'email', 'max:255', 'unique:workers,email'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'nationality' => ['required', 'string', 'size:2'],
+            // 지원 지자체 — 지역별 모집 정원·조건이 따로 운영되므로 가입 시 확정한다.
+            // 선택지는 GET /api/v1/cities 로 내려준다.
+            'city_id' => ['required', 'integer', 'exists:cities,id'],
             'locale' => ['required', 'in:ko,bn,lo,si,vi'],
             'passport_no' => ['required', 'string', 'max:64'],
             'birth_date' => ['nullable', 'date'],
             'phone_home_country' => ['nullable', 'string', 'max:40'],
+        ];
+    }
+
+    /**
+     * 지역별 모집 조건 확인 — 모집을 닫았거나 정원이 찬 지역은 받지 않는다.
+     *
+     * exists 검증을 통과한 뒤에만 의미가 있으므로 after 훅에서 본다.
+     * 근로자에게 나가는 문구라 자국어로 낸다(§6).
+     */
+    public function after(): array
+    {
+        return [
+            function (Validator $validator): void {
+                if ($validator->errors()->has('city_id')) {
+                    return;
+                }
+
+                $city = City::find($this->integer('city_id'));
+
+                if ($city !== null && ! $city->isOpenForSignup()) {
+                    $validator->errors()->add(
+                        'city_id',
+                        trans('worker.city_closed', [], $this->input('locale', 'ko')),
+                    );
+                }
+            },
         ];
     }
 }

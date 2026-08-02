@@ -54,7 +54,7 @@ class IntegrityTestSeeder extends Seeder
         $sigCount = 0;
 
         for ($i = 0; $i < self::N; $i++) {
-            $w = Worker::factory()->create();
+            $w = Worker::factory()->create(['city_id' => $cities->random()->id]);
             $workers->push($w);
 
             // 온보딩 + 실제 전자서명 파일(§9 private)

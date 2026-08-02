@@ -6,6 +6,7 @@ namespace App\Domains\Recruitment\Actions;
 
 use App\Domains\Recruitment\Enums\CandidateStatus;
 use App\Domains\Recruitment\Models\Candidate;
+use App\Domains\Recruitment\Models\EvaluationItem;
 use App\Domains\Recruitment\Models\InterviewEvaluation;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -17,21 +18,31 @@ use Illuminate\Support\Facades\DB;
  */
 class EvaluateCandidateAction
 {
-    /** 합격 기준(총점), 보류 기준(총점) */
-    private const PASS_THRESHOLD = 70;
+    /**
+     * 합격·보류 기준 — 만점 대비 **비율**(%).
+     *
+     * 평가 항목과 배점은 콘솔에서 바뀔 수 있으므로(EvaluationItem) 절대 점수로
+     * 판정하면 항목을 하나 지우는 순간 기준이 무너진다. 비율로 본다.
+     */
+    private const PASS_PERCENT = 70;
 
-    private const HOLD_THRESHOLD = 50;
+    private const HOLD_PERCENT = 50;
 
     /**
-     * @param  array<string, int>  $scores  항목별 점수 (합계로 판정)
+     * @param  array<string, int>  $scores  항목별 점수 (합계 비율로 판정)
      */
     public function execute(Candidate $candidate, User $interviewer, array $scores, ?string $comment = null): InterviewEvaluation
     {
         $total = array_sum($scores);
+        $max = EvaluationItem::totalMaxScore();
+
+        // 항목이 하나도 없으면 판정 근거가 없다 — 보류로 두고 관리자가 항목을 채우게 한다.
+        $percent = $max > 0 ? ($total / $max) * 100 : 0;
 
         $result = match (true) {
-            $total >= self::PASS_THRESHOLD => CandidateStatus::Passed,
-            $total >= self::HOLD_THRESHOLD => CandidateStatus::Held,
+            $max <= 0 => CandidateStatus::Held,
+            $percent >= self::PASS_PERCENT => CandidateStatus::Passed,
+            $percent >= self::HOLD_PERCENT => CandidateStatus::Held,
             default => CandidateStatus::Rejected,
         };
 
