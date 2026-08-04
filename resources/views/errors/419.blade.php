@@ -5,5 +5,5 @@
 @section('message', '보안을 위해 세션이 만료되었습니다. 페이지를 새로고침한 뒤 다시 시도해 주세요.')
 
 @section('actions')
-    <a class="err__btn err__btn--line" href="javascript:location.reload()">새로고침</a>
+    <a class="nd-btn nd-btn--onink" href="javascript:location.reload()">새로고침</a>
 @endsection

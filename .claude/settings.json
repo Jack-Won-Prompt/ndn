@@ -294,7 +294,15 @@
       "PowerShell(& e:\\\\xampp\\\\php\\\\php.exe artisan route:list --path=admin 2>&1 | Select-String -Pattern \"service-requests|regions|required-documents|evaluation-items\" | ForEach-Object { $_.Line.Trim\\(\\) })",
       "PowerShell(git -C e:\\\\xampp\\\\htdocs\\\\ndn remote -v)",
       "PowerShell(git -C e:\\\\xampp\\\\htdocs\\\\ndn branch --show-current)",
-      "PowerShell(git -C e:\\\\xampp\\\\htdocs\\\\ndn log --oneline -1 origin/main 2>&1)"
+      "PowerShell(git -C e:\\\\xampp\\\\htdocs\\\\ndn log --oneline -1 origin/main 2>&1)",
+      "PowerShell(git -C e:\\\\xampp\\\\htdocs\\\\ndn push -u origin feat/regions-consent-gate-sr 2>&1)",
+      "PowerShell(Get-ChildItem 'e:\\\\xampp\\\\htdocs\\\\ndn\\\\resources\\\\views' -Recurse -File | ForEach-Object { $_.FullName.Replace\\('e:\\\\xampp\\\\htdocs\\\\ndn\\\\resources\\\\views\\\\',''\\) } | Sort-Object)",
+      "PowerShell(Get-ChildItem 'e:\\\\xampp\\\\htdocs\\\\ndn\\\\public\\\\site\\\\assets\\\\css','e:\\\\xampp\\\\htdocs\\\\ndn\\\\public\\\\site\\\\assets\\\\js' -File | ForEach-Object { \"$\\($_.FullName\\)  \\($\\($_.Length\\) bytes\\)\" }; Get-ChildItem 'e:\\\\xampp\\\\htdocs\\\\ndn\\\\public\\\\site\\\\assets\\\\icons' -File | Measure-Object | Select-Object -ExpandProperty Count)",
+      "PowerShell(Get-ChildItem 'e:\\\\xampp\\\\htdocs\\\\ndn\\\\resources\\\\views\\\\site','e:\\\\xampp\\\\htdocs\\\\ndn\\\\resources\\\\views\\\\portal','e:\\\\xampp\\\\htdocs\\\\ndn\\\\resources\\\\views\\\\demand','e:\\\\xampp\\\\htdocs\\\\ndn\\\\resources\\\\views\\\\invitations','e:\\\\xampp\\\\htdocs\\\\ndn\\\\resources\\\\views\\\\errors','e:\\\\xampp\\\\htdocs\\\\ndn\\\\resources\\\\views\\\\partials' -Recurse -File | ForEach-Object { \"{0,-58} {1,7}\" -f $_.FullName.Replace\\('e:\\\\xampp\\\\htdocs\\\\ndn\\\\resources\\\\views\\\\',''\\), $_.Length })",
+      "mcp__playwright__browser_wait_for",
+      "PowerShell(Get-ChildItem 'e:\\\\xampp\\\\htdocs\\\\ndn\\\\public\\\\site\\\\assets\\\\img' -File | ForEach-Object { \"{0,-34} {1,8:N0} KB\" -f $_.Name, \\($_.Length/1KB\\) })",
+      "PowerShell(& e:\\\\xampp\\\\php\\\\php.exe \"C:\\\\Users\\\\82103\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\e--xampp-htdocs-ndn\\\\8e72c8e4-0727-4386-908f-a8a48533944d\\\\scratchpad\\\\hero.php\" harvest.jpg 2>&1)",
+      "PowerShell(& e:\\\\xampp\\\\php\\\\php.exe .\\\\vendor\\\\bin\\\\pest tests/Feature/Auth tests/Feature/Invitation 2>&1)"
     ],
     "additionalDirectories": [
       "\\tmp"

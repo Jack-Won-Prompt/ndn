@@ -38,11 +38,14 @@
     /* 아래 여백은 변수로 둔다 — 패널 높이가 이 값에 맞춰 줄어들어야
        위로 올렸을 때 머리말(닫기 버튼)이 화면 밖으로 밀리지 않는다.
        앱 안에서는 레이아웃이 이 변수를 키워 로그인 버튼을 피한다. */
-    .cw { position: fixed; right: 20px; --cw-bottom: 20px; bottom: var(--cw-bottom); z-index: 9999; font-family: inherit; }
+    /* 색은 사이트 디자인 시스템(ndn.css)의 잉크·액센트를 따른다. 이 위젯은 콘솔에서도
+       쓰이지 않고 사이트/포털 위에만 뜨므로, 변수를 못 읽는 경우를 대비해 값을 적어 둔다. */
+    .cw { position: fixed; right: 20px; --cw-bottom: 20px; bottom: var(--cw-bottom); z-index: 9999; font-family: inherit;
+        --cw-ink: #0B0F16; --cw-accent: #E0332F; }
     .cw-launch { display: inline-flex; align-items: center; gap: 8px; border: 0; cursor: pointer;
-        background: #1E9C92; color: #fff; font-family: inherit; font-size: 15px; font-weight: 700;
-        padding: 12px 18px; border-radius: 999px; box-shadow: 0 8px 24px rgba(15,23,42,.22); transition: transform .15s, box-shadow .15s; }
-    .cw-launch:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(30,156,146,.35); }
+        background: var(--cw-ink); color: #fff; font-family: inherit; font-size: 15px; font-weight: 700;
+        padding: 12px 18px; border-radius: 999px; box-shadow: 0 8px 24px rgba(11,15,22,.28); transition: transform .15s, box-shadow .15s; }
+    .cw-launch:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(11,15,22,.34); }
     .cw-launch__icon { font-size: 18px; line-height: 1; }
     .cw.is-open .cw-launch { display: none; }
 
@@ -54,7 +57,7 @@
     @keyframes cw-pop { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: none; } }
 
     .cw-head { display: flex; align-items: center; justify-content: space-between; gap: 8px;
-        padding: 14px 16px; background: #1E9C92; color: #fff; }
+        padding: 14px 16px; background: var(--cw-ink); color: #fff; }
     .cw-head__t { display: flex; flex-direction: column; line-height: 1.35; }
     .cw-head__t b { font-size: 15px; }
     .cw-head__sub { font-size: 12px; opacity: .85; }
@@ -62,21 +65,21 @@
     .cw-close:hover { opacity: 1; }
 
     .cw-msgs { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 8px;
-        background: #F6F8F8; scroll-behavior: smooth; }
+        background: #F5F6F8; scroll-behavior: smooth; }
     .cw-bubble { max-width: 78%; padding: 9px 12px; border-radius: 14px; font-size: 14px; line-height: 1.5;
         word-break: break-word; white-space: pre-wrap; box-shadow: 0 1px 2px rgba(15,23,42,.06); }
     .cw-bubble--in { align-self: flex-start; background: #fff; color: #0F172A; border-bottom-left-radius: 4px; }
-    .cw-bubble--out { align-self: flex-end; background: #1E9C92; color: #fff; border-bottom-right-radius: 4px; }
+    .cw-bubble--out { align-self: flex-end; background: var(--cw-accent); color: #fff; border-bottom-right-radius: 4px; }
     .cw-bubble__orig { display: block; margin-top: 4px; padding-top: 4px; border-top: 1px dashed rgba(15,23,42,.15); font-size: 12px; opacity: .7; }
     .cw-bubble--out .cw-bubble__orig { border-top-color: rgba(255,255,255,.3); }
     .cw-bubble__at { display: block; margin-top: 3px; font-size: 10px; opacity: .6; }
-    .cw-greet { background: #E7F3F1; color: #0F172A; }
+    .cw-greet { background: #FDECEB; color: #0F172A; }
 
-    .cw-inbar { display: flex; align-items: flex-end; gap: 8px; padding: 10px; border-top: 1px solid #E5EBEA; background: #fff; }
-    .cw-input { flex: 1; resize: none; border: 1px solid #D4DCDB; border-radius: 12px; padding: 9px 12px;
+    .cw-inbar { display: flex; align-items: flex-end; gap: 8px; padding: 10px; border-top: 1px solid #E3E6EB; background: #fff; }
+    .cw-input { flex: 1; resize: none; border: 1px solid #D3D8E0; border-radius: 12px; padding: 9px 12px;
         font-family: inherit; font-size: 14px; line-height: 1.4; max-height: 120px; outline: none; }
-    .cw-input:focus { border-color: #1E9C92; box-shadow: 0 0 0 3px rgba(30,156,146,.15); }
-    .cw-send { border: 0; cursor: pointer; background: #1E9C92; color: #fff; font-family: inherit; font-weight: 700;
+    .cw-input:focus { border-color: var(--cw-accent); box-shadow: 0 0 0 3px rgba(224,51,47,.16); }
+    .cw-send { border: 0; cursor: pointer; background: var(--cw-accent); color: #fff; font-family: inherit; font-weight: 700;
         font-size: 14px; padding: 9px 14px; border-radius: 12px; flex: 0 0 auto; }
     .cw-send:disabled { opacity: .5; cursor: default; }
 

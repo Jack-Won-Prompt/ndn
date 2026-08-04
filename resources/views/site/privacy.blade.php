@@ -14,17 +14,17 @@
 @endphp
 
 @section('content')
-    <section class="page-head">
-        <div class="wrap page-head__inner">
-            <p class="crumb"><a href="{{ route('site.home') }}">홈</a><span>›</span>개인정보처리방침</p>
-            <h1>개인정보처리방침</h1>
-            <p>{{ $company }}(이하 "회사")는 이용자의 개인정보를 중요하게 생각하며 관련 법령을 준수합니다.</p>
+    <section class="nd-pagehero">
+        <div class="nd-wrap">
+            <p class="nd-crumb"><a href="{{ route('site.home') }}">홈</a><span>›</span>개인정보처리방침</p>
+            <h1 class="nd-h1">개인정보처리방침</h1>
+            <p class="nd-lead">{{ $company }}(이하 "회사")는 이용자의 개인정보를 중요하게 생각하며 관련 법령을 준수합니다.</p>
         </div>
     </section>
 
-    <section class="section">
-        <div class="wrap legal">
-            <p class="legal__meta">시행일: 2026년 7월 28일</p>
+    <section class="nd-section">
+        <div class="nd-wrap nd-wrap--narrow nd-prose">
+            <p class="nd-prose__meta">시행일: 2026년 7월 28일</p>
 
             <h2>1. 수집하는 개인정보 항목</h2>
             <p>회사는 서비스 제공을 위해 아래 항목을 수집합니다.</p>
@@ -35,7 +35,7 @@
                 <li><b>기기·접속</b>: 앱 푸시 토큰(FCM), 접속 일시·기기 정보, 서비스 이용 기록</li>
                 <li><b>위치정보</b>: <u>긴급 SOS를 누른 그 순간의 좌표 1회</u>, 점검자의 농가 방문 체크인 좌표(점검 증빙). 그 외 상시·주기적 위치는 수집하지 않습니다.</li>
             </ul>
-            <p class="legal__note">여권번호·생년월일·전화번호·계좌번호 등 민감정보는 <b>암호화하여 저장</b>합니다.</p>
+            <p class="nd-prose__note">여권번호·생년월일·전화번호·계좌번호 등 민감정보는 <b>암호화하여 저장</b>합니다.</p>
 
             <h2>2. 개인정보의 수집 방법</h2>
             <ul>

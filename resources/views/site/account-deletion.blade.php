@@ -9,19 +9,19 @@
 @endphp
 
 @section('content')
-    <section class="page-head">
-        <div class="wrap page-head__inner">
-            <p class="crumb"><a href="{{ route('site.home') }}">홈</a><span>›</span>계정 삭제 요청</p>
-            <h1>계정 및 데이터 삭제 요청</h1>
-            <p>N.D.N Korea 앱 계정과 관련 데이터의 삭제를 요청할 수 있습니다.</p>
+    <section class="nd-pagehero">
+        <div class="nd-wrap">
+            <p class="nd-crumb"><a href="{{ route('site.home') }}">홈</a><span>›</span>계정 삭제 요청</p>
+            <h1 class="nd-h1">계정 및 데이터 삭제 요청</h1>
+            <p class="nd-lead">N.D.N Korea 앱 계정과 관련 데이터의 삭제를 요청할 수 있습니다.</p>
         </div>
     </section>
 
-    <section class="section">
-        <div class="wrap legal">
+    <section class="nd-section">
+        <div class="nd-wrap nd-wrap--narrow nd-prose">
             @if (session('deletion_ok'))
-                <div class="del-ok">
-                    ✅ 삭제 요청이 접수되었습니다. 확인 후 처리되며, 필요 시 기재하신 이메일로 안내드립니다.
+                <div class="nd-note nd-note--ok" style="margin-bottom:26px" role="status">
+                    삭제 요청이 접수되었습니다. 확인 후 처리되며, 필요 시 기재하신 이메일로 안내드립니다.
                 </div>
             @endif
 
@@ -45,53 +45,37 @@
             <h2>요청 방법</h2>
             <p>아래 양식으로 신청하거나, 이메일(<a href="mailto:{{ $email }}">{{ $email }}</a>)로 삭제를 요청할 수 있습니다.</p>
 
-            <form class="del-form" method="POST" action="{{ route('legal.account-deletion.store') }}">
+            <form class="nd-panel" style="margin-top:22px" method="POST" action="{{ route('legal.account-deletion.store') }}">
                 @csrf
-                <div class="del-field">
-                    <label for="del-name">이름 <span class="req">*</span></label>
-                    <input id="del-name" type="text" name="name" value="{{ old('name') }}" maxlength="100" required>
-                    @error('name')<p class="del-err">{{ $message }}</p>@enderror
+                <div class="nd-field">
+                    <label for="del-name">이름 <span class="nd-req">*</span></label>
+                    <input class="nd-input @error('name') is-bad @enderror" id="del-name" type="text"
+                           name="name" value="{{ old('name') }}" maxlength="100" required>
+                    @error('name')<p class="nd-err">{{ $message }}</p>@enderror
                 </div>
-                <div class="del-field">
-                    <label for="del-email">가입 이메일(로그인 ID) <span class="req">*</span></label>
-                    <input id="del-email" type="email" name="email" value="{{ old('email') }}" maxlength="150" required>
-                    @error('email')<p class="del-err">{{ $message }}</p>@enderror
+                <div class="nd-field">
+                    <label for="del-email">가입 이메일(로그인 ID) <span class="nd-req">*</span></label>
+                    <input class="nd-input @error('email') is-bad @enderror" id="del-email" type="email"
+                           name="email" value="{{ old('email') }}" maxlength="150" required>
+                    @error('email')<p class="nd-err">{{ $message }}</p>@enderror
                 </div>
-                <div class="del-field">
+                <div class="nd-field">
                     <label for="del-reason">사유 (선택)</label>
-                    <textarea id="del-reason" name="reason" rows="3" maxlength="1000">{{ old('reason') }}</textarea>
-                    @error('reason')<p class="del-err">{{ $message }}</p>@enderror
+                    <textarea class="nd-textarea @error('reason') is-bad @enderror" id="del-reason"
+                              name="reason" rows="3" maxlength="1000">{{ old('reason') }}</textarea>
+                    @error('reason')<p class="nd-err">{{ $message }}</p>@enderror
                 </div>
-                <label class="del-consent">
-                    <input type="checkbox" name="confirm" value="1" {{ old('confirm') ? 'checked' : '' }}>
-                    <span>위 안내(삭제 항목·90일 후 파기)를 확인했으며 계정 삭제를 요청합니다.</span>
+
+                <label class="nd-check" style="align-items:flex-start;margin-bottom:6px">
+                    <input type="checkbox" name="confirm" value="1" {{ old('confirm') ? 'checked' : '' }} style="margin-top:3px">
+                    <span style="color:var(--nd-text-2);line-height:1.6">위 안내(삭제 항목·90일 후 파기)를 확인했으며 계정 삭제를 요청합니다.</span>
                 </label>
-                @error('confirm')<p class="del-err">{{ $message }}</p>@enderror
-                <div class="del-actions">
-                    <button type="submit" class="del-btn">삭제 요청 보내기</button>
+                @error('confirm')<p class="nd-err">{{ $message }}</p>@enderror
+
+                <div class="nd-btnrow" style="margin-top:20px">
+                    <button type="submit" class="nd-btn nd-btn--accent">삭제 요청 보내기</button>
                 </div>
             </form>
         </div>
     </section>
-
-    <style>
-        .legal{max-width:760px;}
-        .legal h2{font-size:20px;margin:28px 0 10px;}
-        .legal p{line-height:1.75;color:#333A44;margin:8px 0;}
-        .legal ul{margin:8px 0 8px 2px;padding-left:18px;line-height:1.8;color:#333A44;}
-        .legal a{color:#1E9C92;font-weight:600;}
-        .del-ok{background:#E7F3F1;border:1px solid #B9E0D9;color:#12695F;padding:14px 16px;border-radius:10px;margin-bottom:22px;font-size:15px;}
-        .del-form{margin-top:14px;background:#fff;border:1px solid #E3E6EA;border-radius:14px;padding:22px;box-shadow:0 1px 2px rgba(15,23,42,.04);}
-        .del-field{margin-bottom:16px;}
-        .del-field label{display:block;font-size:14px;font-weight:700;color:#1B1E24;margin-bottom:6px;}
-        .del-field input, .del-field textarea{width:100%;box-sizing:border-box;border:1px solid #D4DCDB;border-radius:9px;padding:10px 12px;font-family:inherit;font-size:15px;}
-        .del-field input:focus, .del-field textarea:focus{outline:none;border-color:#1E9C92;box-shadow:0 0 0 3px rgba(30,156,146,.15);}
-        .req{color:#E5484D;}
-        .del-consent{display:flex;gap:9px;align-items:flex-start;font-size:14px;color:#333A44;line-height:1.55;cursor:pointer;}
-        .del-consent input{margin-top:3px;}
-        .del-err{color:#B42318;font-size:13px;margin:6px 0 0;}
-        .del-actions{margin-top:18px;}
-        .del-btn{font-family:inherit;font-size:15px;font-weight:700;color:#fff;background:#E5484D;border:0;border-radius:10px;padding:12px 22px;cursor:pointer;}
-        .del-btn:hover{background:#C93B40;}
-    </style>
 @endsection

@@ -1,19 +1,22 @@
-{{-- N.D.N Korea 회사소개 사이트 공통 레이아웃 --}}
+{{-- N.D.N Korea 회사소개 사이트 공통 레이아웃 (2026 리디자인) --}}
 @php
-    // 활성 메뉴 키 (라우트에서 ['active' => '...'] 로 주입). 없으면 빈 문자열.
+    // 활성 메뉴 키 (SiteController 에서 ['active' => '...'] 로 주입). 없으면 빈 문자열.
     $active ??= '';
 
     // 모바일 앱의 WebView 안에서 보고 있는지. 앱이 User-Agent 에 NDNApp 을 붙인다.
     // 앱에는 자체 버튼이 떠 있어 화면 아래쪽 배치가 달라진다.
     $inApp = str_contains((string) request()->userAgent(), 'NDNApp');
+
     $nav = [
-        'home'    => ['route' => 'site.home',    'label' => '홈'],
-        'about'   => ['route' => 'site.about',   'label' => '회사소개'],
-        'services'=> ['route' => 'site.services', 'label' => '서비스'],
-        'worker'  => ['route' => 'site.worker',  'label' => '근로자 지원'],
-        'partners'=> ['route' => 'site.partners', 'label' => '협력기관'],
-        'contact' => ['route' => 'site.contact', 'label' => '문의'],
+        'home'     => ['route' => 'site.home',     'label' => '홈'],
+        'about'    => ['route' => 'site.about',    'label' => '회사소개'],
+        'services' => ['route' => 'site.services', 'label' => '서비스'],
+        'worker'   => ['route' => 'site.worker',   'label' => '근로자 지원'],
+        'partners' => ['route' => 'site.partners', 'label' => '협력기관'],
+        'contact'  => ['route' => 'site.contact',  'label' => '문의'],
     ];
+
+    $curLocale = session('site_locale', 'ko');
 @endphp
 <!DOCTYPE html>
 <html lang="ko">
@@ -21,6 +24,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="csrf-token" content="{{ csrf_token() }}">
+<meta name="theme-color" content="#0B0F16">
 <title>@yield('title', 'N.D.N Korea — 외국인 계절근로자 통합관리')</title>
 <meta name="description" content="@yield('description', '주식회사 앤디앤(N.D.N Korea)은 외국인 계절근로자(E-8)의 전 주기를 하나의 체계로 운영합니다.')">
 <meta name="robots" content="noindex, nofollow">
@@ -28,80 +32,63 @@
 <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('site/assets/favicon-32.png') }}">
 <link rel="apple-touch-icon" href="{{ asset('site/assets/apple-touch-icon.png') }}">
 <link rel="preload" href="{{ asset('site/assets/fonts/PretendardVariable.woff2') }}" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="{{ asset('site/assets/css/style.css') }}">
 <style>
-    /* 언어 선택 — 국기가 아니라 언어 이름을 그 언어 문자로 보여 준다.
-       국기는 언어가 아니다(영어를 쓰는 나라가 여럿이고, 방문자가 자기 국기를
-       못 찾으면 고를 수 없다). 자기 언어 이름은 누구나 알아본다.
-
-       넓은 화면은 6개를 한 줄로 펼치고, 좁은 화면은 드롭다운으로 접는다.
-       6개를 헤더에 늘어놓으면 폭을 넘겨 페이지 전체가 가로로 밀린다. */
-    .lang-switch{display:flex;gap:2px;align-items:center;margin-left:16px;flex:0 1 auto;min-width:0;}
-    .lang-switch__item{display:inline-block;padding:4px 8px;border-radius:6px;font-size:13px;line-height:1.3;white-space:nowrap;color:#5B6472;text-decoration:none;transition:color .15s,background-color .15s;}
-    .lang-switch__item:hover{color:#1A140F;background:rgba(15,23,42,.06);}
-    .lang-switch__item.is-active{color:#0F7B4F;background:rgba(15,123,79,.12);font-weight:700;}
-
-    /* 헤더 배경이 밝으므로 글자도 어두운색이어야 한다. 흰색으로 두면 빈 상자로 보인다. */
-    .lang-select{display:none;flex:0 0 auto;margin-left:auto;max-width:46vw;
-        padding:7px 28px 7px 10px;border:1px solid rgba(15,23,42,.18);border-radius:8px;
-        background-color:#fff;color:#1A140F;font-size:14px;font-family:inherit;
-        appearance:none;-webkit-appearance:none;cursor:pointer;
-        background-image:url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231A140F' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-        background-repeat:no-repeat;background-position:right 8px center;background-size:14px;}
-    .lang-select:focus-visible{outline:2px solid #0F7B4F;outline-offset:2px;}
-
-    @media (max-width:820px){
-        .lang-switch{display:none;}
-        .lang-select{display:block;}
-    }
-    /* 번역으로 라벨이 길어져도 상단 메뉴는 항상 한 줄 유지(데스크톱). 넘치면 가로 스크롤. */
-    @media (min-width:821px){
-        .header__inner{gap:16px;flex-wrap:nowrap;}
-        .nav{flex-wrap:nowrap;min-width:0;overflow-x:auto;scrollbar-width:none;}
-        .nav::-webkit-scrollbar{display:none;}
-        .nav a{white-space:nowrap;}
-    }
-    @media (max-width:860px){.lang-switch{margin-left:auto;}}
+    @font-face{font-family:"Pretendard Variable";src:url("{{ asset('site/assets/fonts/PretendardVariable.woff2') }}") format("woff2-variations");font-weight:45 920;font-display:swap;}
 </style>
+{{-- 과도기: 아직 새 시스템으로 옮기지 않은 페이지(회사소개·서비스·근로자지원·협력기관·
+     문의·약관·방침·계정삭제)가 옛 클래스를 쓴다. 그 페이지들을 다 옮기면 이 줄과
+     public/site/assets/css/style.css, js/main.js 를 함께 지운다.
+     클래스 이름이 겹치지 않아(새 시스템은 전부 nd- 접두) 서로 간섭하지 않는다. --}}
+<link rel="stylesheet" href="{{ asset('site/assets/css/style.css') }}?v={{ @filemtime(public_path('site/assets/css/style.css')) }}">
+<link rel="stylesheet" href="{{ asset('site/assets/css/ndn.css') }}?v={{ @filemtime(public_path('site/assets/css/ndn.css')) }}">
+{{-- 등장 효과는 JS 가 있을 때만 건다. 이 줄이 없으면 스크립트가 실패한 환경에서
+     본문이 투명한 채로 남는다. 첫 페인트 전에 실행되어야 하므로 인라인이다. --}}
+<script>document.documentElement.className += ' nd-js';</script>
 @include('partials.tz-cookie')
+@stack('head')
 </head>
 <body>
 
-<a class="skip-link" href="#main">본문 바로가기</a>
+<a class="nd-skip" href="#main">본문 바로가기</a>
 
-<header class="header">
-    <div class="wrap header__inner">
-        <a class="logo" href="{{ route('site.home') }}">
-            <span class="logo__mark">N.D.N</span>
-            <span class="logo__sub">Korea</span>
+<header class="nd-header" data-nd-header>
+    <div class="nd-wrap nd-header__in">
+        <a class="nd-logo" href="{{ route('site.home') }}">
+            <span class="nd-logo__mark">N<i>.</i>D<i>.</i>N</span>
+            <span class="nd-logo__sub">Korea</span>
         </a>
-        <nav class="nav" id="primary-nav" aria-label="주 메뉴">
+
+        <nav class="nd-nav" id="nd-nav" aria-label="주 메뉴">
             @foreach ($nav as $key => $item)
                 <a href="{{ route($item['route']) }}" @if ($active === $key) aria-current="page" @endif>{{ $item['label'] }}</a>
             @endforeach
         </nav>
-        {{-- 언어 선택기 — 언어 이름을 그 언어 문자로 (번역 제외) --}}
-        @php $curLocale = session('site_locale', 'ko'); @endphp
-        {{-- 넓은 화면 — 6개를 한 줄로 --}}
-        <div class="lang-switch" data-no-translate>
-            @foreach (\App\Shared\Translation\SiteTranslator::NATIVE as $lc => $native)
-                <a href="{{ route('site.lang', $lc) }}"
-                   class="lang-switch__item @if ($curLocale === $lc) is-active @endif"
-                   hreflang="{{ $lc }}" lang="{{ $lc }}"
-                   @if ($curLocale === $lc) aria-current="true" @endif>{{ $native }}</a>
-            @endforeach
+
+        <div class="nd-header__end">
+            {{-- 언어 선택 — 언어 이름을 그 언어 문자로. 번역기가 건드리면 안 되므로 제외 표시. --}}
+            <div class="nd-lang" data-no-translate>
+                @foreach (\App\Shared\Translation\SiteTranslator::NATIVE as $lc => $native)
+                    <a href="{{ route('site.lang', $lc) }}"
+                       class="@if ($curLocale === $lc) is-on @endif"
+                       hreflang="{{ $lc }}" lang="{{ $lc }}"
+                       @if ($curLocale === $lc) aria-current="true" @endif>{{ $native }}</a>
+                @endforeach
+            </div>
+
+            {{-- 좁은 화면 — 기기 기본 선택기라 6개가 모두 보인다. --}}
+            <select class="nd-langsel" data-no-translate aria-label="Language"
+                    onchange="if(this.value)location.href=this.value">
+                @foreach (\App\Shared\Translation\SiteTranslator::NATIVE as $lc => $native)
+                    <option value="{{ route('site.lang', $lc) }}" lang="{{ $lc }}"
+                            @if ($curLocale === $lc) selected @endif>{{ $native }}</option>
+                @endforeach
+            </select>
+
+            <button class="nd-burger" type="button" data-nd-burger
+                    aria-expanded="false" aria-controls="nd-nav">
+                <span></span><span class="nd-sr">메뉴 열기</span>
+            </button>
         </div>
-        {{-- 좁은 화면 — 드롭다운. 기기 기본 선택기라 6개가 모두 보인다. --}}
-        <select class="lang-select" data-no-translate aria-label="Language"
-                onchange="if(this.value)location.href=this.value">
-            @foreach (\App\Shared\Translation\SiteTranslator::NATIVE as $lc => $native)
-                <option value="{{ route('site.lang', $lc) }}" lang="{{ $lc }}"
-                        @if ($curLocale === $lc) selected @endif>{{ $native }}</option>
-            @endforeach
-        </select>
-        <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav">
-            <span class="sr-only">메뉴 열기</span>☰
-        </button>
     </div>
 </header>
 
@@ -109,10 +96,10 @@
 @yield('content')
 </main>
 
-<footer class="footer">
-    <div class="wrap">
-        <div class="footer__grid">
-            <div class="footer__about">
+<footer class="nd-footer">
+    <div class="nd-wrap">
+        <div class="nd-footer__grid">
+            <div class="nd-footer__about">
                 <h4>N.D.N Korea</h4>
                 <p>
                     주식회사 앤디앤. 외국인 계절근로자(E-8)의 모집부터 귀국까지
@@ -145,7 +132,7 @@
                 </ul>
             </div>
         </div>
-        <div class="footer__bottom">
+        <div class="nd-footer__bottom">
             <span>&copy; {{ date('Y') }} 주식회사 앤디앤 (N.D.N Korea)</span>
             <nav aria-label="약관">
                 <a href="{{ route('site.privacy') }}">개인정보처리방침</a>
@@ -173,6 +160,7 @@
     </style>
 @endif
 
-<script src="{{ asset('site/assets/js/main.js') }}"></script>
+<script src="{{ asset('site/assets/js/ndn.js') }}?v={{ @filemtime(public_path('site/assets/js/ndn.js')) }}"></script>
+@stack('scripts')
 </body>
 </html>

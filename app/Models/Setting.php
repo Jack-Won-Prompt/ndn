@@ -34,6 +34,16 @@ class Setting extends Model
     {
         return [
             [
+                'group' => '홈 화면',
+                'fields' => [
+                    // public/site/assets/img/ 안의 파일명만 넣는다 (예: harvest.jpg).
+                    // 비워 두면 사진 없이 그라디언트 배경으로 나온다.
+                    // 라이선스가 확보된 파일만 쓸 것 — public/site/README.md 사진 감사 결과 참조.
+                    ['key' => 'site.hero_image', 'label' => '히어로 배경 사진 (파일명)',
+                        'ph' => '예: harvest.jpg · 비우면 사진 없음'],
+                ],
+            ],
+            [
                 'group' => '홈 통계',
                 'fields' => [
                     ['key' => 'stats.countries',   'label' => '송출 협력국 (개국)', 'ph' => '예: 4'],

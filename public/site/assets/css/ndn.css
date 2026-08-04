@@ -1,0 +1,1100 @@
+/* ============================================================================
+   N.D.N Korea — 웹 디자인 시스템 (2026)
+   ----------------------------------------------------------------------------
+   회사소개 사이트 · 로그인 · 협력 포털 · 수요 신청 · 초대 · 에러 화면 공용.
+   운영 콘솔(/admin)은 이 파일을 쓰지 않는다 — 그쪽은 데이터 밀집형 UI 로 별도다.
+
+   방향: 밝은 지면 위에 검은 밴드로 리듬을 만든다.
+        본문·표는 흰 바탕에서 읽고, 히어로·전환 구간만 잉크로 덮어 대비를 준다.
+        강조는 오직 액센트 한 색으로만 — 색을 늘리면 강조가 사라진다.
+
+   이름 규칙: 모든 클래스는 nd- 로 시작한다. 이전 스타일시트와 섞이지 않게 하려는
+             것이며, 이 파일만 지우면 흔적이 남지 않는다.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------- 토큰 --- */
+:root {
+    /* 지면 */
+    --nd-paper:      #FFFFFF;
+    --nd-paper-2:    #F5F6F8;   /* 섹션 교대용 옅은 바탕 */
+    --nd-paper-3:    #EDEFF3;
+
+    /* 잉크 (다크 밴드) */
+    --nd-ink:        #0B0F16;
+    --nd-ink-2:      #141B25;
+    --nd-ink-3:      #1F2833;
+
+    /* 글자 */
+    --nd-text:       #0E141C;
+    --nd-text-2:     #566070;
+    --nd-text-3:     #8A93A1;
+    --nd-on-ink:     #FFFFFF;
+    --nd-on-ink-2:   rgba(255,255,255,.72);
+    --nd-on-ink-3:   rgba(255,255,255,.48);
+
+    /* 선 */
+    --nd-line:       #E3E6EB;
+    --nd-line-2:     #D3D8E0;
+    --nd-line-ink:   rgba(255,255,255,.14);
+
+    /* 액센트 — 강조 단어, CTA, 활성 상태. 이 한 색만 쓴다. */
+    --nd-accent:     #E0332F;
+    --nd-accent-700: #B8221F;
+    --nd-accent-050: #FDECEB;
+
+    /* 상태 (배지·알림에만) */
+    --nd-ok:         #0F7A5A;
+    --nd-ok-bg:      #E6F4EF;
+    --nd-warn:       #9A6300;
+    --nd-warn-bg:    #FDF3E0;
+    --nd-err:        #B42318;
+    --nd-err-bg:     #FDECEC;
+
+    /* 형태 */
+    --nd-r-sm:   8px;
+    --nd-r:      14px;
+    --nd-r-lg:   22px;
+    --nd-r-pill: 999px;
+
+    --nd-shadow-1: 0 1px 2px rgba(11,15,22,.06), 0 1px 3px rgba(11,15,22,.04);
+    --nd-shadow-2: 0 10px 30px rgba(11,15,22,.08), 0 2px 8px rgba(11,15,22,.04);
+    --nd-shadow-3: 0 24px 60px rgba(11,15,22,.16);
+
+    /* 지면 폭 */
+    --nd-wrap:   1180px;
+    --nd-wrap-n: 820px;    /* 약관·긴 글 */
+
+    --nd-header-h: 68px;
+}
+
+/* ------------------------------------------------------------- 리셋 --- */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+    scroll-padding-top: calc(var(--nd-header-h) + 16px);
+}
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+}
+
+body {
+    margin: 0;
+    background: var(--nd-paper);
+    color: var(--nd-text);
+    font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
+                 "Segoe UI", "Noto Sans KR", system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.7;
+    letter-spacing: -.011em;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+img, svg, video { max-width: 100%; height: auto; display: block; }
+h1, h2, h3, h4, h5 { margin: 0; font-weight: 800; line-height: 1.24; letter-spacing: -.028em; }
+p { margin: 0; }
+ul, ol { margin: 0; padding: 0; list-style: none; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; }
+
+:focus-visible {
+    outline: 2px solid var(--nd-accent);
+    outline-offset: 3px;
+    border-radius: 4px;
+}
+
+.nd-sr {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* 키보드로 들어온 사람이 메뉴를 건너뛸 수 있게. 평소엔 화면 밖. */
+.nd-skip {
+    position: absolute; left: 12px; top: -60px; z-index: 200;
+    padding: 10px 16px; border-radius: var(--nd-r-sm);
+    background: var(--nd-ink); color: var(--nd-on-ink); font-weight: 700;
+    transition: top .18s;
+}
+.nd-skip:focus { top: 12px; }
+
+/* -------------------------------------------------------------- 지면 --- */
+.nd-wrap {
+    width: 100%;
+    max-width: var(--nd-wrap);
+    margin-inline: auto;
+    padding-inline: 24px;
+}
+.nd-wrap--narrow { max-width: var(--nd-wrap-n); }
+
+@media (max-width: 640px) {
+    .nd-wrap { padding-inline: 18px; }
+}
+
+/* ------------------------------------------------------------ 타이포 --- */
+/* 큰 제목은 뷰포트에 따라 늘어난다. 모바일에서 억지로 줄바꿈되지 않게 하한을 둔다.
+   줄 높이는 라틴 기준보다 넉넉하게 잡는다 — 한글은 받침이 아래로 내려와서
+   1.15 정도로 조이면 윗줄 글자와 맞닿는다(실측: 34px 글자가 39px 슬롯에 들어갔다).
+   한글은 음절 아무 데서나 끊기면 읽기 나쁘므로 단어 단위로만 끊는다. */
+.nd-display, .nd-h1, .nd-h2, .nd-h3 { word-break: keep-all; overflow-wrap: break-word; }
+.nd-display { font-size: clamp(32px, 6.2vw, 62px); line-height: 1.26; letter-spacing: -.038em; font-weight: 800; }
+.nd-h1      { font-size: clamp(27px, 4.4vw, 44px); line-height: 1.32; letter-spacing: -.032em; }
+.nd-h2      { font-size: clamp(23px, 3.2vw, 34px); line-height: 1.38; letter-spacing: -.028em; }
+.nd-h3      { font-size: clamp(18px, 2vw, 21px);   line-height: 1.48; letter-spacing: -.018em; }
+
+.nd-lead {
+    font-size: clamp(16px, 1.5vw, 18px);
+    line-height: 1.78;
+    color: var(--nd-text-2);
+}
+.nd-band .nd-lead, .nd-hero .nd-lead { color: var(--nd-on-ink-2); }
+
+/* 헤드라인 안에서 한 구절만 액센트로 — 레퍼런스의 강조 방식. */
+.nd-mark { color: var(--nd-accent); }
+
+/* 섹션 머리표 — 영문 소문자 라벨 + 짧은 규칙선 */
+.nd-eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12px; font-weight: 800; letter-spacing: .16em;
+    text-transform: uppercase; color: var(--nd-accent);
+}
+.nd-eyebrow::before {
+    content: ""; width: 22px; height: 2px; background: var(--nd-accent); border-radius: 2px;
+}
+.nd-band .nd-eyebrow { color: #FF6B62; }
+.nd-band .nd-eyebrow::before { background: #FF6B62; }
+
+.nd-sechead { max-width: 720px; }
+.nd-sechead--center { margin-inline: auto; text-align: center; }
+.nd-sechead .nd-h2 { margin-top: 14px; }
+.nd-sechead .nd-lead { margin-top: 16px; }
+
+/* ------------------------------------------------------------ 섹션 --- */
+.nd-section { padding: clamp(64px, 9vw, 116px) 0; }
+.nd-section--tight { padding: clamp(44px, 6vw, 72px) 0; }
+.nd-section--muted { background: var(--nd-paper-2); }
+
+/* 다크 밴드 — 밝은 지면의 리듬을 끊는 구간. 히어로·전환·CTA 에만 쓴다. */
+.nd-band {
+    position: relative;
+    background: var(--nd-ink);
+    color: var(--nd-on-ink);
+    overflow: hidden;
+}
+.nd-band h1, .nd-band h2, .nd-band h3 { color: var(--nd-on-ink); }
+
+/* 어두운 바탕 위 제목은 색을 '상속'에 맡기지 않고 못박는다.
+   요소 선택자(h1,h2,h3)로 색을 지정하는 스타일시트가 함께 실려 있으면
+   상속이 그 규칙에 지고, 검은 배경 위에 검은 제목이 나온다.
+   (실제로 과도기 style.css 가 그랬다.) */
+.nd-hero h1, .nd-hero h2, .nd-hero h3,
+.nd-pagehero h1, .nd-pagehero h2, .nd-pagehero h3,
+.nd-plate h1, .nd-plate h2, .nd-plate h3,
+.nd-auth__side h1, .nd-auth__side h2, .nd-auth__side h3,
+.nd-error h1, .nd-error h2,
+.nd-footer h4 { color: var(--nd-on-ink); }
+
+/* 잉크 위 은은한 격자 — 사진 없이 밀도를 만든다(사용 가능한 사진이 없다). */
+.nd-band::before {
+    content: "";
+    position: absolute; inset: 0;
+    background-image:
+        linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse 80% 65% at 50% 40%, #000 35%, transparent 78%);
+    -webkit-mask-image: radial-gradient(ellipse 80% 65% at 50% 40%, #000 35%, transparent 78%);
+    pointer-events: none;
+}
+.nd-band > * { position: relative; z-index: 1; }
+
+/* ------------------------------------------------------------ 헤더 --- */
+.nd-header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(255,255,255,.86);
+    backdrop-filter: saturate(180%) blur(14px);
+    -webkit-backdrop-filter: saturate(180%) blur(14px);
+    border-bottom: 1px solid transparent;
+    transition: border-color .2s, box-shadow .2s;
+}
+.nd-header.is-stuck {
+    border-bottom-color: var(--nd-line);
+    box-shadow: 0 1px 12px rgba(11,15,22,.05);
+}
+.nd-header__in {
+    height: var(--nd-header-h);
+    display: flex; align-items: center; gap: 20px;
+}
+
+.nd-logo { display: inline-flex; align-items: baseline; gap: 7px; flex: 0 0 auto; }
+.nd-logo__mark {
+    font-size: 20px; font-weight: 900; letter-spacing: -.05em; color: var(--nd-ink);
+}
+.nd-logo__mark i { font-style: normal; color: var(--nd-accent); }
+.nd-logo__sub {
+    font-size: 11px; font-weight: 700; letter-spacing: .18em;
+    text-transform: uppercase; color: var(--nd-text-3);
+}
+
+.nd-nav { display: flex; align-items: center; gap: 2px; min-width: 0; }
+.nd-nav a {
+    position: relative;
+    padding: 9px 13px; border-radius: var(--nd-r-sm);
+    font-size: 15px; font-weight: 600; color: var(--nd-text-2);
+    white-space: nowrap; transition: color .15s, background-color .15s;
+}
+.nd-nav a:hover { color: var(--nd-text); background: rgba(11,15,22,.05); }
+.nd-nav a[aria-current="page"] { color: var(--nd-text); font-weight: 700; }
+.nd-nav a[aria-current="page"]::after {
+    content: ""; position: absolute; left: 13px; right: 13px; bottom: 2px;
+    height: 2px; border-radius: 2px; background: var(--nd-accent);
+}
+
+.nd-header__end { display: flex; align-items: center; gap: 10px; margin-left: auto; flex: 0 0 auto; }
+
+/* 언어 선택 — 국기가 아니라 언어 이름을 그 언어 문자로 보여 준다.
+   국기는 언어가 아니고, 방문자가 자기 국기를 못 찾으면 고를 수 없다.
+   6개를 헤더에 늘어놓으면 폭을 넘기므로 좁은 화면에서는 기기 기본 선택기로 접는다. */
+.nd-lang { display: flex; gap: 1px; align-items: center; }
+.nd-lang a {
+    padding: 5px 9px; border-radius: var(--nd-r-sm);
+    font-size: 13px; line-height: 1.35; white-space: nowrap;
+    color: var(--nd-text-3); transition: color .15s, background-color .15s;
+}
+.nd-lang a:hover { color: var(--nd-text); background: rgba(11,15,22,.05); }
+.nd-lang a.is-on {
+    color: var(--nd-accent); background: var(--nd-accent-050); font-weight: 700;
+}
+
+.nd-langsel {
+    display: none;
+    max-width: 44vw;
+    padding: 8px 30px 8px 12px;
+    border: 1px solid var(--nd-line-2); border-radius: var(--nd-r-sm);
+    background-color: var(--nd-paper); color: var(--nd-text);
+    font-size: 14px; font-family: inherit; cursor: pointer;
+    appearance: none; -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230E141C' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 9px center; background-size: 15px;
+}
+
+.nd-burger {
+    display: none;
+    width: 40px; height: 40px; padding: 0;
+    align-items: center; justify-content: center;
+    border: 1px solid var(--nd-line); border-radius: var(--nd-r-sm);
+    background: var(--nd-paper); cursor: pointer;
+}
+.nd-burger span {
+    display: block; width: 17px; height: 2px; border-radius: 2px;
+    background: var(--nd-text); position: relative;
+}
+.nd-burger span::before, .nd-burger span::after {
+    content: ""; position: absolute; left: 0; width: 17px; height: 2px;
+    border-radius: 2px; background: var(--nd-text);
+}
+.nd-burger span::before { top: -6px; }
+.nd-burger span::after  { top: 6px; }
+
+@media (max-width: 1024px) {
+    .nd-nav { display: none; }
+    .nd-lang { display: none; }
+    .nd-langsel { display: block; }
+    .nd-burger { display: inline-flex; }
+    /* 열린 메뉴 — 헤더 아래로 펼친다 */
+    .nd-nav.is-open {
+        display: flex; flex-direction: column; align-items: stretch; gap: 2px;
+        position: absolute; left: 0; right: 0; top: var(--nd-header-h);
+        padding: 12px 18px 18px;
+        background: var(--nd-paper);
+        border-bottom: 1px solid var(--nd-line);
+        box-shadow: var(--nd-shadow-2);
+    }
+    .nd-nav.is-open a { padding: 13px 12px; font-size: 16px; }
+    .nd-nav.is-open a[aria-current="page"]::after { display: none; }
+}
+
+/* ------------------------------------------------------------ 버튼 --- */
+.nd-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 13px 24px;
+    border: 1px solid transparent; border-radius: var(--nd-r-pill);
+    font-size: 15px; font-weight: 700; letter-spacing: -.01em;
+    cursor: pointer; white-space: nowrap;
+    transition: background-color .16s, color .16s, border-color .16s, transform .16s;
+}
+.nd-btn:active { transform: translateY(1px); }
+
+.nd-btn--accent { background: var(--nd-accent); color: #fff; }
+.nd-btn--accent:hover { background: var(--nd-accent-700); }
+
+.nd-btn--ink { background: var(--nd-ink); color: var(--nd-on-ink); }
+.nd-btn--ink:hover { background: var(--nd-ink-3); }
+
+.nd-btn--line { background: transparent; color: var(--nd-text); border-color: var(--nd-line-2); }
+.nd-btn--line:hover { border-color: var(--nd-text); background: rgba(11,15,22,.04); }
+
+/* 다크 밴드 위 */
+.nd-btn--paper { background: var(--nd-paper); color: var(--nd-ink); }
+.nd-btn--paper:hover { background: #EDEFF3; }
+.nd-btn--onink { background: transparent; color: var(--nd-on-ink); border-color: var(--nd-line-ink); }
+.nd-btn--onink:hover { border-color: rgba(255,255,255,.5); background: rgba(255,255,255,.07); }
+
+.nd-btn--sm { padding: 9px 16px; font-size: 14px; }
+.nd-btn--block { width: 100%; }
+
+.nd-btnrow { display: flex; flex-wrap: wrap; gap: 10px; }
+.nd-btnrow--center { justify-content: center; }
+
+/* ------------------------------------------------------------ 히어로 --- */
+.nd-hero {
+    position: relative;
+    background: var(--nd-ink);
+    color: var(--nd-on-ink);
+    overflow: hidden;
+    padding: clamp(72px, 11vw, 132px) 0 clamp(72px, 10vw, 120px);
+}
+/* 사진을 쓸 수 없으므로 빛·격자로 깊이를 만든다. */
+.nd-hero::before {
+    content: "";
+    position: absolute; inset: 0;
+    background:
+        radial-gradient(60% 70% at 78% 8%, rgba(224,51,47,.30), transparent 62%),
+        radial-gradient(52% 62% at 12% 88%, rgba(52,96,168,.28), transparent 66%);
+    pointer-events: none;
+}
+.nd-hero::after {
+    content: "";
+    position: absolute; inset: 0;
+    background-image:
+        linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px);
+    background-size: 72px 72px;
+    mask-image: radial-gradient(ellipse 90% 80% at 50% 30%, #000 30%, transparent 80%);
+    -webkit-mask-image: radial-gradient(ellipse 90% 80% at 50% 30%, #000 30%, transparent 80%);
+    pointer-events: none;
+}
+/* 사진을 깐 히어로 — 관리자가 [사이트 설정]에서 파일을 지정했을 때만 쓰인다.
+   사진은 밝기를 예측할 수 없으므로 위에 어두운 막(scrim)을 반드시 덮는다.
+   그렇지 않으면 흰 제목이 밝은 하늘·온실 위에서 읽히지 않는다. */
+.nd-hero__bg {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; object-position: center 42%;
+    z-index: 0;
+    /* 사진이 흐리멍덩하게 깔리지 않도록 아주 살짝만 조인다. 과하면 인쇄물처럼 뜬다. */
+    filter: contrast(1.14) saturate(1.12) brightness(1.03);
+}
+
+/* 어둠막을 화면 전체에 균일하게 덮으면 사진이 죽는다.
+   글자가 놓이는 왼쪽만 진하게 깔고 오른쪽은 사진을 그대로 보여 준다.
+   아래쪽은 지표 띠가 얹히므로 조금 더 눌러 경계를 만든다. */
+.nd-hero--photo::before {
+    background:
+        linear-gradient(90deg,
+            rgba(9,12,18,.72) 0%,
+            rgba(9,12,18,.52) 30%,
+            rgba(9,12,18,.18) 58%,
+            rgba(9,12,18,.04) 100%),
+        linear-gradient(180deg,
+            rgba(9,12,18,.30) 0%,
+            transparent 22%,
+            transparent 62%,
+            rgba(9,12,18,.58) 100%);
+    z-index: 1;
+}
+
+/* 막을 걷어낸 만큼 글자 자체가 버텨야 한다. 사진 위에서만 그림자를 준다.
+   단색 배경에서는 그림자가 지저분하므로 --photo 일 때로 한정한다. */
+.nd-hero--photo .nd-hero__in h1,
+.nd-hero--photo .nd-hero__in .nd-lead,
+.nd-hero--photo .nd-tag {
+    text-shadow: 0 1px 2px rgba(0,0,0,.5), 0 4px 22px rgba(0,0,0,.55);
+}
+/* 지표 띠는 사진 위에 뜨므로 바탕을 조금 더 눌러 숫자가 배경에 묻히지 않게 한다. */
+.nd-hero--photo .nd-herometa > div { background: rgba(9,12,18,.62); }
+.nd-hero--photo .nd-herometa {
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+}
+/* 격자는 사진 위에서 먼지처럼 보인다 — 사진이 있으면 걷는다. */
+.nd-hero--photo::after { display: none; }
+
+/* 좁은 화면은 가로가 없어 좌우 분리가 성립하지 않는다. 위아래로 나눈다. */
+@media (max-width: 860px) {
+    .nd-hero--photo::before {
+        background:
+            linear-gradient(180deg,
+                rgba(9,12,18,.86) 0%,
+                rgba(9,12,18,.72) 46%,
+                rgba(9,12,18,.52) 70%,
+                rgba(9,12,18,.82) 100%);
+    }
+}
+.nd-hero--photo .nd-hero__in,
+.nd-hero--photo .nd-herometa { z-index: 2; }
+
+.nd-hero__in { position: relative; z-index: 1; max-width: 900px; }
+.nd-hero--center .nd-hero__in { margin-inline: auto; text-align: center; }
+.nd-hero .nd-display { margin-top: 20px; }
+.nd-hero .nd-lead { margin-top: 22px; max-width: 640px; }
+.nd-hero--center .nd-lead { margin-inline: auto; }
+.nd-hero .nd-btnrow { margin-top: 34px; }
+
+.nd-tag {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 7px 15px 7px 12px;
+    border: 1px solid var(--nd-line-ink); border-radius: var(--nd-r-pill);
+    background: rgba(255,255,255,.06);
+    font-size: 13px; font-weight: 700; color: var(--nd-on-ink-2);
+}
+.nd-tag::before {
+    content: ""; width: 7px; height: 7px; border-radius: 50%;
+    background: var(--nd-accent); box-shadow: 0 0 0 4px rgba(224,51,47,.22);
+}
+
+/* 히어로 하단에 붙는 지표 띠 */
+.nd-herometa {
+    position: relative; z-index: 1;
+    margin-top: clamp(44px, 6vw, 72px);
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 1px; background: var(--nd-line-ink);
+    border: 1px solid var(--nd-line-ink); border-radius: var(--nd-r);
+    overflow: hidden;
+}
+.nd-herometa > div { background: rgba(11,15,22,.55); padding: 22px 20px; }
+.nd-herometa dt { font-size: 13px; color: var(--nd-on-ink-3); font-weight: 600; }
+.nd-herometa dd {
+    margin: 6px 0 0; font-size: clamp(22px, 3vw, 30px); font-weight: 800;
+    letter-spacing: -.03em; color: var(--nd-on-ink);
+}
+.nd-herometa dd small { font-size: .5em; font-weight: 700; margin-left: 3px; color: var(--nd-on-ink-2); }
+@media (max-width: 760px) {
+    .nd-herometa { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ------------------------------------------------- 하위 페이지 머리 --- */
+/* 홈 히어로보다 얕은 잉크 밴드. 어느 페이지에 있는지만 알려주면 된다. */
+.nd-pagehero {
+    position: relative; background: var(--nd-ink); color: var(--nd-on-ink);
+    overflow: hidden; padding: clamp(46px, 6vw, 78px) 0 clamp(44px, 5.5vw, 68px);
+}
+.nd-pagehero::before {
+    content: ""; position: absolute; inset: 0;
+    background:
+        radial-gradient(56% 80% at 88% 0%, rgba(224,51,47,.28), transparent 62%),
+        radial-gradient(44% 70% at 4% 100%, rgba(52,96,168,.24), transparent 68%);
+}
+.nd-pagehero > * { position: relative; z-index: 1; }
+.nd-pagehero h1 { margin-top: 14px; }
+.nd-pagehero p { margin-top: 14px; color: var(--nd-on-ink-2); max-width: 620px; }
+
+/* 사진을 깐 페이지 머리. 히어로와 같은 원칙 — 글자 쪽만 진하게 덮는다. */
+.nd-pagehero__bg {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; object-position: center 40%;
+    z-index: 0; filter: contrast(1.1) saturate(1.08);
+}
+.nd-pagehero--photo::before {
+    background:
+        linear-gradient(90deg,
+            rgba(9,12,18,.80) 0%, rgba(9,12,18,.60) 34%,
+            rgba(9,12,18,.26) 66%, rgba(9,12,18,.10) 100%),
+        linear-gradient(180deg, rgba(9,12,18,.34) 0%, transparent 40%, rgba(9,12,18,.40) 100%);
+    z-index: 1;
+}
+.nd-pagehero--photo h1,
+.nd-pagehero--photo .nd-lead,
+.nd-pagehero--photo .nd-crumb {
+    text-shadow: 0 1px 2px rgba(0,0,0,.5), 0 4px 20px rgba(0,0,0,.5);
+}
+@media (max-width: 860px) {
+    .nd-pagehero--photo::before {
+        background: linear-gradient(180deg, rgba(9,12,18,.82) 0%, rgba(9,12,18,.58) 55%, rgba(9,12,18,.80) 100%);
+    }
+}
+
+.nd-crumb { display: flex; align-items: center; gap: 9px; font-size: 13.5px; color: var(--nd-on-ink-3); }
+.nd-crumb a:hover { color: var(--nd-on-ink); }
+.nd-crumb span { opacity: .5; }
+
+/* ---------------------------------------------------------- 연혁 --- */
+.nd-timeline { margin-top: 30px; display: grid; gap: 0; }
+.nd-tl {
+    position: relative; padding: 0 0 30px 30px;
+    border-left: 2px solid var(--nd-line);
+}
+.nd-tl:last-child { border-left-color: transparent; padding-bottom: 0; }
+.nd-tl::before {
+    content: ""; position: absolute; left: -7px; top: 6px;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: var(--nd-paper); border: 3px solid var(--nd-accent);
+}
+.nd-tl__y {
+    display: inline-block; font-size: 13px; font-weight: 800; letter-spacing: .06em;
+    color: var(--nd-accent);
+}
+.nd-tl h3 { margin-top: 6px; font-size: 17.5px; }
+.nd-tl p { margin-top: 8px; font-size: 15px; line-height: 1.72; color: var(--nd-text-2); }
+
+/* ------------------------------------------------------------ 카드 --- */
+.nd-grid { display: grid; gap: 20px; }
+.nd-grid--2 { grid-template-columns: repeat(2, 1fr); }
+.nd-grid--3 { grid-template-columns: repeat(3, 1fr); }
+.nd-grid--4 { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 960px) {
+    .nd-grid--3, .nd-grid--4 { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 620px) {
+    .nd-grid--2, .nd-grid--3, .nd-grid--4 { grid-template-columns: 1fr; }
+}
+
+.nd-card {
+    background: var(--nd-paper);
+    border: 1px solid var(--nd-line);
+    border-radius: var(--nd-r-lg);
+    padding: 28px;
+    transition: border-color .18s, box-shadow .18s, transform .18s;
+}
+.nd-card:hover { border-color: var(--nd-line-2); box-shadow: var(--nd-shadow-2); transform: translateY(-2px); }
+.nd-card__no {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 34px; height: 34px; padding: 0 10px;
+    border-radius: var(--nd-r-sm);
+    background: var(--nd-ink); color: var(--nd-on-ink);
+    font-size: 13px; font-weight: 800; letter-spacing: .04em;
+}
+.nd-card .nd-h3 { margin-top: 16px; }
+.nd-card p { margin-top: 10px; color: var(--nd-text-2); font-size: 15px; line-height: 1.72; }
+
+/* 다크 밴드 위 카드 */
+.nd-band .nd-card {
+    background: rgba(255,255,255,.04);
+    border-color: var(--nd-line-ink);
+}
+.nd-band .nd-card:hover { border-color: rgba(255,255,255,.3); box-shadow: none; }
+.nd-band .nd-card p { color: var(--nd-on-ink-2); }
+.nd-band .nd-card__no { background: var(--nd-accent); }
+
+/* 강조 카드 — 한 그리드에 하나만 */
+.nd-card--accent { background: var(--nd-ink); border-color: var(--nd-ink); color: var(--nd-on-ink); }
+.nd-card--accent .nd-h3 { color: var(--nd-on-ink); }
+.nd-card--accent p { color: var(--nd-on-ink-2); }
+.nd-card--accent .nd-card__no { background: var(--nd-accent); }
+
+/* ------------------------------------------------------ 2단 구성 --- */
+.nd-split {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: clamp(32px, 5vw, 72px); align-items: center;
+}
+.nd-split--reverse .nd-split__a { order: 2; }
+@media (max-width: 900px) {
+    .nd-split { grid-template-columns: 1fr; }
+    .nd-split--reverse .nd-split__a { order: 0; }
+}
+
+/* 사진 자리 — 실제 사진 없이 타이포로 채운 판. 라이선스 확보 전까지 이 형태를 쓴다. */
+.nd-plate {
+    position: relative;
+    border-radius: var(--nd-r-lg);
+    background: var(--nd-ink);
+    color: var(--nd-on-ink);
+    padding: clamp(32px, 4vw, 48px);
+    overflow: hidden;
+    min-height: 300px;
+    display: flex; flex-direction: column; justify-content: flex-end;
+}
+.nd-plate::before {
+    content: "";
+    position: absolute; inset: 0;
+    background:
+        radial-gradient(70% 80% at 80% 0%, rgba(224,51,47,.26), transparent 60%),
+        linear-gradient(180deg, rgba(255,255,255,.06), transparent 46%);
+}
+.nd-plate > * { position: relative; z-index: 1; }
+
+/* 사진을 넣은 판. 숫자 타이포 대신(또는 위에) 실제 사진이 깔린다.
+   사진이 있으면 아래쪽만 눌러 글자를 받치고 위쪽은 사진을 살린다. */
+.nd-plate--photo { min-height: 360px; }
+.nd-plate__img {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; object-position: center;
+    z-index: 0; filter: contrast(1.08) saturate(1.06);
+    transition: transform .7s cubic-bezier(.16, 1, .3, 1);
+}
+.nd-plate--photo::before {
+    background: linear-gradient(180deg,
+        rgba(9,12,18,.14) 0%, rgba(9,12,18,.30) 46%, rgba(9,12,18,.86) 100%);
+    z-index: 1;
+}
+.nd-plate--photo .nd-plate__k { color: rgba(255,255,255,.30); }
+.nd-plate--photo .nd-plate__t,
+.nd-plate--photo .nd-plate__d { text-shadow: 0 1px 2px rgba(0,0,0,.55); }
+/* 마우스를 올리면 사진이 아주 조금 밀려 들어온다 */
+@media (hover: hover) and (pointer: fine) {
+    .nd-plate--photo:hover .nd-plate__img { transform: scale(1.045); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .nd-plate__img { transition: none; }
+    .nd-plate--photo:hover .nd-plate__img { transform: none; }
+}
+.nd-plate__k {
+    font-size: clamp(44px, 7vw, 76px); font-weight: 900; letter-spacing: -.05em;
+    line-height: 1; color: rgba(255,255,255,.16);
+}
+.nd-plate__t { margin-top: 18px; font-size: 18px; font-weight: 700; }
+.nd-plate__d { margin-top: 8px; color: var(--nd-on-ink-2); font-size: 15px; }
+
+/* --------------------------------------------------------- 체크 목록 --- */
+.nd-checks { margin-top: 26px; display: grid; gap: 12px; }
+.nd-checks li {
+    position: relative; padding-left: 32px;
+    color: var(--nd-text-2); font-size: 15.5px; line-height: 1.68;
+}
+.nd-checks li::before {
+    content: ""; position: absolute; left: 0; top: 6px;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: var(--nd-accent-050);
+}
+.nd-checks li::after {
+    content: ""; position: absolute; left: 6px; top: 12px;
+    width: 8px; height: 4px;
+    border-left: 2px solid var(--nd-accent); border-bottom: 2px solid var(--nd-accent);
+    transform: rotate(-45deg);
+}
+.nd-band .nd-checks li { color: var(--nd-on-ink-2); }
+.nd-band .nd-checks li::before { background: rgba(224,51,47,.22); }
+.nd-band .nd-checks li::after { border-color: #FF8A83; }
+
+/* ------------------------------------------------------------ 단계 --- */
+.nd-steps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; background: var(--nd-line-ink);
+    border: 1px solid var(--nd-line-ink); border-radius: var(--nd-r); overflow: hidden; }
+@media (max-width: 1000px) { .nd-steps { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px)  { .nd-steps { grid-template-columns: 1fr; } }
+.nd-step { background: rgba(11,15,22,.55); padding: 30px 24px; }
+.nd-step__n {
+    font-size: 12px; font-weight: 800; letter-spacing: .16em; color: var(--nd-accent);
+}
+.nd-step h3 { margin-top: 12px; font-size: 18px; color: var(--nd-on-ink); }
+.nd-step p { margin-top: 10px; font-size: 14.5px; line-height: 1.7; color: var(--nd-on-ink-2); }
+
+/* ------------------------------------------------------------ 지표 --- */
+.nd-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+@media (max-width: 760px) { .nd-stats { grid-template-columns: repeat(2, 1fr); } }
+.nd-stat {
+    border-left: 3px solid var(--nd-accent);
+    padding: 4px 0 4px 20px;
+}
+.nd-stat__n {
+    display: block; font-size: clamp(30px, 4.4vw, 44px); font-weight: 900;
+    letter-spacing: -.04em; line-height: 1.1;
+}
+.nd-stat__n small { font-size: .44em; font-weight: 700; margin-left: 4px; color: var(--nd-text-2); }
+.nd-band .nd-stat__n small { color: var(--nd-on-ink-2); }
+.nd-stat__l { display: block; margin-top: 8px; font-size: 14px; color: var(--nd-text-2); }
+.nd-band .nd-stat__l { color: var(--nd-on-ink-2); }
+
+/* -------------------------------------------------------- 나라 배지 --- */
+.nd-countries { display: flex; flex-wrap: wrap; gap: 10px; }
+/* 알약 바탕은 어느 자리에 놓이든 흰색이다. 글자색을 상속에 맡기면
+   다크 밴드 안에서 흰 글자가 되어 통째로 사라진다 — 색을 못박는다. */
+.nd-country {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 11px 18px 11px 12px;
+    border: 1px solid var(--nd-line); border-radius: var(--nd-r-pill);
+    background: var(--nd-paper); color: var(--nd-text);
+    font-size: 15px; font-weight: 600;
+}
+.nd-country__c {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; border-radius: 50%;
+    background: var(--nd-ink); color: var(--nd-on-ink);
+    font-size: 11px; font-weight: 800; letter-spacing: .04em;
+}
+.nd-country__l { color: var(--nd-text-3); font-weight: 500; }
+
+/* ------------------------------------------------------------- 표 --- */
+.nd-tablewrap {
+    border: 1px solid var(--nd-line); border-radius: var(--nd-r);
+    overflow-x: auto; background: var(--nd-paper);
+}
+.nd-table { width: 100%; border-collapse: collapse; font-size: 15px; }
+.nd-table th, .nd-table td { padding: 15px 20px; text-align: left; border-bottom: 1px solid var(--nd-line); }
+.nd-table thead th {
+    background: var(--nd-paper-2); font-size: 13px; font-weight: 800;
+    color: var(--nd-text-2); letter-spacing: .01em; white-space: nowrap;
+}
+.nd-table tbody tr:last-child td { border-bottom: 0; }
+.nd-table td:first-child { font-weight: 700; white-space: nowrap; color: var(--nd-text); }
+.nd-table .nd-c { text-align: center; }
+
+/* ------------------------------------------------------------ 배지 --- */
+.nd-badge {
+    display: inline-flex; align-items: center; padding: 3px 11px;
+    border-radius: var(--nd-r-pill); font-size: 12.5px; font-weight: 800; white-space: nowrap;
+}
+.nd-badge--ok   { background: var(--nd-ok-bg);   color: var(--nd-ok); }
+.nd-badge--warn { background: var(--nd-warn-bg); color: var(--nd-warn); }
+.nd-badge--err  { background: var(--nd-err-bg);  color: var(--nd-err); }
+.nd-badge--mute { background: var(--nd-paper-3); color: var(--nd-text-2); }
+
+/* ------------------------------------------------------------ 알림 --- */
+.nd-note {
+    padding: 16px 20px; border-radius: var(--nd-r);
+    border: 1px solid var(--nd-line); background: var(--nd-paper-2);
+    font-size: 15px; color: var(--nd-text-2);
+}
+.nd-note--ok  { background: var(--nd-ok-bg);  border-color: transparent; color: var(--nd-ok); }
+.nd-note--err { background: var(--nd-err-bg); border-color: transparent; color: var(--nd-err); }
+.nd-note strong { color: inherit; }
+
+/* ------------------------------------------------------------- 폼 --- */
+.nd-panel {
+    background: var(--nd-paper); border: 1px solid var(--nd-line);
+    border-radius: var(--nd-r-lg); padding: clamp(24px, 3vw, 36px);
+}
+.nd-panel__h { padding-bottom: 20px; margin-bottom: 24px; border-bottom: 1px solid var(--nd-line); }
+.nd-panel__h p { margin-top: 8px; color: var(--nd-text-2); font-size: 15px; }
+
+.nd-field { margin-bottom: 18px; }
+.nd-field > label,
+.nd-label {
+    display: block; margin-bottom: 7px;
+    font-size: 14px; font-weight: 700; color: var(--nd-text);
+}
+.nd-req { color: var(--nd-accent); margin-left: 3px; }
+.nd-hint { margin-top: 7px; font-size: 13px; color: var(--nd-text-3); }
+
+.nd-input, .nd-select, .nd-textarea {
+    width: 100%; padding: 12px 14px;
+    border: 1px solid var(--nd-line-2); border-radius: var(--nd-r-sm);
+    background: var(--nd-paper); color: var(--nd-text);
+    font-family: inherit; font-size: 15px; line-height: 1.5;
+    transition: border-color .15s, box-shadow .15s;
+}
+.nd-textarea { resize: vertical; min-height: 110px; }
+.nd-input:focus, .nd-select:focus, .nd-textarea:focus {
+    outline: none; border-color: var(--nd-ink);
+    box-shadow: 0 0 0 3px rgba(11,15,22,.08);
+}
+.nd-input::placeholder, .nd-textarea::placeholder { color: var(--nd-text-3); }
+.nd-select {
+    appearance: none; -webkit-appearance: none; padding-right: 38px; cursor: pointer;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230E141C' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 12px center; background-size: 16px;
+}
+.nd-input.is-bad, .nd-select.is-bad, .nd-textarea.is-bad { border-color: var(--nd-err); }
+.nd-err { margin-top: 6px; font-size: 13px; font-weight: 600; color: var(--nd-err); }
+
+.nd-check { display: flex; align-items: center; gap: 9px; cursor: pointer; font-size: 14.5px; }
+.nd-check input { width: 17px; height: 17px; margin: 0; accent-color: var(--nd-accent); cursor: pointer; }
+
+.nd-fieldrow { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 620px) { .nd-fieldrow { grid-template-columns: 1fr; } }
+
+/* -------------------------------------------------------------- FAQ --- */
+/* <details>/<summary> 를 그대로 쓴다 — JS 없이 열리고, 브라우저 검색(Ctrl+F)에도 걸린다. */
+.nd-faq { max-width: 860px; margin-inline: auto; border-top: 1px solid var(--nd-line); }
+.nd-faq details { border-bottom: 1px solid var(--nd-line); }
+.nd-faq summary {
+    display: flex; align-items: flex-start; gap: 16px;
+    padding: 22px 4px; cursor: pointer; list-style: none;
+    font-size: 17px; font-weight: 700; letter-spacing: -.02em; line-height: 1.5;
+    transition: color .15s;
+}
+.nd-faq summary::-webkit-details-marker { display: none; }
+.nd-faq summary:hover { color: var(--nd-accent); }
+.nd-faq summary::after {
+    content: ""; flex: 0 0 auto; margin-left: auto; margin-top: 8px;
+    width: 11px; height: 11px;
+    border-right: 2.2px solid var(--nd-text-3); border-bottom: 2.2px solid var(--nd-text-3);
+    transform: rotate(45deg); transition: transform .25s ease, border-color .15s;
+}
+.nd-faq details[open] summary::after { transform: rotate(-135deg); border-color: var(--nd-accent); }
+.nd-faq__a {
+    padding: 0 4px 24px; max-width: 76ch;
+    font-size: 15.5px; line-height: 1.8; color: var(--nd-text-2);
+}
+
+/* --------------------------------------------------------- 정보 목록 --- */
+.nd-info { display: grid; gap: 0; border-top: 1px solid var(--nd-line); }
+.nd-info > div {
+    display: grid; grid-template-columns: 130px 1fr; gap: 16px;
+    padding: 16px 2px; border-bottom: 1px solid var(--nd-line);
+}
+.nd-info dt { font-size: 14px; font-weight: 700; color: var(--nd-text-2); }
+.nd-info dd { margin: 0; font-size: 15.5px; }
+@media (max-width: 520px) {
+    .nd-info > div { grid-template-columns: 1fr; gap: 5px; }
+}
+
+/* --------------------------------------------------- 로그인·인증 화면 --- */
+.nd-auth {
+    min-height: 100dvh;
+    display: grid; grid-template-columns: 1.05fr .95fr;
+    background: var(--nd-paper);
+}
+@media (max-width: 900px) { .nd-auth { grid-template-columns: 1fr; } }
+
+/* 왼쪽 잉크 판 — 좁은 화면에서는 접어 감춘다(로그인 폼이 먼저 보여야 한다). */
+.nd-auth__side {
+    position: relative; background: var(--nd-ink); color: var(--nd-on-ink);
+    padding: clamp(40px, 5vw, 64px); display: flex; flex-direction: column; overflow: hidden;
+}
+.nd-auth__side::before {
+    content: ""; position: absolute; inset: 0;
+    background:
+        radial-gradient(66% 60% at 84% 6%, rgba(224,51,47,.32), transparent 62%),
+        radial-gradient(50% 54% at 6% 96%, rgba(52,96,168,.30), transparent 66%);
+}
+.nd-auth__side > * { position: relative; z-index: 1; }
+.nd-auth__side .nd-h1 { margin-top: auto; }
+.nd-auth__side p { margin-top: 18px; color: var(--nd-on-ink-2); max-width: 420px; }
+@media (max-width: 900px) { .nd-auth__side { display: none; } }
+
+.nd-auth__main {
+    display: flex; align-items: center; justify-content: center;
+    padding: clamp(32px, 5vw, 64px) 24px;
+}
+.nd-auth__box { width: 100%; max-width: 400px; }
+.nd-auth__box .nd-logo { margin-bottom: 26px; }
+.nd-auth__box .nd-h2 { font-size: 26px; }
+.nd-auth__box > p { margin-top: 10px; color: var(--nd-text-2); font-size: 15px; }
+.nd-auth__form { margin-top: 28px; }
+.nd-auth__foot { margin-top: 22px; font-size: 13.5px; color: var(--nd-text-3); text-align: center; }
+.nd-auth__foot a { color: var(--nd-text); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+
+/* 테스트 계정 안내 (NDN_SHOW_TEST_LOGINS 일 때만) */
+.nd-demo { margin-top: 26px; padding-top: 20px; border-top: 1px dashed var(--nd-line-2); }
+.nd-demo__h { font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--nd-text-3); }
+.nd-demo ul { margin-top: 12px; display: grid; gap: 6px; }
+.nd-demo button {
+    width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    padding: 10px 13px; border: 1px solid var(--nd-line); border-radius: var(--nd-r-sm);
+    background: var(--nd-paper-2); cursor: pointer; text-align: left;
+    transition: border-color .15s, background-color .15s;
+}
+.nd-demo button:hover { border-color: var(--nd-line-2); background: var(--nd-paper); }
+.nd-demo__r { font-size: 14px; font-weight: 700; }
+.nd-demo__r em { font-style: normal; color: var(--nd-accent); font-size: 12px; margin-left: 5px; }
+.nd-demo__e { font-size: 12.5px; color: var(--nd-text-3); }
+.nd-demo__f { margin-top: 10px; font-size: 12px; color: var(--nd-text-3); }
+.nd-demo code { background: var(--nd-paper-3); padding: 1px 6px; border-radius: 4px; font-size: 12px; }
+
+/* ------------------------------------------------------ 앱 화면 셸 --- */
+/* 협력 포털·수요 신청처럼 로그인 뒤 쓰는 업무 화면. 사이트보다 조밀하게. */
+.nd-app { min-height: 100dvh; display: flex; flex-direction: column; background: var(--nd-paper-2); }
+.nd-app__bar {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--nd-ink); color: var(--nd-on-ink);
+}
+.nd-app__bar .nd-wrap { display: flex; align-items: center; gap: 16px; height: 60px; }
+.nd-app__bar .nd-logo__mark { color: var(--nd-on-ink); }
+.nd-app__bar .nd-logo__sub { color: var(--nd-on-ink-3); }
+.nd-app__nav { display: flex; gap: 2px; margin-left: 10px; overflow-x: auto; scrollbar-width: none; }
+.nd-app__nav::-webkit-scrollbar { display: none; }
+.nd-app__nav a {
+    padding: 8px 13px; border-radius: var(--nd-r-sm); white-space: nowrap;
+    font-size: 14.5px; font-weight: 600; color: var(--nd-on-ink-2);
+    transition: color .15s, background-color .15s;
+}
+.nd-app__nav a:hover { color: var(--nd-on-ink); background: rgba(255,255,255,.08); }
+.nd-app__nav a.is-on { color: var(--nd-on-ink); background: rgba(255,255,255,.13); }
+.nd-app__end { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.nd-app__who { font-size: 13.5px; color: var(--nd-on-ink-2); white-space: nowrap; }
+.nd-app__out {
+    padding: 7px 14px; border: 1px solid var(--nd-line-ink); border-radius: var(--nd-r-pill);
+    background: transparent; color: var(--nd-on-ink); font-size: 13.5px; font-weight: 700; cursor: pointer;
+}
+.nd-app__out:hover { background: rgba(255,255,255,.1); }
+.nd-app__body { flex: 1; padding: 32px 0 64px; }
+
+.nd-pagehead { margin-bottom: 26px; }
+.nd-pagehead h1 { font-size: 27px; letter-spacing: -.03em; }
+.nd-pagehead p { margin-top: 8px; color: var(--nd-text-2); font-size: 15px; }
+
+/* ------------------------------------------------------------ 긴 글 --- */
+/* 개인정보처리방침·이용약관. 읽는 것이 목적이므로 장식을 최소로. */
+.nd-prose { font-size: 15.5px; line-height: 1.85; color: var(--nd-text-2); }
+.nd-prose h2 { margin: 44px 0 14px; font-size: 21px; color: var(--nd-text); }
+.nd-prose h2:first-child { margin-top: 0; }
+.nd-prose h3 { margin: 26px 0 10px; font-size: 17px; color: var(--nd-text); }
+.nd-prose p  { margin: 12px 0; }
+.nd-prose ul { margin: 12px 0; display: grid; gap: 8px; }
+.nd-prose ul li { position: relative; padding-left: 18px; }
+.nd-prose ul li::before {
+    content: ""; position: absolute; left: 3px; top: 12px;
+    width: 5px; height: 5px; border-radius: 50%; background: var(--nd-line-2);
+}
+.nd-prose a { color: var(--nd-text); text-decoration: underline; text-underline-offset: 3px; }
+.nd-prose strong { color: var(--nd-text); font-weight: 700; }
+.nd-prose .nd-tablewrap { margin: 20px 0; }
+/* 시행일·개정일 같은 메타 한 줄 */
+.nd-prose__meta {
+    display: inline-block; margin-bottom: 34px; padding: 6px 14px;
+    border-radius: var(--nd-r-pill); background: var(--nd-paper-2);
+    font-size: 13.5px; font-weight: 700; color: var(--nd-text-2);
+}
+/* 본문 중 특별히 짚어야 하는 문단 */
+.nd-prose__note {
+    margin: 18px 0; padding: 14px 18px;
+    border-left: 3px solid var(--nd-accent); border-radius: 0 var(--nd-r-sm) var(--nd-r-sm) 0;
+    background: var(--nd-accent-050); color: var(--nd-text);
+    font-size: 15px; line-height: 1.75;
+}
+
+/* ------------------------------------------------------------ CTA --- */
+.nd-cta { padding: clamp(64px, 8vw, 104px) 0; text-align: center; }
+.nd-cta .nd-h2 { max-width: 760px; margin-inline: auto; }
+.nd-cta .nd-lead { max-width: 600px; margin: 18px auto 0; }
+.nd-cta .nd-btnrow { margin-top: 32px; justify-content: center; }
+
+/* ----------------------------------------------------------- 푸터 --- */
+.nd-footer { background: var(--nd-ink); color: var(--nd-on-ink-2); padding: 64px 0 28px; }
+.nd-footer__grid {
+    display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr; gap: 40px;
+}
+@media (max-width: 900px) { .nd-footer__grid { grid-template-columns: 1fr 1fr; gap: 32px; } }
+@media (max-width: 560px) { .nd-footer__grid { grid-template-columns: 1fr; } }
+.nd-footer h4 { font-size: 13px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--nd-on-ink); }
+.nd-footer__about p { margin-top: 14px; font-size: 14.5px; line-height: 1.75; max-width: 340px; }
+.nd-footer ul { margin-top: 14px; display: grid; gap: 9px; }
+.nd-footer ul a { font-size: 14.5px; transition: color .15s; }
+.nd-footer ul a:hover { color: var(--nd-on-ink); }
+.nd-footer__bottom {
+    margin-top: 52px; padding-top: 22px; border-top: 1px solid var(--nd-line-ink);
+    display: flex; flex-wrap: wrap; gap: 14px; justify-content: space-between; align-items: center;
+    font-size: 13.5px; color: var(--nd-on-ink-3);
+}
+.nd-footer__bottom nav { display: flex; flex-wrap: wrap; gap: 18px; }
+.nd-footer__bottom a:hover { color: var(--nd-on-ink); }
+
+/* ----------------------------------------------------------- 에러 --- */
+.nd-error {
+    min-height: 100dvh; display: flex; align-items: center; justify-content: center;
+    background: var(--nd-ink); color: var(--nd-on-ink); text-align: center;
+    padding: 40px 24px; position: relative; overflow: hidden;
+}
+.nd-error::before {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(60% 60% at 50% 0%, rgba(224,51,47,.26), transparent 66%);
+}
+.nd-error__in { position: relative; z-index: 1; max-width: 520px; }
+.nd-error__code {
+    font-size: clamp(64px, 14vw, 128px); font-weight: 900; line-height: 1;
+    letter-spacing: -.06em; color: rgba(255,255,255,.14);
+}
+.nd-error h1 { margin-top: 12px; font-size: clamp(22px, 3.4vw, 30px); }
+.nd-error p { margin-top: 14px; color: var(--nd-on-ink-2); }
+.nd-error .nd-btnrow { margin-top: 30px; justify-content: center; }
+
+/* ====================================================================
+   인터랙션
+   --------------------------------------------------------------------
+   원칙 세 가지.
+   1) 없어도 되는 것만 넣는다 — 전부 꺼져도 내용과 조작에는 지장이 없다.
+   2) prefers-reduced-motion 을 켠 사람에게는 전부 끈다. 어지럼증·전정기능
+      장애가 있는 사람에게 시차 스크롤과 확대는 실제로 불편을 준다.
+   3) 합성만 건드린다(transform/opacity). 레이아웃을 다시 계산시키면
+      스크롤이 끊긴다.
+   ==================================================================== */
+
+/* ------------------------------------------------------ 스크롤 진척 --- */
+/* 페이지가 얼마나 남았는지 알려주는 아주 얇은 선. 문서가 길 때만 켠다. */
+.nd-progress {
+    position: fixed; top: 0; left: 0; right: 0; height: 2px;
+    z-index: 300; pointer-events: none;
+    background: linear-gradient(90deg, var(--nd-accent), #FF8A83);
+    transform: scaleX(0); transform-origin: 0 50%;
+    will-change: transform;
+}
+
+/* --------------------------------------------------------- 제목 등장 --- */
+/* 글자가 아래에서 올라오며 드러난다. 자르는 상자를 씌우고 그 안에서 움직인다. */
+.nd-js .nd-reveal { display: block; overflow: hidden; }
+.nd-js .nd-reveal > span {
+    display: block;
+    transform: translateY(105%);
+    transition: transform .9s cubic-bezier(.16, 1, .3, 1);
+}
+.nd-js .nd-reveal.is-in > span { transform: none; }
+/* 여러 줄이면 순서대로 */
+.nd-js .nd-reveal:nth-of-type(2) > span { transition-delay: .09s; }
+.nd-js .nd-reveal:nth-of-type(3) > span { transition-delay: .18s; }
+
+/* ------------------------------------------------------ 카드 스포트라이트 --- */
+/* 커서를 따라 옅은 빛이 카드 위를 지난다. 위치는 JS 가 --mx/--my 로 준다. */
+.nd-card { position: relative; overflow: hidden; }
+.nd-card::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: radial-gradient(220px circle at var(--mx, 50%) var(--my, 0%),
+                rgba(224,51,47,.10), transparent 68%);
+    opacity: 0; transition: opacity .35s ease;
+    pointer-events: none;
+}
+.nd-card:hover::after { opacity: 1; }
+.nd-band .nd-card::after {
+    background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 0%),
+                rgba(255,255,255,.10), transparent 68%);
+}
+/* 카드 안 내용이 빛 위에 오도록 */
+.nd-card > * { position: relative; z-index: 1; }
+
+/* ------------------------------------------------------------ 버튼 광택 --- */
+/* 커서가 지나갈 때 한 번 스치는 빛. 과하면 싸구려로 보이므로 아주 옅게. */
+.nd-btn { position: relative; overflow: hidden; }
+.nd-btn > * { position: relative; z-index: 1; }
+.nd-btn::after {
+    content: "";
+    position: absolute; top: 0; bottom: 0; left: -40%; width: 34%;
+    background: linear-gradient(100deg, transparent, rgba(255,255,255,.34), transparent);
+    transform: translateX(0); opacity: 0;
+    pointer-events: none;
+}
+.nd-btn:hover::after { animation: nd-sheen .7s ease forwards; }
+@keyframes nd-sheen {
+    from { transform: translateX(0);    opacity: 0; }
+    18%  { opacity: 1; }
+    to   { transform: translateX(420%); opacity: 0; }
+}
+.nd-btn--line:hover::after, .nd-btn--onink:hover::after { opacity: 0; animation: none; }
+
+/* --------------------------------------------------------- 히어로 시차 --- */
+/* 배경만 스크롤보다 느리게 움직인다. 사진이 있든 없든 깊이가 생긴다. */
+.nd-hero__bg, .nd-hero::before { will-change: transform; }
+
+/* ------------------------------------------------------------ 지표 숫자 --- */
+/* 세는 동안 숫자 폭이 요동치면 표가 흔들린다. 고정폭 숫자로 고정한다. */
+.nd-herometa dd, .nd-stat__n { font-variant-numeric: tabular-nums; }
+
+/* ---------------------------------------------------- 모션 최소화 존중 --- */
+@media (prefers-reduced-motion: reduce) {
+    .nd-progress { display: none; }
+    .nd-js .nd-reveal > span { transform: none; transition: none; }
+    .nd-card::after, .nd-btn::after { display: none; }
+    .nd-card:hover { transform: none; }
+}
+
+/* ------------------------------------------------------- 등장 효과 --- */
+/* 스크롤로 들어올 때 살짝 올라온다.
+   기본값은 '보임'이다 — .nd-js 가 붙었을 때만 숨긴다. 이 순서가 아니면 JS 가
+   실패하거나 IntersectionObserver 가 없는 환경에서 본문이 통째로 사라진다.
+   .nd-js 는 <head> 인라인 스크립트가 붙이므로 첫 페인트 전에 결정된다. */
+.nd-js .nd-rise {
+    opacity: 0; transform: translateY(18px);
+    transition: opacity .6s ease, transform .6s ease;
+}
+.nd-js .nd-rise.is-in { opacity: 1; transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+    .nd-js .nd-rise { opacity: 1; transform: none; transition: none; }
+}
+
+/* ------------------------------------------------------------ 인쇄 --- */
+@media print {
+    .nd-header, .nd-footer, .nd-skip, .cw, .aiw { display: none !important; }
+    body { background: #fff; }
+    .nd-band, .nd-hero { background: #fff !important; color: #000 !important; }
+    .nd-band::before, .nd-hero::before, .nd-hero::after { display: none !important; }
+}

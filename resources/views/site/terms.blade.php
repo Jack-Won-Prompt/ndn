@@ -9,17 +9,17 @@
 @endphp
 
 @section('content')
-    <section class="page-head">
-        <div class="wrap page-head__inner">
-            <p class="crumb"><a href="{{ route('site.home') }}">홈</a><span>›</span>이용약관</p>
-            <h1>이용약관</h1>
-            <p>N.D.N Korea 서비스 이용에 관한 회사와 이용자 간의 권리·의무를 정합니다.</p>
+    <section class="nd-pagehero">
+        <div class="nd-wrap">
+            <p class="nd-crumb"><a href="{{ route('site.home') }}">홈</a><span>›</span>이용약관</p>
+            <h1 class="nd-h1">이용약관</h1>
+            <p class="nd-lead">N.D.N Korea 서비스 이용에 관한 회사와 이용자 간의 권리·의무를 정합니다.</p>
         </div>
     </section>
 
-    <section class="section">
-        <div class="wrap legal">
-            <p class="legal__meta">시행일: 2026년 7월 28일</p>
+    <section class="nd-section">
+        <div class="nd-wrap nd-wrap--narrow nd-prose">
+            <p class="nd-prose__meta">시행일: 2026년 7월 28일</p>
 
             <h2>제1조 (목적)</h2>
             <p>이 약관은 주식회사 앤디앤(이하 "회사")이 제공하는 외국인 계절근로자(E-8) 통합관리 플랫폼 및 모바일 앱(이하 "서비스")의 이용과 관련하여 회사와 이용자의 권리·의무 및 책임사항을 규정함을 목적으로 합니다.</p>
