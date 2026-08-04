@@ -323,7 +323,10 @@
       "PowerShell(git -C e:\\\\xampp\\\\htdocs\\\\ndn branch -D feat/site-copy-photos-langs)",
       "PowerShell(git -C e:\\\\xampp\\\\htdocs\\\\ndn log --oneline -3)",
       "PowerShell(git -C e:\\\\xampp\\\\htdocs\\\\ndn ls-files --error-unmatch public/site/assets/img/harvest.jpg 2>&1)",
-      "PowerShell(& e:\\\\xampp\\\\php\\\\php.exe .\\\\vendor\\\\bin\\\\pest tests/Feature/Site/HeroImageTest.php 2>&1)"
+      "PowerShell(& e:\\\\xampp\\\\php\\\\php.exe .\\\\vendor\\\\bin\\\\pest tests/Feature/Site/HeroImageTest.php 2>&1)",
+      "PowerShell(git -C e:\\\\xampp\\\\htdocs\\\\ndn log --oneline -2)",
+      "PowerShell(git -C e:\\\\xampp\\\\htdocs\\\\ndn push -u origin fix/hero-image-setting 2>&1)",
+      "PowerShell(git -C e:\\\\xampp\\\\htdocs\\\\ndn switch main)"
     ],
     "additionalDirectories": [
       "\\tmp"
