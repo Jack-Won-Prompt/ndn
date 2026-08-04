@@ -35,7 +35,7 @@
                             <td><b>{{ $r['title'] ?: $r['code'] }}</b> <span class="rd-code">{{ $r['code'] }}</span></td>
                             <td class="c">v{{ $r['version'] }}</td>
                             <td class="c">
-                                @foreach (['ko','bn','lo','si','vi'] as $loc)
+                                @foreach (\App\Domains\Onboarding\Models\RequiredDocument::LOCALES as $loc)
                                     <span class="rd-loc rd-loc--{{ in_array($loc, $r['filled'], true) ? 'on' : 'off' }}">{{ $loc }}</span>
                                 @endforeach
                             </td>
@@ -89,8 +89,8 @@
     (function () {
         var token = document.querySelector('meta[name="csrf-token"]').content;
         var BASE = '{{ url('admin/required-documents') }}';
-        var LOCALES = ['ko', 'bn', 'lo', 'si', 'vi'];
-        var LOCALE_NAMES = { ko: '한국어', bn: '벵골어', lo: '라오어', si: '싱할라어', vi: '베트남어' };
+        var LOCALES = @json(\App\Domains\Onboarding\Models\RequiredDocument::LOCALES);
+        var LOCALE_NAMES = { ko: '한국어', bn: '벵골어', lo: '라오어', si: '싱할라어', vi: '베트남어', ne: '네팔어', ky: '키르기스어' };
         var doc = null;
 
         function esc(s) { return (s == null ? '' : String(s)); }

@@ -19,14 +19,14 @@ class CheckTranslations extends Command
 {
     protected $signature = 'translations:check';
 
-    protected $description = '근로자 대상 번역 키가 5개 언어에 모두 존재하는지 검사';
+    protected $description = '근로자 대상 번역 키가 지원 언어 전부에 존재하는지 검사';
 
     /** 근로자 대상 네임스페이스 (파일명, 확장자 제외) */
     private const WORKER_FACING = ['worker'];
 
     private const BASE_LOCALE = 'ko';
 
-    private const REQUIRED_LOCALES = ['ko', 'bn', 'lo', 'si', 'vi'];
+    private const REQUIRED_LOCALES = ['ko', 'bn', 'lo', 'si', 'vi', 'ne', 'ky'];
 
     public function handle(): int
     {
@@ -75,7 +75,12 @@ class CheckTranslations extends Command
             return self::FAILURE;
         }
 
-        $this->info('번역 검사 통과: 근로자 대상 키가 5개 언어에 모두 존재합니다.');
+        // 언어가 늘어날 수 있으므로 개수를 문구에 박지 않는다.
+        $this->info(sprintf(
+            '번역 검사 통과: 근로자 대상 키가 %d개 언어(%s)에 모두 존재합니다.',
+            count(self::REQUIRED_LOCALES),
+            implode('/', self::REQUIRED_LOCALES),
+        ));
 
         return self::SUCCESS;
     }

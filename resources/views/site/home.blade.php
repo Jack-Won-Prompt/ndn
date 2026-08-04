@@ -62,7 +62,7 @@
             <div class="nd-split">
                 <div class="nd-split__a nd-rise">
                     <div class="nd-plate nd-plate--photo">
-                        <img class="nd-plate__img" src="{{ asset('site/assets/img/business_meeting.jpg') }}" alt="지자체·농가 관계자 협의 장면">
+                        <img class="nd-plate__img" src="{{ asset('site/assets/img/team_meeting.jpg') }}" alt="관계자들이 한자리에 모여 배치 계획을 논의하는 장면">
                         <span class="nd-plate__k">4 : 1</span>
                         <p class="nd-plate__t">네 주체, 하나의 화면</p>
                         <p class="nd-plate__d">지자체 · 농가 · 송출기관 · 근로자가 같은 진행 상황을 봅니다.</p>
@@ -110,7 +110,7 @@
                 <article class="nd-card nd-rise">
                     <span class="nd-card__no">02</span>
                     <h3 class="nd-h3">사전 교육</h3>
-                    <p>한국어, 생활 규칙, 농작업 안전. 입국 전에 알고 오는 것과 와서 배우는 것은 정착 속도가 다릅니다.</p>
+                    <p>생활 규칙, 농작업 안전, 한국 농가의 현실적인 현황. 입국 전에 알고 오는 것과 와서 배우는 것은 정착 속도가 다릅니다.</p>
                 </article>
                 <article class="nd-card nd-rise">
                     <span class="nd-card__no">03</span>
@@ -130,7 +130,7 @@
                 <article class="nd-card nd-rise">
                     <span class="nd-card__no">06</span>
                     <h3 class="nd-h3">생활 지원</h3>
-                    <p>통장 개설, 보험 가입, 통신·유심. 입국 첫 주에 몰리는 일들을 대리점과 연계해 처리합니다.</p>
+                    <p>통장 개설, 보험 가입. 입국 첫 주에 몰리는 일들을 지역 헬프센터와 연계해 처리합니다.</p>
                 </article>
             </div>
         </div>
@@ -154,7 +154,7 @@
                 <li class="nd-step">
                     <span class="nd-step__n">STEP 02</span>
                     <h3>사전 교육</h3>
-                    <p>현지에서 한국어와 안전 교육을 마치고 출국을 준비합니다.</p>
+                    <p>현지에서 위생 교육과 근무지 수칙, 안전 교육을 마치고 출국을 준비합니다.</p>
                 </li>
                 <li class="nd-step">
                     <span class="nd-step__n">STEP 03</span>
@@ -164,7 +164,7 @@
                 <li class="nd-step">
                     <span class="nd-step__n">STEP 04</span>
                     <h3>현장 배치</h3>
-                    <p>농가 조건과 근로자 이력을 맞춰 배치합니다. 가족은 함께 묶습니다.</p>
+                    <p>농가 조건과 근로자 이력을 맞춰 배치합니다.</p>
                 </li>
                 <li class="nd-step">
                     <span class="nd-step__n">STEP 05</span>
@@ -181,10 +181,17 @@
             <div class="nd-split nd-split--reverse">
                 <div class="nd-split__a nd-rise">
                     <div class="nd-plate nd-plate--photo">
-                        <img class="nd-plate__img" src="{{ asset('site/assets/img/korean_class.jpg') }}" alt="송출국 현지 한국어 수업 장면">
-                        <span class="nd-plate__k">5</span>
-                        <p class="nd-plate__t">다섯 언어로 같은 내용을</p>
-                        <p class="nd-plate__d" data-no-translate>한국어 · বাংলা · ລາວ · සිංහල · Tiếng Việt</p>
+                        <img class="nd-plate__img" src="{{ asset('site/assets/img/korean_class.jpg') }}" alt="송출국 현지 사전 교육 장면">
+                        {{-- 여기 적는 언어는 '송출국 목록'이 아니라 시스템이 실제로 문서·알림을
+                             내보낼 수 있는 언어다. 송출국이 바뀌어도 이미 입국한 근로자가 있으면
+                             그 언어 지원은 남는다. 손으로 적으면 언어가 늘 때 어긋나므로
+                             SiteTranslator 에서 뽑는다(en 은 근로자 대상이 아니라 제외). --}}
+                        @php
+                            $workerLangs = collect(\App\Shared\Translation\SiteTranslator::NATIVE)->forget('en');
+                        @endphp
+                        <span class="nd-plate__k">{{ $workerLangs->count() }}</span>
+                        <p class="nd-plate__t">{{ $workerLangs->count() }}개 언어로 같은 내용을</p>
+                        <p class="nd-plate__d" data-no-translate>{{ $workerLangs->implode(' · ') }}</p>
                     </div>
                 </div>
                 <div class="nd-rise">
@@ -198,8 +205,9 @@
                     <div class="nd-countries" style="margin-top:28px">
                         <span class="nd-country"><span class="nd-country__c">BD</span> 방글라데시 <span class="nd-country__l" data-no-translate>বাংলা</span></span>
                         <span class="nd-country"><span class="nd-country__c">LA</span> 라오스 <span class="nd-country__l" data-no-translate>ລາວ</span></span>
-                        <span class="nd-country"><span class="nd-country__c">LK</span> 스리랑카 <span class="nd-country__l" data-no-translate>සිංහල</span></span>
                         <span class="nd-country"><span class="nd-country__c">VN</span> 베트남 <span class="nd-country__l" data-no-translate>Tiếng Việt</span></span>
+                        <span class="nd-country"><span class="nd-country__c">NP</span> 네팔 <span class="nd-country__l" data-no-translate>नेपाली</span></span>
+                        <span class="nd-country"><span class="nd-country__c">KG</span> 키르기스스탄 <span class="nd-country__l" data-no-translate>Кыргызча</span></span>
                     </div>
                 </div>
             </div>

@@ -24,7 +24,7 @@ use OpenSpout\Reader\CSV\Reader;
  */
 class WorkerGridController extends Controller
 {
-    private const LOCALES = ['ko', 'bn', 'lo', 'si', 'vi'];
+    private const LOCALES = ['ko', 'bn', 'lo', 'si', 'vi', 'ne', 'ky'];
 
     /** 비민감 필드만 매핑 (그리드·엑셀 다운로드 공용) */
     public static function mapRow(Worker $w): array

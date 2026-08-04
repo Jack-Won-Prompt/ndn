@@ -37,7 +37,11 @@
                 <article class="nd-card nd-rise">
                     <span class="nd-card__no">교육</span>
                     <h3 class="nd-h3">교육기관</h3>
-                    <p>청주대학교, 보건과학대학교, 충청대학교, 신성대학교. 한국어·문화 교육 과정과 유학 서비스를 함께 설계합니다.</p>
+                    <p>청주대학교, 보건과학대학교, 충청대학교, 신성대학교. 한국어·문화 교육 과정과 <strong>뿌리교육사업</strong>을 함께 설계합니다.</p>
+                    <p style="margin-top:10px;font-size:14px;color:var(--nd-text-3)">
+                        뿌리교육 — 지역 산업현장에 부족한 인력을 지역 대학교와 함께 인재로 육성해,
+                        그 지역으로 취업까지 이어주는 서비스입니다.
+                    </p>
                 </article>
                 <article class="nd-card nd-rise">
                     <span class="nd-card__no">산업</span>
@@ -72,7 +76,7 @@
 
             <p class="nd-lead nd-rise" style="margin-top:28px;max-width:760px">
                 각 송출국의 현지 파트너가 모집 공고, 서류 접수, 면접, 출국 준비를 담당합니다.
-                근로자는 모국어로 안내받으며, 출국 전 한국어 · 생활 · 안전 교육을 마칩니다.
+                근로자는 모국어로 안내받으며, 출국 전 위생 · 근무지 수칙 · 안전 교육을 마칩니다.
             </p>
         </div>
     </section>
@@ -98,7 +102,7 @@
                 </div>
                 <div class="nd-split__a nd-rise">
                     <div class="nd-plate nd-plate--photo">
-                        <img class="nd-plate__img" src="{{ asset('site/assets/img/partnership_mou.jpg') }}" alt="해외 협력기관 업무협약 장면">
+                        <img class="nd-plate__img" src="{{ asset('site/assets/img/mou_signing_close.jpg') }}" alt="해외 협력기관과 업무협약서에 서명하는 장면">
                         <span class="nd-plate__k">4</span>
                         <p class="nd-plate__t">통장 · 보험 · 통신 · 유심</p>
                         <p class="nd-plate__d">배정된 건만, 동의 범위 안에서만 대리점에 보입니다.</p>

@@ -24,7 +24,7 @@ class RequiredDocument extends Model
     use HasFactory;
 
     /** 지원 언어 (CLAUDE.md §6) */
-    public const LOCALES = ['ko', 'bn', 'lo', 'si', 'vi'];
+    public const LOCALES = ['ko', 'bn', 'lo', 'si', 'vi', 'ne', 'ky'];
 
     protected $fillable = ['code', 'translations', 'version', 'sort_order', 'required', 'active'];
 

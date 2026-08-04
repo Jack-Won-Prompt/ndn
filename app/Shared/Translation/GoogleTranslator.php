@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Log;
 class GoogleTranslator
 {
     /** 지원 언어(근로자 송출국 + 한국어) */
-    public const LANGS = ['ko', 'bn', 'lo', 'si', 'vi', 'en', 'zh'];
+    public const LANGS = ['ko', 'bn', 'lo', 'si', 'vi', 'en', 'zh', 'ne', 'ky'];
 
     /**
      * text 를 target 언어로 번역. from 은 'auto' 가능.

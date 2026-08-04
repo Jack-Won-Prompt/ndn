@@ -308,7 +308,18 @@
       "PowerShell(git -C e:\\\\xampp\\\\htdocs\\\\ndn log --oneline main..feat/web-redesign-2026)",
       "PowerShell(if \\($?\\) { \"fast-forward ����\" } else { \"fast-forward �Ұ�\" })",
       "PowerShell(git -C e:\\\\xampp\\\\htdocs\\\\ndn diff --stat .claude/settings.json)",
-      "PowerShell(git -C e:\\\\xampp\\\\htdocs\\\\ndn diff .claude/settings.json)"
+      "PowerShell(git -C e:\\\\xampp\\\\htdocs\\\\ndn diff .claude/settings.json)",
+      "PowerShell(git -C e:\\\\xampp\\\\htdocs\\\\ndn push origin main 2>&1)",
+      "PowerShell(git -C e:\\\\xampp\\\\htdocs\\\\ndn branch -d feat/regions-consent-gate-sr feat/web-redesign-2026)",
+      "PowerShell(git -C e:\\\\xampp\\\\htdocs\\\\ndn push origin --delete feat/regions-consent-gate-sr feat/web-redesign-2026 2>&1)",
+      "PowerShell(git -C e:\\\\xampp\\\\htdocs\\\\ndn branch -D feat/web-redesign-2026)",
+      "PowerShell(git -C e:\\\\xampp\\\\htdocs\\\\ndn branch -a)",
+      "PowerShell(git -C e:\\\\xampp\\\\htdocs\\\\ndn status --short --branch)",
+      "PowerShell(Get-ChildItem 'e:\\\\xampp\\\\htdocs\\\\ndn\\\\public\\\\site\\\\assets\\\\img' -File | Where-Object { $_.LastWriteTime -gt \\(Get-Date\\).AddHours\\(-3\\) } | Select-Object Name, Length, LastWriteTime; \"--- 전체 개수: $\\(\\(Get-ChildItem 'e:\\\\xampp\\\\htdocs\\\\ndn\\\\public\\\\site\\\\assets\\\\img' -File\\).Count\\)\")",
+      "PowerShell(Get-ChildItem 'e:\\\\xampp\\\\htdocs\\\\ndn\\\\public\\\\site\\\\assets\\\\img' -File | Where-Object { $_.Name -in 'field_workers.jpg','mou_bangladesh.jpg','training_bangladesh.jpg' } | Select-Object Name, Length; \"총 $\\(\\(Get-ChildItem 'e:\\\\xampp\\\\htdocs\\\\ndn\\\\public\\\\site\\\\assets\\\\img' -File\\).Count\\)장\")",
+      "PowerShell($p='E:\\\\xampp\\\\htdocs\\\\ndn\\\\사진'; if \\(Test-Path $p\\) { Get-ChildItem $p -File -Recurse | ForEach-Object { $d=$null; try { $img=[System.Drawing.Image]::FromFile\\($_.FullName\\); $d=\"$\\($img.Width\\)x$\\($img.Height\\)\"; $img.Dispose\\(\\) } catch { $d='?' }; \"{0,-42} {1,9:N0} KB  {2}\" -f $_.Name, \\($_.Length/1KB\\), $d } } else { \"폴더 없음\" })",
+      "PowerShell(& e:\\\\xampp\\\\php\\\\php.exe \"C:\\\\Users\\\\82103\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\e--xampp-htdocs-ndn\\\\8e72c8e4-0727-4386-908f-a8a48533944d\\\\scratchpad\\\\dims.php\" 2>&1)",
+      "PowerShell(& e:\\\\xampp\\\\php\\\\php.exe \"C:\\\\Users\\\\82103\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\e--xampp-htdocs-ndn\\\\8e72c8e4-0727-4386-908f-a8a48533944d\\\\scratchpad\\\\import.php\" 2>&1)"
     ],
     "additionalDirectories": [
       "\\tmp"

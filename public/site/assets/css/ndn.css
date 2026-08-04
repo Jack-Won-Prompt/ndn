@@ -227,7 +227,13 @@ button { font: inherit; color: inherit; }
     display: flex; align-items: center; gap: 20px;
 }
 
-.nd-logo { display: inline-flex; align-items: baseline; gap: 7px; flex: 0 0 auto; }
+.nd-logo { display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+
+/* 로고 이미지. 원본 배경이 흰색이라 밝은 지면에서만 쓴다 —
+   잉크 밴드(푸터·로그인 옆판·에러)에서는 흰 사각형으로 뜨므로 텍스트 워드마크를 쓴다.
+   투명 배경 파일을 받으면 그때 어두운 면에도 쓸 수 있다. */
+.nd-logo__img { height: 30px; width: auto; display: block; }
+@media (max-width: 480px) { .nd-logo__img { height: 26px; } }
 .nd-logo__mark {
     font-size: 20px; font-weight: 900; letter-spacing: -.05em; color: var(--nd-ink);
 }

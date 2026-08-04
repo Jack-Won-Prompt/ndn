@@ -23,7 +23,7 @@ class WorkerFactory extends Factory
     ];
 
     /** 국적 → locale 매핑 */
-    private const LOCALE = ['BD' => 'bn', 'LA' => 'lo', 'LK' => 'si', 'VN' => 'vi'];
+    private const LOCALE = ['BD' => 'bn', 'LA' => 'lo', 'LK' => 'si', 'VN' => 'vi', 'NP' => 'ne', 'KG' => 'ky'];
 
     /** 국적 → 여권번호 접두 (국가별 형식 근사) */
     private const PASSPORT_PREFIX = ['BD' => 'BW', 'LA' => 'P', 'LK' => 'N', 'VN' => 'C'];

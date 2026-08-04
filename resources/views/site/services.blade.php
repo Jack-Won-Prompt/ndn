@@ -35,7 +35,7 @@
                 </div>
                 <div class="nd-split__a nd-rise">
                     <div class="nd-plate nd-plate--photo">
-                        <img class="nd-plate__img" src="{{ asset('site/assets/img/interview.jpg') }}" alt="송출국 현지 면접 장면">
+                        <img class="nd-plate__img" src="{{ asset('site/assets/img/interview_bangladesh.jpg') }}" alt="송출국 현지에서 지원자 서류를 접수하고 면접을 진행하는 장면">
                         <span class="nd-plate__k">01</span>
                         <p class="nd-plate__t">현지 면접, 기록으로 남습니다</p>
                         <p class="nd-plate__d">합격·보류·불합격 사유가 다음 회차로 그대로 이어집니다.</p>
@@ -57,33 +57,34 @@
                         현지 교육은 출국 준비 기간에 맞춰 진행합니다.
                     </p>
                     <ul class="nd-checks">
-                        <li><strong>한국어</strong> — 작업 지시와 안전 표지를 알아듣는 수준까지</li>
-                        <li><strong>생활 규칙</strong> — 숙소 사용, 단체 생활, 급여 수령 방식</li>
+                        <li><strong>위생 교육</strong> — 개인·작업장 위생, 식품 취급 기본</li>
+                        <li><strong>근무지 수칙</strong> — 숙소 사용, 단체 생활, 급여 수령 방식</li>
                         <li><strong>산업 안전</strong> — 농기계, 농약, 온열질환 대응</li>
+                        <li><strong>한국 농가의 현실</strong> — 작업 강도와 하루 일과를 미리 알고 옵니다</li>
                     </ul>
                     <p class="nd-hint" style="margin-top:24px">
-                        교육 자료는 방글라어·라오어·싱할라어·베트남어로 제공됩니다.
+                        교육 자료는 방글라어·라오어·싱할라어·베트남어·네팔어·키르기스어로 제공됩니다.
                     </p>
                 </div>
                 <div class="nd-split__a nd-rise">
                     <div class="nd-plate nd-plate--photo">
-                        <img class="nd-plate__img" src="{{ asset('site/assets/img/safety_training.jpg') }}" alt="산업 안전 교육 수업 장면">
+                        <img class="nd-plate__img" src="{{ asset('site/assets/img/training_bangladesh.jpg') }}" alt="송출국 현지 직업훈련장에서 안전 장구를 착용하고 교육받는 장면">
                         <span class="nd-plate__k">02</span>
                         <p class="nd-plate__t">출국 전에 끝내는 교육</p>
-                        <p class="nd-plate__d">한국어 · 생활 규칙 · 산업 안전을 현지에서 마칩니다.</p>
+                        <p class="nd-plate__d">위생 교육 · 근무지 수칙 · 산업 안전을 현지에서 마칩니다.</p>
                     </div>
                 </div>
             </div>
 
             <div class="nd-grid nd-grid--3" style="margin-top:56px">
                 <article class="nd-card nd-rise">
-                    <span class="nd-card__no">한국어</span>
-                    <h3 class="nd-h3">한국어 교육</h3>
-                    <p>인사와 숫자, 작업 용어, 몸이 아플 때 쓸 표현부터 가르칩니다.</p>
+                    <span class="nd-card__no">위생</span>
+                    <h3 class="nd-h3">위생 교육</h3>
+                    <p>개인 위생과 작업장 위생, 식품 취급의 기본. 농산물을 다루는 일이라 첫날부터 요구되는 기준이 있습니다.</p>
                 </article>
                 <article class="nd-card nd-rise">
-                    <span class="nd-card__no">생활</span>
-                    <h3 class="nd-h3">생활 교육</h3>
+                    <span class="nd-card__no">수칙</span>
+                    <h3 class="nd-h3">근무지 수칙</h3>
                     <p>숙소 규칙, 쓰레기 분리, 이웃 관계. 사소해 보이지만 갈등의 대부분이 여기서 시작됩니다.</p>
                 </article>
                 <article class="nd-card nd-rise">
@@ -133,7 +134,7 @@
                 <h2 class="nd-h2">행정과 정착 지원</h2>
                 <p class="nd-lead">입국 첫 주에 몰리는 일들입니다. 미리 예약해 두면 근로자가 이틀을 절약합니다.</p>
             </div>
-            <div class="nd-grid nd-grid--4" style="margin-top:44px">
+            <div class="nd-grid nd-grid--3" style="margin-top:44px">
                 <article class="nd-card nd-rise">
                     <span class="nd-card__no">01</span>
                     <h3 class="nd-h3">비자 · 입국</h3>
@@ -147,12 +148,7 @@
                 <article class="nd-card nd-rise">
                     <span class="nd-card__no">03</span>
                     <h3 class="nd-h3">통장 · 보험</h3>
-                    <p>급여 계좌 개설과 보험 가입. 제휴 대리점과 연계해 처리합니다.</p>
-                </article>
-                <article class="nd-card nd-rise">
-                    <span class="nd-card__no">04</span>
-                    <h3 class="nd-h3">통신 · 유심</h3>
-                    <p>연락이 닿지 않으면 관리도 불가능합니다. 입국 당일 개통을 목표로 합니다.</p>
+                    <p>급여 계좌 개설과 보험 가입. 지역 헬프센터와 연계해 처리합니다.</p>
                 </article>
             </div>
         </div>
@@ -179,7 +175,6 @@
                         <tr><td>온보딩</td><td>근로자</td><td>모국어 입력 화면 제공</td><td>본인 기입 서류</td></tr>
                         <tr><td>매칭 · 배치</td><td>시청 · 농가</td><td>조건 대조 및 그룹 매칭</td><td>배치 확정서</td></tr>
                         <tr><td>입국 · 이송</td><td>N.D.N</td><td>항공 · 픽업 · 배차 운영</td><td>이송 계획표</td></tr>
-                        <tr><td>정착 서비스</td><td>제휴 대리점</td><td>배정 및 진행 상태 관리</td><td>처리 완료 내역</td></tr>
                         <tr><td>사후 관리</td><td>N.D.N</td><td>월별 인터뷰 · 현장 점검</td><td>월간 관리 보고서</td></tr>
                     </tbody>
                 </table>

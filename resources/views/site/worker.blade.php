@@ -6,19 +6,22 @@
 @section('content')
 
     <section class="nd-pagehero nd-pagehero--photo">
-        <img class="nd-pagehero__bg" src="{{ asset('site/assets/img/worker_consult.jpg') }}" alt="" aria-hidden="true">
+        <img class="nd-pagehero__bg" src="{{ asset('site/assets/img/field_workers.jpg') }}" alt="" aria-hidden="true">
         <div class="nd-wrap">
             <p class="nd-crumb"><a href="{{ route('site.home') }}">홈</a><span>›</span>근로자 지원</p>
             <h1 class="nd-h1">근로자 지원</h1>
             <p class="nd-lead">한국에 오기 전에 알아 두면 좋은 것들을 정리했습니다.</p>
 
-            {{-- 언어 이름은 그 언어 문자 그대로 둔다(자동 번역 제외). --}}
+            {{-- 근로자에게 안내가 나가는 언어. 목록을 여기 손으로 적으면 언어가 늘 때마다
+                 빠뜨리므로 시스템 언어 목록에서 직접 뽑는다. en 은 근로자 대상이 아니라 제외.
+                 언어 이름은 그 언어 문자 그대로 둔다(자동 번역 제외). --}}
             <div class="nd-countries" style="margin-top:28px" data-no-translate>
-                <span class="nd-country"><span class="nd-country__c">KO</span> 한국어</span>
-                <span class="nd-country"><span class="nd-country__c">BN</span> বাংলা</span>
-                <span class="nd-country"><span class="nd-country__c">LO</span> ລາວ</span>
-                <span class="nd-country"><span class="nd-country__c">SI</span> සිංහල</span>
-                <span class="nd-country"><span class="nd-country__c">VI</span> Tiếng Việt</span>
+                @foreach (\App\Shared\Translation\SiteTranslator::NATIVE as $lc => $native)
+                    @continue ($lc === 'en')
+                    <span class="nd-country">
+                        <span class="nd-country__c">{{ strtoupper($lc) }}</span> {{ $native }}
+                    </span>
+                @endforeach
             </div>
         </div>
     </section>
@@ -32,8 +35,8 @@
                     <h2 class="nd-h2">입국 전 준비</h2>
                     <p class="nd-lead" style="margin-top:18px">출국 전에 끝내 두면 한국에서 보내는 첫 주가 훨씬 수월해집니다.</p>
                     <ul class="nd-checks">
-                        <li>여권 유효기간 확인 — 체류 예정 기간보다 길어야 합니다</li>
-                        <li>사전 교육 이수 — 한국어, 생활 규칙, 산업 안전</li>
+                        <li>근로위반 귀국동의서 — 무단결근·무단이탈 등 근로생활 위반 시 귀국에 동의(본인 서명)</li>
+                        <li>사전 교육 이수 — 위생 교육, 근무지 수칙, 산업 안전</li>
                         <li>본인 정보 입력 — 앱에서 모국어로 직접 작성합니다</li>
                         <li>건강검진 결과 제출</li>
                         <li>가족 연락처 등록 — 긴급 상황 시 연락할 곳</li>
@@ -41,7 +44,7 @@
                 </div>
                 <div class="nd-split__a nd-rise">
                     <div class="nd-plate nd-plate--photo">
-                        <img class="nd-plate__img" src="{{ asset('site/assets/img/culture_class.jpg') }}" alt="출국 전 문화·한국어 교육 장면">
+                        <img class="nd-plate__img" src="{{ asset('site/assets/img/culture_class.jpg') }}" alt="출국 전 사전 교육 장면">
                         <span class="nd-plate__k">5</span>
                         <p class="nd-plate__t">출국 전 확인할 다섯 가지</p>
                         <p class="nd-plate__d">앱에서 모국어로 확인하고 그대로 제출할 수 있습니다.</p>
@@ -78,11 +81,16 @@
                 </div>
             </div>
 
-            <div class="nd-grid nd-grid--3">
+            <div class="nd-grid nd-grid--4">
                 <article class="nd-card nd-rise">
                     <span class="nd-card__no">숙소</span>
                     <h3 class="nd-h3">숙소</h3>
                     <p>농가가 제공하는 숙소에서 생활합니다. 입주 전 상태를 함께 확인하고 기록으로 남깁니다.</p>
+                </article>
+                <article class="nd-card nd-card--accent nd-rise">
+                    <span class="nd-card__no">비용</span>
+                    <h3 class="nd-h3">본인 부담 비용</h3>
+                    <p>숙소 사용료와 생활에서 쓰는 비용은 근로자가 부담합니다 — 식대, 난방비, 수도비, 전기비 등. 출국 전에 금액과 납부 방식을 확인하십시오.</p>
                 </article>
                 <article class="nd-card nd-rise">
                     <span class="nd-card__no">급여</span>
@@ -181,7 +189,7 @@
                 </details>
                 <details>
                     <summary>한국어를 못 해도 괜찮나요?</summary>
-                    <div class="nd-faq__a">입국 전 교육에서 기본 표현을 배웁니다. 안내와 알림은 모국어로 제공되며, 상담도 모국어로 가능합니다.</div>
+                    <div class="nd-faq__a">안내와 알림은 모국어로 제공되며, 상담도 모국어로 가능합니다. 현장에서 필요한 작업 지시는 담당자가 모국어로 전달합니다.</div>
                 </details>
             </div>
         </div>

@@ -17,7 +17,7 @@ class SiteTranslator
 {
     /** 번역 지원 언어 — 한국어 원본 + 영어 + 근로자 4개국 */
     // 표시 순서 = 이 배열 순서. 한국어(원문) → 영어(심사자·외부 방문자) → 근로자 언어.
-    public const LOCALES = ['ko', 'en', 'bn', 'lo', 'si', 'vi'];
+    public const LOCALES = ['ko', 'en', 'bn', 'lo', 'si', 'vi', 'ne', 'ky'];
 
     public const NATIVE = [
         'ko' => '한국어',
@@ -26,6 +26,8 @@ class SiteTranslator
         'lo' => 'ລາວ',
         'si' => 'සිංහල',
         'vi' => 'Tiếng Việt',
+        'ne' => 'नेपाली',
+        'ky' => 'Кыргызча',
     ];
 
     public static function isSupported(string $locale): bool

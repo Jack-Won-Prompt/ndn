@@ -32,7 +32,7 @@ class RegisterWorkerRequest extends FormRequest
             // 지원 지자체 — 지역별 모집 정원·조건이 따로 운영되므로 가입 시 확정한다.
             // 선택지는 GET /api/v1/cities 로 내려준다.
             'city_id' => ['required', 'integer', 'exists:cities,id'],
-            'locale' => ['required', 'in:ko,bn,lo,si,vi'],
+            'locale' => ['required', 'in:ko,bn,lo,si,vi,ne,ky'],
             'passport_no' => ['required', 'string', 'max:64'],
             'birth_date' => ['nullable', 'date'],
             'phone_home_country' => ['nullable', 'string', 'max:40'],

@@ -12,7 +12,7 @@ use App\Shared\Translation\SiteTranslator;
  * 있어 가드로 남긴다.
  */
 it('영어를 포함한 6개 언어를 지원한다', function () {
-    expect(SiteTranslator::LOCALES)->toBe(['ko', 'en', 'bn', 'lo', 'si', 'vi'])
+    expect(SiteTranslator::LOCALES)->toBe(['ko', 'en', 'bn', 'lo', 'si', 'vi', 'ne', 'ky'])
         ->and(SiteTranslator::isSupported('en'))->toBeTrue();
 });
 

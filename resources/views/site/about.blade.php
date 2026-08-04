@@ -32,11 +32,11 @@
                     <p class="nd-lead" style="margin-top:18px">
                         안녕하십니까. 급변하는 글로벌 환경 속에서 대한민국 농업과 어업 현장은
                         심각한 인력 부족 문제에 직면해 있습니다. 이에 주식회사 앤디앤(NDN Co., Ltd.)은
-                        단순한 인력 공급을 넘어, 외국인 근로자와 대한민국 농·어업 현장이 함께 성장할 수 있는
+                        외국인 근로자와 대한민국 농·어업 현장이 함께 성장할 수 있는
                         지속가능한 인력교류 플랫폼을 구축하고자 설립되었습니다.
                     </p>
                     <p class="nd-lead" style="margin-top:14px">
-                        당사는 외국인 계절근로자(E-8) 사업을 중심으로 해외 인재 발굴, 한국어 및 문화 교육,
+                        당사는 외국인 계절근로자(E-8) 사업을 중심으로 해외 인재 발굴, 위생·안전 및 문화 교육,
                         입국 후 생활관리, 근로환경 지원, 귀국 후 사후관리까지 체계적인 운영 시스템을
                         구축하고 있습니다. 근로자와 고용주 모두가 만족하는 상생 모델로 대한민국 농촌의
                         경쟁력 강화에 기여하고자 노력하고 있습니다.
@@ -111,7 +111,7 @@
                 </div>
                 <div class="nd-split__a nd-rise">
                     <div class="nd-plate nd-plate--photo">
-                        <img class="nd-plate__img" src="{{ asset('site/assets/img/mou_signing.jpg') }}" alt="협약 서명 장면">
+                        <img class="nd-plate__img" src="{{ asset('site/assets/img/mou_bangladesh.jpg') }}" alt="방글라데시 노동국에서 계절근로자 공급 협약을 서명하는 장면">
                         <span class="nd-plate__k">BOESL</span>
                         <p class="nd-plate__t">방글라데시 노동국 산하 국영 송출기업</p>
                         <p class="nd-plate__d">현지 교육서비스센터와 직접 연결된 모집 채널을 운영합니다.</p>

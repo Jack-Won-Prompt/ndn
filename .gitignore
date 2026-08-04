@@ -51,3 +51,6 @@ yarn-error.log
 # Firebase 서비스 계정 키 (FCM 발송용) — 절대 커밋 금지.
 # 이 키 하나로 프로젝트의 모든 기기에 푸시를 보낼 수 있다.
 /storage/app/firebase/*.json
+
+# 사진 원본 (웹용 축소본만 public/site/assets/img 에 커밋)
+/사진/
