@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 use App\Domains\Onboarding\Models\RequiredDocument;
 use App\Domains\Recruitment\Models\Worker;
+use App\Models\User;
+use App\Shared\Enums\UserRole;
 use Database\Seeders\RequiredDocumentSeeder;
+use Database\Seeders\RoleSeeder;
 use Laravel\Sanctum\Sanctum;
 
 /**
@@ -89,6 +92,26 @@ it('사용하지 않는 문서나 파일 없는 문서는 내려받을 수 없�
 
     $noFile = RequiredDocument::factory()->create(['file' => null]);
     $this->get('/api/v1/required-documents/'.$noFile->id.'/file')->assertNotFound();
+});
+
+it('관리자도 콘솔에서 원본을 내려받을 수 있다', function () {
+    $this->seed(RoleSeeder::class);
+    $admin = User::factory()->create();
+    $admin->assignRole(UserRole::NdnAdmin->value);
+
+    $doc = RequiredDocument::factory()->create([
+        'file' => 'work-consent.pdf',
+        'translations' => ['ko' => ['title' => '근로 동의서', 'body' => '']],
+    ]);
+
+    // 목록·상세 응답에 내려받기 주소가 실린다.
+    $this->actingAs($admin)
+        ->getJson(route('admin.required-documents.show', $doc))
+        ->assertOk()
+        ->assertJsonPath('file', 'work-consent.pdf');
+
+    $res = $this->actingAs($admin)->get(route('admin.required-documents.file', $doc))->assertOk();
+    expect(rawurldecode($res->headers->get('content-disposition')))->toContain('근로 동의서.pdf');
 });
 
 it('로그인하지 않으면 원본을 받을 수 없다', function () {

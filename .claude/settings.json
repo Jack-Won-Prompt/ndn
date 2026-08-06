@@ -336,7 +336,11 @@
       "PowerShell(& e:\\\\xampp\\\\php\\\\php.exe \"C:\\\\Users\\\\82103\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\e--xampp-htdocs-ndn\\\\8e72c8e4-0727-4386-908f-a8a48533944d\\\\scratchpad\\\\pdf2.php\" 2>&1)",
       "PowerShell(& e:\\\\xampp\\\\php\\\\php.exe .\\\\vendor\\\\bin\\\\pest tests/Feature/Onboarding 2>&1)",
       "PowerShell(git -C e:\\\\xampp\\\\htdocs\\\\ndn check-ignore -v storage/app/worker-documents/work-consent.pdf)",
-      "PowerShell(\"---\")"
+      "PowerShell(\"---\")",
+      "PowerShell(cd e:\\\\xampp\\\\htdocs\\\\ndn; Select-String -Path 'public\\\\admin-assets\\\\vendor\\\\wwgrid\\\\wwGrid.js' -Pattern 'col\\\\.render|\\\\.render\\\\\\(' -Context 2,4 | Select-Object -First 3 | ForEach-Object { $_.Context.PreContext + $_.Line + $_.Context.PostContext })",
+      "PowerShell(cd e:\\\\xampp\\\\htdocs\\\\ndn; Select-String -Path 'public\\\\admin-assets\\\\vendor\\\\wwgrid\\\\wwGrid.js' -Pattern 'render' | Select-Object -First 8 | ForEach-Object { \"$\\($_.LineNumber\\): $\\($_.Line.Trim\\(\\).Substring\\(0,[Math]::Min\\(150,$_.Line.Trim\\(\\).Length\\)\\)\\)\" })",
+      "PowerShell(cd e:\\\\xampp\\\\htdocs\\\\ndn; $l=Get-Content storage\\\\logs\\\\laravel.log -Tail 400; $i=[array]::LastIndexOf\\($l,\\($l | Where-Object { $_ -match 'ERROR' } | Select-Object -Last 1\\)\\); \\($l | Where-Object { $_ -match 'ERROR' } | Select-Object -Last 1\\).Substring\\(0,[Math]::Min\\(600,\\($l | Where-Object { $_ -match 'ERROR' } | Select-Object -Last 1\\).Length\\)\\))",
+      "PowerShell(cd e:\\\\xampp\\\\htdocs\\\\ndn; Get-Content storage\\\\logs\\\\laravel.log -Tail 400 | Select-String -Pattern 'local\\\\.ERROR' | Select-Object -Last 3 | ForEach-Object { $_.Line.Substring\\(0,[Math]::Min\\(400,$_.Line.Length\\)\\) })"
     ],
     "additionalDirectories": [
       "\\tmp"

@@ -194,6 +194,9 @@ Route::prefix('admin')->group(function () {
         // 필수 확인·동의 문서 — 언어별 본문 편집 + 버전 관리
         Route::get('/required-documents/{requiredDocument}', [RequiredDocumentAdminController::class, 'show'])
             ->whereNumber('requiredDocument')->name('admin.required-documents.show');
+        // 원본 서식 내려받기 — 파일은 storage 에 있어 이 라우트로만 나간다
+        Route::get('/required-documents/{requiredDocument}/file', [RequiredDocumentAdminController::class, 'download'])
+            ->whereNumber('requiredDocument')->name('admin.required-documents.file');
         Route::post('/required-documents/{requiredDocument}', [RequiredDocumentAdminController::class, 'update'])
             ->whereNumber('requiredDocument')->name('admin.required-documents.update');
 

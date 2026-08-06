@@ -10,6 +10,7 @@ use App\Shared\Support\LocalTime;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
  * 필수 확인·동의 문서 관리 (근로자 의무사항·표준근로계약서 등).
@@ -38,8 +39,27 @@ class RequiredDocumentAdminController extends Controller
                 'filled' => collect(RequiredDocument::LOCALES)
                     ->filter(fn (string $l) => $d->hasTranslation($l))->values()->all(),
                 'agreed' => $d->agreed_count,
+                // 원본이 붙은 문서는 본문 대신 파일을 받아 읽는다(근로 동의서 등).
+                'file' => $d->file,
+                'file_url' => $d->hasFile() ? route('admin.required-documents.file', $d) : null,
                 'updated' => LocalTime::format($d->updated_at),
             ])->all();
+    }
+
+    /**
+     * 원본 서식 내려받기 (관리자용).
+     *
+     * 근로자에게 내려가는 것과 같은 파일이다. 관리자는 한국어 파일명으로 받는다.
+     * 파일은 public/ 밖에 있으므로 이 라우트를 통해서만 나간다.
+     */
+    public function download(RequiredDocument $requiredDocument): BinaryFileResponse
+    {
+        abort_unless($requiredDocument->hasFile(), 404, '원본 파일이 없습니다.');
+
+        return response()->download(
+            storage_path('app/'.RequiredDocument::DIR.'/'.$requiredDocument->file),
+            $requiredDocument->downloadName('ko'),
+        );
     }
 
     /** 언어별 본문 (편집 화면용) */
@@ -53,6 +73,9 @@ class RequiredDocumentAdminController extends Controller
             'version' => $requiredDocument->version,
             'required' => $requiredDocument->required,
             'active' => $requiredDocument->active,
+            'file' => $requiredDocument->file,
+            'file_url' => $requiredDocument->hasFile()
+                ? route('admin.required-documents.file', $requiredDocument) : null,
             'locales' => collect(RequiredDocument::LOCALES)
                 ->mapWithKeys(fn (string $l) => [$l => [
                     'title' => $t[$l]['title'] ?? '',

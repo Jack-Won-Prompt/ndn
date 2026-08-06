@@ -23,6 +23,7 @@
                         <th>문서</th>
                         <th style="width:70px">버전</th>
                         <th style="width:150px">번역 완료 언어</th>
+                        <th style="width:130px">원본 서식</th>
                         <th style="width:80px">동의 필수</th>
                         <th style="width:90px">사용</th>
                         <th style="width:90px">동의 인원</th>
@@ -38,6 +39,14 @@
                                 @foreach (\App\Domains\Onboarding\Models\RequiredDocument::LOCALES as $loc)
                                     <span class="rd-loc rd-loc--{{ in_array($loc, $r['filled'], true) ? 'on' : 'off' }}">{{ $loc }}</span>
                                 @endforeach
+                            </td>
+                            <td class="c">
+                                @if ($r['file_url'])
+                                    {{-- 행 클릭이 편집으로 가므로 링크 클릭은 전파를 막는다 --}}
+                                    <a class="rd-file" href="{{ $r['file_url'] }}" onclick="event.stopPropagation()">내려받기</a>
+                                @else
+                                    <span class="rd-nofile">—</span>
+                                @endif
                             </td>
                             <td class="c">{{ $r['required'] ? '필수' : '열람만' }}</td>
                             <td class="c">
@@ -71,6 +80,12 @@
         .rd-badge{display:inline-block;padding:2px 9px;border-radius:100px;font-size:12px;font-weight:700;}
         .rd-badge--on{background:#E7F3F1;color:#12695F;}
         .rd-badge--off{background:#F1F3F7;color:#6B7280;}
+        .rd-file{display:inline-block;padding:3px 11px;border-radius:100px;font-size:12.5px;font-weight:700;
+            background:var(--mv2-slate-25);border:1px solid var(--mv2-border-default);color:var(--mv2-text-strong);text-decoration:none;}
+        .rd-file:hover{border-color:var(--mv2-text-strong);}
+        .rd-nofile{color:var(--mv2-text-faint);}
+        .rd-fileline{margin:14px 0 4px;padding:12px 14px;border-radius:var(--mv2-r-sm);
+            background:var(--mv2-slate-25);font-size:13.5px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
         .rd-langtabs{display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap;}
         .rd-langtab{font-family:inherit;font-size:var(--mv2-fz-xs);font-weight:700;padding:5px 12px;border:1px solid var(--mv2-border-default);background:#fff;border-radius:100px;cursor:pointer;}
         .rd-langtab.is-active{background:var(--mv2-ink,#0F172A);color:#fff;border-color:transparent;}
@@ -102,6 +117,15 @@
                     doc = d;
                     var html = '<div class="dtl-head"><b>' + esc(d.code) + ' · v' + d.version + '</b>'
                         + '<div class="dtl-head__actions"><button type="button" class="dtl-back" onclick="window.ndnSwitchTab(\'list\')">← 목록</button></div></div>';
+
+                    // 원본이 붙은 문서는 본문을 옮겨 적지 않는다 — 파일을 받아 읽는다.
+                    if (d.file_url) {
+                        html += '<div class="rd-fileline"><b>원본 서식</b>'
+                            + '<span>' + esc(d.file) + '</span>'
+                            + '<a class="rd-file" href="' + d.file_url + '">내려받기</a>'
+                            + '<span style="color:var(--mv2-text-faint)">근로자에게는 각자 언어의 파일명으로 나갑니다.</span>'
+                            + '</div>';
+                    }
 
                     html += '<div class="rd-langtabs">';
                     LOCALES.forEach(function (l, i) {
