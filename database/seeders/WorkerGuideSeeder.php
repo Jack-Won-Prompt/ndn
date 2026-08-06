@@ -74,11 +74,20 @@ class WorkerGuideSeeder extends Seeder
                 'sections' => $this->preTrainingSections(),
             ],
             [
+                'key' => 'daily-life',
+                'title' => '한국 생활 수칙',
+                'lead' => '매일 출근 전, 숙소에서, 건강을 위해 지켜야 할 것들입니다.',
+                'icon' => 'checklist',
+                'position' => 2,
+                'active' => true,
+                'sections' => $this->dailyLifeSections(),
+            ],
+            [
                 'key' => 'emergency',
                 'title' => '긴급 연락처와 대응 방법',
                 'lead' => '아프거나, 다치거나, 부당한 일을 겪었을 때 어디에 연락하는지 미리 알아 두십시오.',
                 'icon' => 'emergency',
-                'position' => 2,
+                'position' => 3,
                 'active' => true,
                 'sections' => $this->emergencySections(),
             ],
@@ -225,6 +234,57 @@ class WorkerGuideSeeder extends Seeder
                     .'부당한 대우를 받거나, 임금 문제가 생기거나, 아프거나 다치거나, 숙소·생활에 문제가 생기면 '
                     ."혼자 고민하지 말고 즉시 연락하십시오.\n\n"
                     .'“성실한 노력은 반드시 좋은 결과로 이어집니다.”',
+            ]],
+        ];
+    }
+
+    /**
+     * 매일 반복하는 습관 — 체크 기록을 쌓아도 쓸모가 없어 읽는 자료로 둔다.
+     *
+     * 출처: life-checklist.docx «근무 전 / 숙소 생활 / 건강관리 체크리스트».
+     * 같은 문서의 «입국 후 1주일 이내 확인사항» 12항목만 체크리스트 기능이
+     * 들고 있다(LifeChecklistSeeder). 한 항목을 두 곳에 적지 말 것.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function dailyLifeSections(): array
+    {
+        return [
+            ['type' => 'list', 'payload' => [
+                'heading' => '매일 출근 전',
+                'items' => [
+                    '충분한 수면을 취하였는가?',
+                    '작업복 및 작업화를 착용하였는가?',
+                    '물(음용수)을 준비하였는가?',
+                    '휴대전화를 소지하고 있는가?',
+                    '몸 상태가 정상인가?',
+                    '출근시간을 확인하였는가?',
+                ],
+            ]],
+            ['type' => 'list', 'payload' => [
+                'heading' => '숙소 생활',
+                'intro' => '숙소는 여러 사람이 함께 쓰는 공간입니다.',
+                'items' => [
+                    '사용한 식기는 즉시 설거지한다.',
+                    '음식물을 방치하지 않는다.',
+                    '쓰레기를 분리하여 버린다.',
+                    '사용하지 않는 전기제품은 전원을 끈다.',
+                    '공동생활 규칙을 지킨다.',
+                    '타인의 물건을 허락 없이 사용하지 않는다.',
+                    '전기·가스 사용 후 반드시 확인한다.',
+                    '숙소를 깨끗하게 유지한다.',
+                ],
+            ]],
+            ['type' => 'list', 'payload' => [
+                'heading' => '건강관리',
+                'items' => [
+                    '몸이 아프면 즉시 관리자에게 알린다.',
+                    '작업 중 어지럽거나 통증이 있으면 즉시 작업을 중단한다.',
+                    '충분한 수분을 섭취한다.',
+                    '안전장비(장갑·장화 등)를 착용한다.',
+                    '정기적으로 휴식을 취한다.',
+                ],
+                'note' => '참고 견디다가 큰 병이 되는 경우가 많습니다. 아프면 바로 말하십시오.',
             ]],
         ];
     }

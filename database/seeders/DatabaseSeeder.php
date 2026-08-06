@@ -22,8 +22,11 @@ class DatabaseSeeder extends Seeder
         // 면접 평가 체크리스트 초안 6항목 — 콘솔에서 조정한다(운영·로컬 공통).
         $this->call(EvaluationItemSeeder::class);
 
-        // 근로자 안내 자료(사전교육·긴급 연락처) — 원본 문서에서 옮긴 내용.
+        // 근로자 안내 자료(사전교육·생활 수칙·긴급 연락처) — 원본 문서에서 옮긴 내용.
         $this->call(WorkerGuideSeeder::class);
+
+        // 한국 생활 체크리스트 12항목 — 콘솔에서 문구를 조정한다(운영·로컬 공통).
+        $this->call(LifeChecklistSeeder::class);
 
         // 운영(production)에서는 테스트 계정·데모 데이터를 만들지 않는다.
         // 관리자 계정은 별도로 생성한다: php artisan ndn:create-admin ...

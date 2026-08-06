@@ -90,6 +90,7 @@ class ConsoleController extends Controller
                 'items' => [
                     ['key' => 'settlement', 'label' => '정착 처리보드', 'icon' => 'grid'],
                     ['key' => 'monitoring', 'label' => '월별 점검', 'icon' => 'clipboard'],
+                    ['key' => 'life-checklist', 'label' => '생활 체크리스트', 'icon' => 'clipboard'],
                     ['key' => 'farmvisits', 'label' => '농가 방문 점검', 'icon' => 'clipboard'],
                     ['key' => 'tickets', 'label' => '민원', 'icon' => 'inbox'],
                     ['key' => 'inquiries', 'label' => '문의하기', 'icon' => 'inbox'],
@@ -151,6 +152,10 @@ class ConsoleController extends Controller
             'onboarding' => $this->onboarding($request),
             'settlement' => $this->settlement($request),
             'monitoring' => $this->monitoring($request),
+            'life-checklist' => view('admin.screens.life-checklist', [
+                'rows' => LifeChecklistController::rows(),
+                'itemRows' => LifeChecklistController::itemRows(),
+            ]),
             'farmvisits' => view('admin.screens.farmvisits', [
                 'rows' => FarmVisitController::rows(),
                 'farms' => FarmVisitController::farmOptions(),

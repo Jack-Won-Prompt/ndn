@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\EvaluationItemGridController;
 use App\Http\Controllers\Admin\FarmVisitController;
 use App\Http\Controllers\Admin\InquiryController;
 use App\Http\Controllers\Admin\InvitationController;
+use App\Http\Controllers\Admin\LifeChecklistController;
 use App\Http\Controllers\Admin\MonitoringController;
 use App\Http\Controllers\Admin\NoticeController;
 use App\Http\Controllers\Admin\RegionController;
@@ -216,6 +217,10 @@ Route::prefix('admin')->group(function () {
 
         // 월별 점검 — 본사 직접 입력
         Route::post('/monitoring/interviews', [MonitoringController::class, 'store'])->name('admin.monitoring.store');
+
+        // 생활 체크리스트 — 항목 문구 편집 (체크는 근로자 본인만 한다)
+        Route::post('/life-checklist/items/{item}', [LifeChecklistController::class, 'updateItem'])
+            ->whereNumber('item')->name('admin.life-checklist.item.update');
 
         // 농가 월별 방문 점검 (본사)
         Route::post('/farm-visits', [FarmVisitController::class, 'store'])->name('admin.farm-visits.store');

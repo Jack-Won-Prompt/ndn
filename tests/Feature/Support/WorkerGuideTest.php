@@ -62,7 +62,7 @@ it('목록은 제목만 주고 본문은 주지 않는다', function () {
 
     $res = $this->getJson('/api/v1/guides')->assertOk();
 
-    expect($res->json('data'))->toHaveCount(2);
+    expect($res->json('data'))->toHaveCount(3);
     expect($res->json('data.0'))->toHaveKeys(['key', 'title', 'lead', 'icon'])
         ->and($res->json('data.0'))->not->toHaveKey('sections');
     expect($res->json('data.0.key'))->toBe('pre-training');
