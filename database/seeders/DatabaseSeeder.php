@@ -28,6 +28,9 @@ class DatabaseSeeder extends Seeder
         // 한국 생활 체크리스트 12항목 — 콘솔에서 문구를 조정한다(운영·로컬 공통).
         $this->call(LifeChecklistSeeder::class);
 
+        // 근무상태 종합 점검표 43항목 — 현장 점검 화면이 이 목록으로 그려진다.
+        $this->call(WorkReviewItemSeeder::class);
+
         // 운영(production)에서는 테스트 계정·데모 데이터를 만들지 않는다.
         // 관리자 계정은 별도로 생성한다: php artisan ndn:create-admin ...
         // 운영에서 테스트가 필요하면 아래 시더를 명시적으로 실행:

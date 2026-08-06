@@ -1,0 +1,240 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Controllers\Admin;
+
+use App\Domains\Matching\Enums\PlacementStatus;
+use App\Domains\Monitoring\Actions\RecordWorkReviewAction;
+use App\Domains\Monitoring\Enums\WorkReviewResult;
+use App\Domains\Monitoring\Enums\WorkReviewSection;
+use App\Domains\Monitoring\Enums\WorkReviewType;
+use App\Domains\Monitoring\Models\WorkReview;
+use App\Domains\Monitoring\Models\WorkReviewItem;
+use App\Domains\Recruitment\Enums\WorkerStatus;
+use App\Domains\Recruitment\Models\Worker;
+use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
+use RuntimeException;
+
+/**
+ * 근무상태 종합 점검표 — 콘솔 목록·작성·상세.
+ *
+ * 근로자 한 사람에 대한 점검이다. 농가·근로자 인적사항은 점검표에 옮겨 담지 않고
+ * 화면에서 이어 붙인다(여권번호 등 암호화 필드를 복사해 두지 않기 위해서, §7-1).
+ */
+class WorkReviewController extends Controller
+{
+    /** 최근 점검부터. N+1 방지로 관계를 즉시 로딩한다. */
+    public static function rows(): array
+    {
+        return WorkReview::query()
+            ->with(['worker', 'farm.city', 'inspector'])
+            ->latest('reviewed_at')->latest('id')
+            ->limit(1000)
+            ->get()
+            ->map(fn (WorkReview $r) => [
+                'id' => $r->id,
+                'worker' => $r->worker?->name ?? '—',
+                'nationality' => $r->worker?->nationality ?? '—',
+                'city' => $r->farm?->city?->name ?? '—',
+                'farm' => $r->farm?->name ?? '—',
+                'date' => $r->reviewed_at?->timezone(config('ndn.timezone'))->format('Y-m-d H:i'),
+                'type' => $r->review_type->label(),
+                'result' => $r->result->label(),
+                'risk' => $r->risk_level->label(),
+                'risk_level' => $r->risk_level->value,
+                'score' => $r->risk_score,
+                'inspector' => $r->inspector?->name ?? '—',
+                'recheck' => $r->recheck_on?->format('Y-m-d') ?? '—',
+                'report' => match (true) {
+                    $r->report_city && $r->report_immigration => '지자체·출입국',
+                    $r->report_city => '지자체',
+                    $r->report_immigration => '출입국',
+                    default => '—',
+                },
+            ])
+            ->all();
+    }
+
+    /** 점검 대상 근로자 — 배정된 농가를 함께 준다(점검표의 농가가 된다). */
+    public static function workerOptions(): array
+    {
+        return Worker::query()
+            ->where('status', WorkerStatus::Active->value)
+            ->with(['placements' => function ($q) {
+                $q->where('status', PlacementStatus::Confirmed->value)->latest('id')->with('farm');
+            }])
+            ->orderBy('name')->limit(2000)->get(['id', 'name', 'nationality'])
+            ->map(function (Worker $w) {
+                $farm = $w->placements->first()?->farm;
+
+                return [
+                    'value' => $w->id,
+                    'label' => $w->name.' ('.$w->nationality.')'.($farm ? ' · '.$farm->name : ' · 미배정'),
+                    'farm_id' => $farm?->id,
+                ];
+            })
+            ->all();
+    }
+
+    /**
+     * 영역별 항목과 보기 — 점검 입력 화면이 이대로 그린다.
+     *
+     * @return list<array{key: string, label: string, options: array<string,string>, items: list<array{id:int,label:string}>}>
+     */
+    public static function sections(): array
+    {
+        $items = WorkReviewItem::query()->active()->get()->groupBy(fn (WorkReviewItem $i) => $i->section->value);
+
+        return collect(WorkReviewSection::ordered())
+            ->map(fn (WorkReviewSection $s) => [
+                'key' => $s->value,
+                'label' => $s->label(),
+                'options' => $s->options(),
+                'items' => ($items->get($s->value) ?? collect())
+                    ->map(fn (WorkReviewItem $i) => ['id' => $i->id, 'label' => $i->label])
+                    ->values()->all(),
+            ])
+            ->all();
+    }
+
+    /** @return array<string, string> */
+    public static function typeOptions(): array
+    {
+        return collect(WorkReviewType::cases())->mapWithKeys(fn ($t) => [$t->value => $t->label()])->all();
+    }
+
+    /** @return array<string, string> */
+    public static function resultOptions(): array
+    {
+        return collect(WorkReviewResult::cases())->mapWithKeys(fn ($r) => [$r->value => $r->label()])->all();
+    }
+
+    public function store(Request $request, RecordWorkReviewAction $action): JsonResponse
+    {
+        $data = $request->validate([
+            'worker_id' => ['required', 'integer', 'exists:workers,id'],
+            'farm_visit_id' => ['nullable', 'integer', 'exists:farm_visits,id'],
+            'reviewed_at' => ['required', 'date'],
+            'place' => ['nullable', 'string', 'max:200'],
+            'review_type' => ['required', Rule::enum(WorkReviewType::class)],
+
+            'overtime_done' => ['nullable', 'boolean'],
+            'overtime_hours' => ['nullable', 'numeric', 'min:0', 'max:999'],
+            'overtime_consented' => ['nullable', 'boolean'],
+
+            'avg_monthly_wage' => ['nullable', 'string', 'max:50'],
+            'last_paid_on' => ['nullable', 'date'],
+            'wage_unpaid' => ['nullable', 'boolean'],
+            'board_provided' => ['nullable', 'boolean'],
+            'contract_followed' => ['nullable', 'boolean'],
+            'contract_violation' => ['nullable', 'string', 'max:2000'],
+
+            'result' => ['required', Rule::enum(WorkReviewResult::class)],
+            'notable' => ['nullable', 'string', 'max:2000'],
+            'improvements' => ['nullable', 'string', 'max:2000'],
+            'farm_requests' => ['nullable', 'string', 'max:2000'],
+
+            'action_due_on' => ['nullable', 'date'],
+            'action_assignee' => ['nullable', 'string', 'max:100'],
+            'recheck_on' => ['nullable', 'date'],
+            'report_city' => ['nullable', 'boolean'],
+            'report_immigration' => ['nullable', 'boolean'],
+            'action_note' => ['nullable', 'string', 'max:2000'],
+
+            'signed_inspector' => ['nullable', 'string', 'max:100'],
+            'signed_farm' => ['nullable', 'string', 'max:100'],
+            'signed_worker' => ['nullable', 'string', 'max:100'],
+            'signed_interpreter' => ['nullable', 'string', 'max:100'],
+
+            'answers' => ['nullable', 'array'],
+        ]);
+
+        $worker = Worker::findOrFail($data['worker_id']);
+
+        try {
+            $review = $action->execute($worker, Auth::user(), $data, $data['answers'] ?? []);
+        } catch (RuntimeException $e) {
+            return response()->json(['ok' => false, 'message' => $e->getMessage()], 422);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'id' => $review->id,
+            'risk' => $review->risk_level->label(),
+            'score' => $review->risk_score,
+        ]);
+    }
+
+    /** 상세 — 항목별 응답까지. */
+    public function show(WorkReview $workReview): JsonResponse
+    {
+        $workReview->load(['worker', 'farm.city', 'inspector', 'answers.item']);
+
+        $answers = $workReview->answers
+            ->groupBy(fn ($a) => $a->item?->section->value ?? 'unknown')
+            ->map(fn ($group) => $group->map(fn ($a) => [
+                'label' => $a->item?->label ?? '—',
+                'value' => $a->item?->section->options()[$a->value] ?? $a->value,
+                'bad' => $a->item?->scored && $a->item->isBad($a->value),
+                'note' => $a->note,
+            ])->values()->all());
+
+        return response()->json([
+            'id' => $workReview->id,
+            'worker' => $workReview->worker?->name,
+            'nationality' => $workReview->worker?->nationality,
+            'farm' => $workReview->farm?->name,
+            'city' => $workReview->farm?->city?->name,
+            'inspector' => $workReview->inspector?->name,
+            'reviewed_at' => $workReview->reviewed_at?->timezone(config('ndn.timezone'))->format('Y-m-d H:i'),
+            'place' => $workReview->place,
+            'type' => $workReview->review_type->label(),
+            'result' => $workReview->result->label(),
+            'risk' => $workReview->risk_level->label(),
+            'score' => $workReview->risk_score,
+            'overtime' => [
+                'done' => $workReview->overtime_done,
+                'hours' => $workReview->overtime_hours,
+                'consented' => $workReview->overtime_consented,
+            ],
+            'wage' => [
+                'avg' => $workReview->avg_monthly_wage,
+                'last_paid_on' => $workReview->last_paid_on?->format('Y-m-d'),
+                'unpaid' => $workReview->wage_unpaid,
+                'board_provided' => $workReview->board_provided,
+                'contract_followed' => $workReview->contract_followed,
+                'violation' => $workReview->contract_violation,
+            ],
+            'opinion' => [
+                'notable' => $workReview->notable,
+                'improvements' => $workReview->improvements,
+                'farm_requests' => $workReview->farm_requests,
+            ],
+            'actions' => [
+                'due_on' => $workReview->action_due_on?->format('Y-m-d'),
+                'assignee' => $workReview->action_assignee,
+                'recheck_on' => $workReview->recheck_on?->format('Y-m-d'),
+                'report_city' => $workReview->report_city,
+                'report_immigration' => $workReview->report_immigration,
+                'note' => $workReview->action_note,
+            ],
+            'signatures' => [
+                'inspector' => $workReview->signed_inspector,
+                'farm' => $workReview->signed_farm,
+                'worker' => $workReview->signed_worker,
+                'interpreter' => $workReview->signed_interpreter,
+            ],
+            'sections' => collect(WorkReviewSection::ordered())
+                ->map(fn (WorkReviewSection $s) => [
+                    'label' => $s->label(),
+                    'answers' => $answers->get($s->value, []),
+                ])
+                ->all(),
+        ]);
+    }
+}

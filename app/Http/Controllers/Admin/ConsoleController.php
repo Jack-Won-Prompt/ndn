@@ -91,6 +91,7 @@ class ConsoleController extends Controller
                     ['key' => 'settlement', 'label' => '정착 처리보드', 'icon' => 'grid'],
                     ['key' => 'monitoring', 'label' => '월별 점검', 'icon' => 'clipboard'],
                     ['key' => 'life-checklist', 'label' => '생활 체크리스트', 'icon' => 'clipboard'],
+                    ['key' => 'work-reviews', 'label' => '근무상태 점검표', 'icon' => 'clipboard'],
                     ['key' => 'farmvisits', 'label' => '농가 방문 점검', 'icon' => 'clipboard'],
                     ['key' => 'tickets', 'label' => '민원', 'icon' => 'inbox'],
                     ['key' => 'inquiries', 'label' => '문의하기', 'icon' => 'inbox'],
@@ -155,6 +156,14 @@ class ConsoleController extends Controller
             'life-checklist' => view('admin.screens.life-checklist', [
                 'rows' => LifeChecklistController::rows(),
                 'itemRows' => LifeChecklistController::itemRows(),
+            ]),
+            'work-reviews' => view('admin.screens.work-reviews', [
+                'rows' => WorkReviewController::rows(),
+                'workers' => WorkReviewController::workerOptions(),
+                'sections' => WorkReviewController::sections(),
+                'typeOptions' => WorkReviewController::typeOptions(),
+                'resultOptions' => WorkReviewController::resultOptions(),
+                'me' => Auth::user()?->name ?? '',
             ]),
             'farmvisits' => view('admin.screens.farmvisits', [
                 'rows' => FarmVisitController::rows(),

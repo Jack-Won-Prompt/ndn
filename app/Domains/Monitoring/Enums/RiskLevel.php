@@ -36,4 +36,21 @@ enum RiskLevel: string
             default => self::Low,
         };
     }
+
+    /**
+     * 근무상태 종합 점검표 점수로 등급 산정.
+     *
+     * 항목이 40개가 넘어 부정 신호 개수를 그대로 쓰면 한두 개만 미흡해도 고위험이
+     * 된다. 나쁨 2점·보통 1점으로 매긴 합계에 문턱을 둔다.
+     * 이탈 가능성·임금 체불처럼 그 자체로 중대한 신호는 Action 이 곧장 고위험으로
+     * 올린다 — 점수와 상관없이.
+     */
+    public static function fromReviewScore(int $score): self
+    {
+        return match (true) {
+            $score >= 8 => self::High,
+            $score >= 3 => self::Medium,
+            default => self::Low,
+        };
+    }
 }

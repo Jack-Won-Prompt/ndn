@@ -23,6 +23,7 @@ use App\Http\Controllers\Admin\ServiceRequestController;
 use App\Http\Controllers\Admin\SignupApprovalController;
 use App\Http\Controllers\Admin\TicketGridController;
 use App\Http\Controllers\Admin\WorkerGridController;
+use App\Http\Controllers\Admin\WorkReviewController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\InvitationAcceptController;
 use App\Http\Controllers\Portal\PartnerSettlementController;
@@ -217,6 +218,11 @@ Route::prefix('admin')->group(function () {
 
         // 월별 점검 — 본사 직접 입력
         Route::post('/monitoring/interviews', [MonitoringController::class, 'store'])->name('admin.monitoring.store');
+
+        // 근무상태 종합 점검표 — 작성·상세
+        Route::post('/work-reviews', [WorkReviewController::class, 'store'])->name('admin.work-reviews.store');
+        Route::get('/work-reviews/{workReview}', [WorkReviewController::class, 'show'])
+            ->whereNumber('workReview')->name('admin.work-reviews.show');
 
         // 생활 체크리스트 — 항목 문구 편집 (체크는 근로자 본인만 한다)
         Route::post('/life-checklist/items/{item}', [LifeChecklistController::class, 'updateItem'])

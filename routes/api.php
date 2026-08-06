@@ -30,6 +30,7 @@ use App\Http\Controllers\Api\Admin\FieldWorkAdminController;
 use App\Http\Controllers\Api\Admin\MatchingAdminController;
 use App\Http\Controllers\Api\Admin\SosAdminController;
 use App\Http\Controllers\Api\Admin\WorkerAdminController;
+use App\Http\Controllers\Api\Admin\WorkReviewAdminController;
 use App\Http\Controllers\Api\AppVersionController;
 use App\Shared\Notifications\Http\Controllers\DeviceTokenController;
 use Illuminate\Support\Facades\Route;
@@ -210,6 +211,11 @@ Route::prefix('v1/admin')->middleware(['auth:sanctum', 'portal'])->group(functio
     // 긴급 SOS 상황판
     Route::get('/sos', [SosAdminController::class, 'index']);
     Route::post('/sos/{sos}/status', [SosAdminController::class, 'updateStatus'])->whereNumber('sos');
+
+    // 근무상태 종합 점검표 — 항목표는 서버가 내려준다(항목이 바뀌어도 앱 재배포 없이)
+    Route::get('/work-reviews/form', [WorkReviewAdminController::class, 'form']);
+    Route::get('/work-reviews', [WorkReviewAdminController::class, 'index']);
+    Route::post('/work-reviews', [WorkReviewAdminController::class, 'store']);
 
     // 현장 점검 (업무흐름 §7) — 농가 방문(사진)·근로자 인터뷰·GPS 체크인
     Route::get('/field/farms', [FieldWorkAdminController::class, 'farms']);
