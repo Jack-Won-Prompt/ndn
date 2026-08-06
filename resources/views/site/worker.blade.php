@@ -87,6 +87,9 @@
                     <h3 class="nd-h3">숙소</h3>
                     <p>농가가 제공하는 숙소에서 생활합니다. 입주 전 상태를 함께 확인하고 기록으로 남깁니다.</p>
                 </article>
+                {{-- 금액은 여기에 적지 말 것. 생활비·초기비용 숫자의 원본은 사전교육 안내
+                     자료 한 곳이다(database/seeders/WorkerGuideSeeder.php, 앱 정보 화면).
+                     두 곳에 적으면 한쪽만 고쳐져 반드시 어긋난다. --}}
                 <article class="nd-card nd-card--accent nd-rise">
                     <span class="nd-card__no">비용</span>
                     <h3 class="nd-h3">본인 부담 비용</h3>

@@ -18,6 +18,7 @@ use App\Domains\Support\Http\Controllers\Api\ChatController;
 use App\Domains\Support\Http\Controllers\Api\NoticeController as WorkerNoticeController;
 use App\Domains\Support\Http\Controllers\Api\SosController;
 use App\Domains\Support\Http\Controllers\Api\TicketController;
+use App\Domains\Support\Http\Controllers\Api\WorkerGuideController;
 use App\Http\Controllers\Api\Admin\AdminAuthController;
 use App\Http\Controllers\Api\Admin\ArrivalAdminController;
 use App\Http\Controllers\Api\Admin\CandidateAdminController;
@@ -132,6 +133,10 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'worker', 'docs.agreed'])->grou
 
     // 공지사항 목록 (본인이 대상인 공지, 근로자 언어로 번역)
     Route::get('/notices', [WorkerNoticeController::class, 'index']);
+
+    // 안내 자료 (사전교육·긴급 연락처·의료기관) — 읽기 전용, 근로자 언어로 번역
+    Route::get('/guides', [WorkerGuideController::class, 'index']);
+    Route::get('/guides/{key}', [WorkerGuideController::class, 'show'])->where('key', '[a-z0-9-]+');
 
     // 채팅 (근로자 ↔ NDN·시청·농가) — 자국어 작성, 자동 번역
     Route::get('/chat/conversations', [ChatController::class, 'conversations']);
