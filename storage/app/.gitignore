@@ -2,3 +2,9 @@
 !private/
 !public/
 !.gitignore
+
+# 근로자 필수 서식(근로 동의서·사전교육 자료 등)은 코드와 함께 배포되어야 한다.
+# public/ 에 두지 않는 이유는 인증 라우트로만 내보내기 위해서지, 배포 제외가 아니다.
+# 개인정보가 아니라 빈 서식·안내 자료다.
+!worker-documents/
+!worker-documents/**

@@ -11,6 +11,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use RuntimeException;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
  * 근로자 앱 — 필수 확인·동의 문서 (CLAUDE.md §6, §9).
@@ -39,6 +40,9 @@ class RequiredDocumentController extends Controller
                 'version' => $d->version,
                 'required' => $d->required,
                 'agreed' => ! in_array($d->id, $pendingIds, true),
+                // 원본을 받아 읽어야 하는 서식이면 내려받기 주소를 함께 준다.
+                'download_url' => $d->hasFile()
+                    ? url('api/v1/required-documents/'.$d->id.'/file') : null,
             ])->all(),
             'meta' => [
                 'locale' => $locale,
@@ -47,6 +51,28 @@ class RequiredDocumentController extends Controller
                 'pending_count' => count($pendingIds),
             ],
         ]);
+    }
+
+    /**
+     * 원본 파일 내려받기 (근로 동의서 등 서명 서식).
+     *
+     * 파일명은 근로자 언어로 짓는다 — 한글 파일명을 그대로 주면 어느 문서인지 모른다.
+     * 한글·벵골어·키릴 파일명이 브라우저에서 깨지지 않도록 RFC 5987 로 인코딩한다.
+     * 파일은 public/ 밖에 있으므로 이 라우트를 통해서만 나간다.
+     */
+    public function download(Request $request, RequiredDocument $requiredDocument): BinaryFileResponse
+    {
+        abort_unless($requiredDocument->active, 404);
+        abort_unless($requiredDocument->hasFile(), 404, '원본 파일이 없습니다.');
+
+        /** @var Worker $worker */
+        $worker = $request->user();
+        $locale = $worker->locale ?: 'ko';
+
+        return response()->download(
+            storage_path('app/'.RequiredDocument::DIR.'/'.$requiredDocument->file),
+            $requiredDocument->downloadName($locale),
+        );
     }
 
     /** 동의 제출 — 체크한 문서들을 현재 버전으로 기록한다. */

@@ -82,6 +82,9 @@ Route::prefix('v1')->group(function () {
 Route::prefix('v1')->middleware(['auth:sanctum', 'worker'])->group(function () {
     Route::get('/required-documents', [RequiredDocumentController::class, 'index']);
     Route::post('/required-documents/agree', [RequiredDocumentController::class, 'agree']);
+    // 원본 서식 내려받기 — 파일명은 근로자 언어로 나간다
+    Route::get('/required-documents/{requiredDocument}/file', [RequiredDocumentController::class, 'download'])
+        ->whereNumber('requiredDocument');
 
     // 로그아웃도 게이트 밖 — 동의하지 않아도 나갈 수는 있어야 한다.
     Route::post('/auth/logout', [AuthController::class, 'logout']);

@@ -326,7 +326,17 @@
       "PowerShell(& e:\\\\xampp\\\\php\\\\php.exe .\\\\vendor\\\\bin\\\\pest tests/Feature/Site/HeroImageTest.php 2>&1)",
       "PowerShell(git -C e:\\\\xampp\\\\htdocs\\\\ndn log --oneline -2)",
       "PowerShell(git -C e:\\\\xampp\\\\htdocs\\\\ndn push -u origin fix/hero-image-setting 2>&1)",
-      "PowerShell(git -C e:\\\\xampp\\\\htdocs\\\\ndn switch main)"
+      "PowerShell(git -C e:\\\\xampp\\\\htdocs\\\\ndn switch main)",
+      "PowerShell(git -C e:\\\\xampp\\\\htdocs\\\\ndn branch -d fix/hero-image-setting)",
+      "PowerShell(git -C e:\\\\xampp\\\\htdocs\\\\ndn push origin --delete fix/hero-image-setting 2>&1)",
+      "PowerShell($p='E:\\\\xampp\\\\htdocs\\\\ndn\\\\근로자 필수 파일'; if \\(Test-Path $p\\) { Get-ChildItem $p -Recurse -File | ForEach-Object { \"{0,-58} {1,9:N0} KB\" -f $_.FullName.Replace\\(\"$p\\\\\",''\\), \\($_.Length/1KB\\) } } else { '폴더 없음' })",
+      "PowerShell(& e:\\\\xampp\\\\php\\\\php.exe \"C:\\\\Users\\\\82103\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\e--xampp-htdocs-ndn\\\\8e72c8e4-0727-4386-908f-a8a48533944d\\\\scratchpad\\\\docx.php\" \"�������� �� üũ\" 2>&1)",
+      "PowerShell(& e:\\\\xampp\\\\php\\\\php.exe \"C:\\\\Users\\\\82103\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\e--xampp-htdocs-ndn\\\\8e72c8e4-0727-4386-908f-a8a48533944d\\\\scratchpad\\\\pdf.php\" 2>&1)",
+      "PowerShell($b=[System.IO.File]::ReadAllBytes\\('E:\\\\xampp\\\\htdocs\\\\ndn\\\\근로자 필수 파일\\\\계절근로자 \\( E-8-1 \\) 근로 동의서.pdf'\\); $s=[System.Text.Encoding]::ASCII.GetString\\($b\\); foreach\\($k in @\\('DCTDecode','FlateDecode','/Image','/Font','/Type0','JPXDecode','/Pages'\\)\\){ \"{0,-14} {1}\" -f $k, \\([regex]::Matches\\($s,[regex]::Escape\\($k\\)\\)\\).Count })",
+      "PowerShell(& e:\\\\xampp\\\\php\\\\php.exe \"C:\\\\Users\\\\82103\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\e--xampp-htdocs-ndn\\\\8e72c8e4-0727-4386-908f-a8a48533944d\\\\scratchpad\\\\pdf2.php\" 2>&1)",
+      "PowerShell(& e:\\\\xampp\\\\php\\\\php.exe .\\\\vendor\\\\bin\\\\pest tests/Feature/Onboarding 2>&1)",
+      "PowerShell(git -C e:\\\\xampp\\\\htdocs\\\\ndn check-ignore -v storage/app/worker-documents/work-consent.pdf)",
+      "PowerShell(\"---\")"
     ],
     "additionalDirectories": [
       "\\tmp"

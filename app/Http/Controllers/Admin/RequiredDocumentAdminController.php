@@ -86,11 +86,12 @@ class RequiredDocumentAdminController extends Controller
 
         $active = (bool) ($data['active'] ?? $requiredDocument->active);
 
-        // 한국어 본문도 없는 문서를 근로자에게 노출하면 빈 화면에 동의를 받게 된다.
-        if ($active && ! filled($translations['ko']['body'])) {
+        // 읽을 것이 하나도 없는 문서를 켜면 빈 화면에 동의를 받게 된다.
+        // 본문이 없어도 내려받을 원본이 붙어 있으면 읽을 수 있으므로 통과시킨다.
+        if ($active && ! filled($translations['ko']['body']) && ! $requiredDocument->hasFile()) {
             return response()->json([
                 'ok' => false,
-                'message' => '한국어 본문을 입력해야 사용으로 켤 수 있습니다.',
+                'message' => '한국어 본문을 입력하거나 원본 파일을 붙여야 사용으로 켤 수 있습니다.',
             ], 422);
         }
 

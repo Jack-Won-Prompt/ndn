@@ -26,7 +26,10 @@ class RequiredDocument extends Model
     /** 지원 언어 (CLAUDE.md §6) */
     public const LOCALES = ['ko', 'bn', 'lo', 'si', 'vi', 'ne', 'ky'];
 
-    protected $fillable = ['code', 'translations', 'version', 'sort_order', 'required', 'active'];
+    /** 원본 파일이 놓이는 곳 (public/ 아님 — 인증 라우트로만 내보낸다) */
+    public const DIR = 'worker-documents';
+
+    protected $fillable = ['code', 'translations', 'file', 'version', 'sort_order', 'required', 'active'];
 
     protected function casts(): array
     {
@@ -94,6 +97,32 @@ class RequiredDocument extends Model
                 ->where('worker_id', $worker->id)
                 ->whereColumn('document_consents.version', 'required_documents.version'))
             ->get();
+    }
+
+    /** 내려받을 원본이 붙어 있는가. */
+    public function hasFile(): bool
+    {
+        return filled($this->file) && is_file(storage_path('app/'.self::DIR.'/'.$this->file));
+    }
+
+    /**
+     * 내려받을 때 보일 파일명 — 근로자 언어로 짓는다.
+     *
+     * 방글라데시 근로자에게 한국어 파일명을 주면 무슨 파일인지 알 수 없다.
+     * 제목은 이미 언어별로 들고 있으므로 그대로 쓰고 확장자만 원본에서 가져온다.
+     * 제목이 비어 있으면 code 로 떨어진다(파일명이 비는 것보다 낫다).
+     */
+    public function downloadName(string $locale): string
+    {
+        $title = trim($this->title($locale)) ?: $this->code;
+
+        // 파일명에 쓸 수 없는 문자만 걷어낸다. 언어 문자는 건드리지 않는다.
+        $title = preg_replace('/[\/\\\\:*?"<>|]+/u', ' ', $title);
+        $title = trim(preg_replace('/\s+/u', ' ', $title));
+
+        $ext = pathinfo((string) $this->file, PATHINFO_EXTENSION);
+
+        return $ext !== '' ? $title.'.'.$ext : $title;
     }
 
     private function text(string $locale, string $key): string

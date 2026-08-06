@@ -15,6 +15,13 @@ use Laravel\Sanctum\Sanctum;
  * 필수 확인·동의 게이트 — 미동의 상태로는 앱의 다음 화면으로 넘어가지 못한다
  * (근로자 의무사항·표준근로계약서·상해보험 약정서 등, CLAUDE.md §6·§9).
  */
+/**
+ * 마이그레이션이 문서 틀을 만들어 두고, 원본이 붙은 근로 동의서는 켜진 상태다.
+ * 이 파일의 검사는 각자 자기 문서를 만들어 쓰므로, 시드된 것은 꺼 두고 시작한다.
+ * (게이트가 시드 문서 때문에 막히면 무엇을 검사하는지 알 수 없게 된다.)
+ */
+beforeEach(fn () => RequiredDocument::query()->update(['active' => false]));
+
 function docWorker(array $attrs = []): Worker
 {
     $worker = Worker::factory()->create($attrs);
@@ -116,18 +123,24 @@ it('본문은 근로자 언어로 내려오고 번역이 없으면 한국어로 
     expect($res->json('data.0.title'))->toBe('근로자 의무사항');
 });
 
-it('시더는 요청한 문서 5종을 미사용 상태로 만든다', function () {
+it('시더가 문서 6종을 만들고, 읽을 것이 없는 5종은 꺼 둔다', function () {
+    RequiredDocument::query()->delete();
     $this->seed(RequiredDocumentSeeder::class);
 
     expect(RequiredDocument::orderBy('sort_order')->pluck('code')->all())->toBe([
+        'work_consent',
         'worker_duties',
         'standard_contract',
         'insurance_agreement',
         'retention_agreement',
         'deposit_service_agreement',
     ]);
-    // 본문이 비어 있으므로 근로자에게 노출되지 않는다
+
+    // 전부 꺼진 채로 만든다. 켜는 순간 미동의 근로자가 앱에서 막히므로
+    // 그 시점은 운영이 콘솔에서 정한다.
     expect(RequiredDocument::where('active', true)->count())->toBe(0);
+    // 근로 동의서에는 읽을 원본이 붙어 있다.
+    expect(RequiredDocument::where('code', 'work_consent')->value('file'))->toBe('work-consent.pdf');
 });
 
 it('한국어 본문 없이 사용으로 켤 수 없다', function () {
