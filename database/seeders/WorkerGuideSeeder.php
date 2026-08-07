@@ -91,6 +91,15 @@ class WorkerGuideSeeder extends Seeder
                 'active' => true,
                 'sections' => $this->emergencySections(),
             ],
+            [
+                'key' => 'medical',
+                'title' => '의료비 지원 상담이 가능한 병원',
+                'lead' => '건강보험에 가입되지 않아도 진료·수술비 상담을 받을 수 있는 공공병원입니다.',
+                'icon' => 'hospital',
+                'position' => 4,
+                'active' => true,
+                'sections' => $this->medicalSections(),
+            ],
         ];
     }
 
@@ -285,6 +294,77 @@ class WorkerGuideSeeder extends Seeder
                     '정기적으로 휴식을 취한다.',
                 ],
                 'note' => '참고 견디다가 큰 병이 되는 경우가 많습니다. 아프면 바로 말하십시오.',
+            ]],
+        ];
+    }
+
+    /**
+     * 외국인 의료비 지원 상담이 가능한 주요 공공병원.
+     *
+     * 출처: medical-institutions.docx. 연락처는 원문 그대로 옮겼다 —
+     * 병원 대표번호와 사회복지실(의료사회사업팀) 번호가 다르고, 근로자가 걸어야
+     * 하는 곳은 사회복지실이다. 이 구분이 흐려지면 안내가 쓸모없어진다.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function medicalSections(): array
+    {
+        return [
+            ['type' => 'text', 'payload' => [
+                'heading' => '전화로 먼저 물어보십시오',
+                'body' => "아래는 각 병원 사회복지실(의료사회사업팀) 연락처입니다.\n\n"
+                    .'방문 전에 전화해서 “건강보험 미가입 외국인 의료지원 사업 대상인지, 수술 상담이 가능한지”를 '
+                    .'물어보면 자세히 안내받을 수 있습니다.',
+            ]],
+            ['type' => 'contacts', 'payload' => [
+                'heading' => '국립중앙의료원 (서울)',
+                'items' => [
+                    ['label' => '대표', 'value' => '02-2260-7114'],
+                    ['label' => '공공의료사업팀', 'value' => '02-2260-7080'],
+                    ['label' => '사회복지실', 'value' => '02-2276-2301'],
+                ],
+                'note' => '국가 거점 공공병원으로 외국인 근로자 지원 사업을 활발히 운영합니다.',
+            ]],
+            ['type' => 'contacts', 'payload' => [
+                'heading' => '적십자병원 (희망진료센터)',
+                'items' => [
+                    ['label' => '서울적십자병원 사회복지실·희망진료센터', 'value' => '02-2002-8681~3'],
+                    ['label' => '인천적십자병원 대표', 'value' => '032-899-4000'],
+                    ['label' => '인천적십자병원 공공의료사업팀', 'value' => '032-899-4114'],
+                ],
+                'note' => '외국인 진료비·수술비 지원 프로그램을 별도로 운영합니다.',
+            ]],
+            ['type' => 'contacts', 'payload' => [
+                'heading' => '경기도의료원',
+                'intro' => '수원·의정부·파주·이천·안성·포천에 있습니다.',
+                'items' => [
+                    ['label' => '대표·상담 (수원병원 기준)', 'value' => '031-250-8800'],
+                ],
+                'note' => '경기도 권역 공공병원으로 외국인 근로자 의료지원 사업 지정 병원입니다.',
+            ]],
+            ['type' => 'contacts', 'payload' => [
+                'heading' => '녹색병원 (서울 중랑구)',
+                'items' => [
+                    ['label' => '대표', 'value' => '02-490-2000'],
+                    ['label' => '사회복지실', 'value' => '02-490-2180'],
+                ],
+                'note' => '민간 공익병원으로 외국인 노동자 진료 지원에 특화돼 있습니다.',
+            ]],
+            ['type' => 'contacts', 'payload' => [
+                'heading' => '충남 당진 인근',
+                'items' => [
+                    ['label' => '충청남도 서산의료원 사회복지팀', 'value' => '041-689-7114'],
+                ],
+                'note' => '당진 지역에서 가까운 공공 의료 지원을 찾는다면 이곳에 먼저 문의해 보십시오.',
+            ]],
+            ['type' => 'list', 'payload' => [
+                'heading' => '가져갈 서류',
+                'items' => [
+                    '여권',
+                    '체류 관련 서류 (또는 입국 도장)',
+                    '근로 사실 증빙 문서',
+                    '그 밖에 가지고 있는 진료 관련 서류',
+                ],
             ]],
         ];
     }

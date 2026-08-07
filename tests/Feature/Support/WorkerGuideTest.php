@@ -36,6 +36,28 @@ it('시더가 사전교육·긴급 연락처 자료를 만든다', function () {
         ->and($costs->payload['rows'])->toHaveCount(8);
 
     expect(WorkerGuide::where('key', 'emergency')->exists())->toBeTrue();
+    expect(WorkerGuide::where('key', 'daily-life')->exists())->toBeTrue();
+    expect(WorkerGuide::where('key', 'medical')->exists())->toBeTrue();
+});
+
+it('의료기관 안내의 전화번호는 번역에서 빠진다', function () {
+    Http::fake(function ($request) {
+        $q = (string) ($request->data()['q'] ?? '');
+        $out = collect(explode("\n", $q))->map(fn ($l) => 'X '.$l)->implode("\n");
+
+        return Http::response([[[$out, $q]]]);
+    });
+
+    guideWorker('si');
+    $this->seed(WorkerGuideSeeder::class);
+
+    $res = $this->getJson('/api/v1/guides/medical')->assertOk();
+
+    $nmc = collect($res->json('data.sections'))
+        ->firstWhere('payload.heading', 'X 국립중앙의료원 (서울)');
+
+    // 사회복지실 번호는 근로자가 실제로 눌러야 하는 값이다. 원문 그대로여야 한다.
+    expect(collect($nmc['payload']['items'])->pluck('value'))->toContain('02-2276-2301');
 });
 
 it('시더를 다시 돌려도 섹션이 중복되지 않는다', function () {
@@ -62,7 +84,7 @@ it('목록은 제목만 주고 본문은 주지 않는다', function () {
 
     $res = $this->getJson('/api/v1/guides')->assertOk();
 
-    expect($res->json('data'))->toHaveCount(3);
+    expect($res->json('data'))->toHaveCount(4);
     expect($res->json('data.0'))->toHaveKeys(['key', 'title', 'lead', 'icon'])
         ->and($res->json('data.0'))->not->toHaveKey('sections');
     expect($res->json('data.0.key'))->toBe('pre-training');
