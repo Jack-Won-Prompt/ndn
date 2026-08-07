@@ -1,12 +1,16 @@
 @php
+    use App\Domains\Settlement\Notifications\SettlementAssignedNotification;
+    use App\Shared\Enums\UserRole;
+
     $user = auth()->user();
-    $isPartner = $user?->isRole(\App\Shared\Enums\UserRole::PartnerAgency) ?? false;
-    $isFarm = $user?->isRole(\App\Shared\Enums\UserRole::FarmOwner) ?? false;
+    $isPartner = $user?->isRole(UserRole::PartnerAgency) ?? false;
+    $isFarm = $user?->isRole(UserRole::FarmOwner) ?? false;
+
+    // 대리점에 새로 배정된 정착 건 — 메뉴에 숫자로 달아 둔다.
     $settleUnread = $isPartner
-        ? $user->unreadNotifications()
-            ->where('type', \App\Domains\Settlement\Notifications\SettlementAssignedNotification::class)
-            ->count()
+        ? $user->unreadNotifications()->where('type', SettlementAssignedNotification::class)->count()
         : 0;
+
     $active = $active ?? '';
 @endphp
 <!DOCTYPE html>
@@ -15,67 +19,70 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="csrf-token" content="{{ csrf_token() }}">
+<meta name="theme-color" content="#0B0F16">
 <title>@yield('title', '협력 포털') — N.D.N Korea</title>
 @include('partials.tz-cookie')
 <link rel="icon" type="image/svg+xml" href="{{ asset('site/assets/favicon.svg') }}">
+<link rel="icon" type="image/png" sizes="32x32" href="{{ asset('site/assets/favicon-32.png') }}">
 <style>
     @font-face{font-family:"Pretendard Variable";src:url("{{ asset('site/assets/fonts/PretendardVariable.woff2') }}") format("woff2-variations");font-weight:45 920;font-display:swap;}
-    body{margin:0;font-family:"Pretendard Variable","Pretendard",-apple-system,"Malgun Gothic",sans-serif;background:#F6F8F8;color:#1B1E24;-webkit-font-smoothing:antialiased;}
-    .portal-top{height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;border-bottom:1px solid #E3E6EA;background:#fff;}
-    .portal-brand b{font-size:18px;font-weight:800;letter-spacing:.04em;}
-    .portal-brand span{font-size:12px;color:#6B7280;margin-left:8px;letter-spacing:.1em;text-transform:uppercase;}
-    .portal-left{display:flex;align-items:center;}
-    .portal-nav{display:flex;align-items:center;gap:6px;margin-left:26px;}
-    .portal-nav a{position:relative;font-size:14px;color:#4B5563;text-decoration:none;padding:7px 14px;border-radius:8px;font-weight:600;}
-    .portal-nav a:hover{background:#EEF1F4;color:#1B1E24;}
-    .portal-nav a.is-active{background:#1E9C92;color:#fff;}
-    .portal-badge{display:inline-flex;min-width:17px;height:17px;padding:0 5px;margin-left:6px;border-radius:9px;background:#E5484D;color:#fff;font-size:11px;font-weight:700;align-items:center;justify-content:center;}
-    .portal-user{display:flex;align-items:center;gap:12px;font-size:13px;color:#333A44;}
-    .portal-user form{margin:0;}
-    .portal-logout{font-family:inherit;font-size:13px;color:#6B7280;background:none;border:1px solid #E3E6EA;border-radius:6px;padding:6px 12px;cursor:pointer;}
-    .portal-logout:hover{color:#1B1E24;border-color:#9AA1AC;}
-    .portal-body{padding:22px;max-width:1100px;margin:0 auto;}
-    .pflash{padding:11px 15px;border-radius:9px;font-size:14px;margin-bottom:16px;}
-    .pflash--ok{background:#E7F3F1;color:#12695F;border:1px solid #B9E0D9;}
-    .pflash--err{background:#FDECEC;color:#B42318;border:1px solid #F3C0C0;}
 </style>
+{{-- 로그인 화면과 같은 디자인 시스템. 로그인하고 들어왔는데 다른 사이트로 보이면
+     안 된다. 셸(.nd-app*)은 ndn.css 에 이미 있던 것을 쓴다. --}}
+<link rel="stylesheet" href="{{ asset('site/assets/css/ndn.css') }}?v={{ @filemtime(public_path('site/assets/css/ndn.css')) }}">
 @stack('head')
 </head>
 <body>
-    <header class="portal-top">
-        <div class="portal-left">
-            <div class="portal-brand"><b>N.D.N</b><span>협력 포털</span></div>
-            <nav class="portal-nav">
+<div class="nd-app">
+
+    <header class="nd-app__bar">
+        <div class="nd-wrap">
+            <a class="nd-logo" href="{{ route('portal.index') }}">
+                <span class="nd-logo__mark">N<i>.</i>D<i>.</i>N</span>
+                <span class="nd-logo__sub">협력 포털</span>
+            </a>
+
+            <nav class="nd-app__nav">
                 @if ($isFarm)
-                    <a href="{{ route('demand.index') }}">수요 신청</a>
+                    <a href="{{ route('demand.index') }}" class="{{ $active === 'demand' ? 'is-on' : '' }}">수요 신청</a>
                 @endif
                 @if ($isPartner)
-                    <a href="{{ route('portal.settlements.index') }}" class="{{ $active === 'settlements' ? 'is-active' : '' }}">
+                    <a href="{{ route('portal.settlements.index') }}" class="{{ $active === 'settlements' ? 'is-on' : '' }}">
                         정착 처리
-                        @if ($settleUnread > 0)<span class="portal-badge">{{ $settleUnread }}</span>@endif
+                        @if ($settleUnread > 0)<span class="nd-app__badge">{{ $settleUnread }}</span>@endif
                     </a>
                 @endif
-                <a href="{{ route('portal.index') }}" class="{{ $active === 'chat' ? 'is-active' : '' }}">채팅</a>
+                <a href="{{ route('portal.index') }}" class="{{ $active === 'chat' ? 'is-on' : '' }}">채팅</a>
             </nav>
-        </div>
-        <div class="portal-user">
-            <span>{{ $user->name }}</span>
-            <form method="POST" action="{{ route('portal.logout') }}">
-                @csrf
-                <button type="submit" class="portal-logout">로그아웃</button>
-            </form>
+
+            <div class="nd-app__end">
+                <span class="nd-app__who">{{ $user->name }}</span>
+                <form method="POST" action="{{ route('portal.logout') }}" style="margin:0">
+                    @csrf
+                    <button type="submit" class="nd-app__out">로그아웃</button>
+                </form>
+            </div>
         </div>
     </header>
 
-    <main class="portal-body">
-        @if (session('status'))
-            <div class="pflash pflash--ok">{{ session('status') }}</div>
-        @endif
-        @if (session('error'))
-            <div class="pflash pflash--err">{{ session('error') }}</div>
-        @endif
-        @yield('body')
+    <main class="nd-app__body">
+        <div class="nd-wrap">
+            @if (session('status'))
+                <div class="nd-note nd-note--ok" style="margin-bottom:18px" role="status">{{ session('status') }}</div>
+            @endif
+            @if (session('error'))
+                <div class="nd-note nd-note--err" style="margin-bottom:18px" role="alert">{{ session('error') }}</div>
+            @endif
+            @if ($errors->any())
+                <div class="nd-note nd-note--err" style="margin-bottom:18px" role="alert">
+                    @foreach ($errors->all() as $e)<div>{{ $e }}</div>@endforeach
+                </div>
+            @endif
+
+            @yield('body')
+        </div>
     </main>
-    @stack('scripts')
+</div>
+@stack('scripts')
 </body>
 </html>

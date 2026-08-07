@@ -1104,3 +1104,52 @@ button { font: inherit; color: inherit; }
     .nd-band, .nd-hero { background: #fff !important; color: #000 !important; }
     .nd-band::before, .nd-hero::before, .nd-hero::after { display: none !important; }
 }
+
+/* --------------------------------------------- 앱 화면 — 목록·상세 조각 --- */
+/* 위 '앱 화면 셸' 을 실제로 쓰는 화면들(수요 신청·정착 처리)이 필요로 하는 것만
+   더한다. 표·판·버튼·배지는 사이트 본문 것을 그대로 쓴다 — 같은 것을 두 벌
+   만들지 않는다. 다만 업무 화면은 한 눈에 여러 행을 봐야 해서 표만 조밀하게 한다. */
+
+/* 조치할 건이 있는 메뉴에 숫자를 단다 */
+.nd-app__nav a { display: inline-flex; align-items: center; gap: 7px; }
+.nd-app__badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--nd-r-pill);
+    background: var(--nd-accent); color: #fff; font-size: 11px; font-weight: 800; line-height: 1;
+}
+
+/* 업무 목록 표 — 사이트 본문 표보다 조밀하게, 날짜는 줄바꿈하지 않는다 */
+.nd-tablewrap--dense .nd-table { font-size: 14.5px; }
+.nd-tablewrap--dense .nd-table th,
+.nd-tablewrap--dense .nd-table td { padding: 13px 18px; white-space: nowrap; }
+.nd-tablewrap--dense .nd-table td.nd-wrapcell { white-space: normal; }
+.nd-tablewrap--dense tbody tr[data-href] { cursor: pointer; }
+.nd-tablewrap--dense tbody tr[data-href]:hover { background: var(--nd-paper-2); }
+.nd-empty { text-align: center; color: var(--nd-text-3); padding: 46px 20px; font-size: 15px; white-space: normal; }
+
+/* 상세 정의 목록 */
+.nd-dl { display: grid; grid-template-columns: 1fr 1fr; margin: 0; border-top: 1px solid var(--nd-line); }
+.nd-dl > div { display: flex; gap: 14px; padding: 13px 4px; border-bottom: 1px solid var(--nd-line); }
+.nd-dl--one { grid-template-columns: 1fr; }
+.nd-dl__full { grid-column: 1 / -1; }
+.nd-dl dt { flex: 0 0 128px; margin: 0; color: var(--nd-text-2); font-size: 13.5px; font-weight: 700; }
+.nd-dl dd { margin: 0; font-size: 15px; color: var(--nd-text); }
+
+/* 화면 머리의 오른쪽 행동, 판 아래의 행동 줄 */
+.nd-pagehead--row { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+.nd-formfoot { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+.nd-formhint { margin: 10px 0 0; font-size: 13px; color: var(--nd-text-2); text-align: right; }
+
+/* 기한을 넘긴 건은 눈에 띄어야 한다 */
+.nd-over { color: var(--nd-err); font-weight: 800; }
+
+@media (max-width: 720px) {
+    .nd-pagehead--row { flex-direction: column; align-items: stretch; }
+    .nd-dl { grid-template-columns: 1fr; }
+}
+/* 체크박스를 필드 안에 넣으면 '.nd-field > label' 이 더 강해서 .nd-check 의
+   가로 배치를 덮어쓴다. 체크 상자와 글이 붙어 버린다. 여기서 되돌린다. */
+.nd-field > label.nd-check {
+    display: flex; align-items: center; gap: 9px;
+    font-size: 15px; font-weight: 500; color: var(--nd-text); letter-spacing: 0;
+}
