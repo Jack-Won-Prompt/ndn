@@ -35,11 +35,6 @@
 <style>
     @font-face{font-family:"Pretendard Variable";src:url("{{ asset('site/assets/fonts/PretendardVariable.woff2') }}") format("woff2-variations");font-weight:45 920;font-display:swap;}
 </style>
-{{-- 과도기: 아직 새 시스템으로 옮기지 않은 페이지(회사소개·서비스·근로자지원·협력기관·
-     문의·약관·방침·계정삭제)가 옛 클래스를 쓴다. 그 페이지들을 다 옮기면 이 줄과
-     public/site/assets/css/style.css, js/main.js 를 함께 지운다.
-     클래스 이름이 겹치지 않아(새 시스템은 전부 nd- 접두) 서로 간섭하지 않는다. --}}
-<link rel="stylesheet" href="{{ asset('site/assets/css/style.css') }}?v={{ @filemtime(public_path('site/assets/css/style.css')) }}">
 <link rel="stylesheet" href="{{ asset('site/assets/css/ndn.css') }}?v={{ @filemtime(public_path('site/assets/css/ndn.css')) }}">
 {{-- 등장 효과는 JS 가 있을 때만 건다. 이 줄이 없으면 스크립트가 실패한 환경에서
      본문이 투명한 채로 남는다. 첫 페인트 전에 실행되어야 하므로 인라인이다. --}}
