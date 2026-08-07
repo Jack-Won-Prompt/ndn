@@ -7,8 +7,8 @@ namespace App\Domains\Recruitment\Http\Controllers\Api;
 use App\Domains\Arrival\Enums\ArrivalStatus;
 use App\Domains\Matching\Enums\PlacementStatus;
 use App\Domains\Matching\Models\Placement;
-use App\Domains\Monitoring\Enums\InterviewSource;
-use App\Domains\Monitoring\Models\MonthlyInterview;
+use App\Domains\Monitoring\Models\LifeChecklistCheck;
+use App\Domains\Monitoring\Models\LifeChecklistItem;
 use App\Domains\Onboarding\Models\OnboardingSubmission;
 use App\Domains\Recruitment\Models\Worker;
 use App\Domains\Settlement\Enums\SettlementStatus;
@@ -43,14 +43,13 @@ class DashboardController extends Controller
 
         $arrival = $placement?->arrival;
 
-        // 이번 달 자가 평가를 냈는지 — 홈에서 가장 자주 확인하는 값이다.
-        $selfThisMonth = MonthlyInterview::where('worker_id', $worker->id)
-            ->where('source', InterviewSource::Self->value)
-            ->whereBetween('interviewed_on', [
-                now()->startOfMonth()->toDateString(),
-                now()->endOfMonth()->toDateString(),
-            ])
-            ->exists();
+        // 생활 체크리스트를 어디까지 확인했는지 — 홈에서 가장 자주 보는 값이다.
+        // 월별 자가 평가(6항목)가 있던 자리다. 그쪽은 폐기됐다.
+        $checklistTotal = LifeChecklistItem::query()->active()->count();
+        $checklistDone = LifeChecklistCheck::query()
+            ->where('worker_id', $worker->id)
+            ->whereHas('item', fn ($q) => $q->where('active', true))
+            ->count();
 
         $onboarding = OnboardingSubmission::where('worker_id', $worker->id)
             ->latest('id')
@@ -80,8 +79,10 @@ class DashboardController extends Controller
                     'scheduled_arrival_at' => $arrival->scheduled_arrival_at?->toIso8601String(),
                 ],
 
-                'assessment' => [
-                    'submitted_this_month' => $selfThisMonth,
+                'life_checklist' => [
+                    'total' => $checklistTotal,
+                    'checked' => $checklistDone,
+                    'completed' => $checklistTotal > 0 && $checklistDone >= $checklistTotal,
                 ],
 
                 'onboarding' => $onboarding === null ? null : [

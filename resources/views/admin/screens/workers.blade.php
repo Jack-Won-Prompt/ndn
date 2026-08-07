@@ -51,12 +51,12 @@
                 } else { html += '<div class="dtl-empty">입국 기록이 없습니다.</div>'; }
                 html += '</div>';
 
-                html += '<div class="dtl-sec"><div class="dtl-sec__title">한국 생활 점검 이력 (' + (d.interviews || []).length + '건)</div>';
-                if (d.interviews && d.interviews.length) {
-                    d.interviews.forEach(function (iv) {
-                        html += '<div class="dtl-hist__row"><b>' + wkEsc(iv.date) + '</b>'
-                            + '<span class="dtl-badge">' + wkEsc(iv.risk) + '</span><span>' + wkEsc(iv.source) + '</span>'
-                            + (iv.negatives ? '<span>이상 ' + iv.negatives + '항목</span>' : '<span>전항목 양호</span>') + '</div>';
+                html += '<div class="dtl-sec"><div class="dtl-sec__title">근무상태 점검 이력 (' + (d.reviews || []).length + '건)</div>';
+                if (d.reviews && d.reviews.length) {
+                    d.reviews.forEach(function (r) {
+                        html += '<div class="dtl-hist__row"><b>' + wkEsc(r.date) + '</b>'
+                            + '<span class="dtl-badge">' + wkEsc(r.risk) + '</span><span>' + wkEsc(r.type) + '</span>'
+                            + '<span>' + wkEsc(r.result) + ' · ' + r.score + '점</span></div>';
                     });
                 } else { html += '<div class="dtl-empty">점검 이력이 없습니다.</div>'; }
                 html += '</div>';

@@ -8,7 +8,11 @@ use App\Domains\Demand\Enums\DemandStatus;
 use App\Domains\Demand\Models\City;
 use App\Domains\Demand\Models\DemandRequest;
 use App\Domains\Demand\Models\Farm;
-use App\Domains\Monitoring\Models\MonthlyInterview;
+use App\Domains\Monitoring\Enums\RiskLevel;
+use App\Domains\Monitoring\Enums\WorkReviewResult;
+use App\Domains\Monitoring\Models\LifeChecklistCheck;
+use App\Domains\Monitoring\Models\LifeChecklistItem;
+use App\Domains\Monitoring\Models\WorkReview;
 use App\Domains\Onboarding\Enums\OnboardingStatus;
 use App\Domains\Onboarding\Models\OnboardingSubmission;
 use App\Domains\Recruitment\Enums\CandidateStatus;
@@ -18,6 +22,7 @@ use App\Domains\Settlement\Models\SettlementRequest;
 use App\Domains\Support\Models\ChatMessage;
 use App\Domains\Support\Models\SupportTicket;
 use App\Domains\Support\Services\ChatService;
+use App\Models\User;
 use App\Shared\Translation\GoogleTranslator;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -29,7 +34,7 @@ use Illuminate\Support\Str;
  * 운영에서도 명시 실행:
  *   php artisan db:seed --class=Database\\Seeders\\IntegrityTestSeeder --force
  *
- * 근로자 20명을 축으로 온보딩(서명파일)·월별점검·민원·정착·수요·후보자·채팅(자동번역)을
+ * 근로자 20명을 축으로 온보딩(서명파일)·근무상태점검·생활체크리스트·민원·정착·수요·후보자·채팅(자동번역)을
  * 참조무결성 있게 생성하고, 마지막에 정합성 검증 결과를 출력한다.
  */
 class IntegrityTestSeeder extends Seeder
@@ -71,12 +76,27 @@ class IntegrityTestSeeder extends Seeder
             ]);
             $sigCount++;
 
-            // 월별 점검 (대부분 저위험, 일부 고위험)
-            $mi = MonthlyInterview::factory();
-            if (fake()->boolean(20)) {
-                $mi = $mi->highRisk();
+            // 근무상태 점검표 (대부분 저위험, 일부 고위험)
+            $high = fake()->boolean(20);
+            WorkReview::factory()->create([
+                'worker_id' => $w->id,
+                'farm_id' => $farms->random()->id,
+                'inspector_user_id' => User::query()->value('id') ?? User::factory(),
+                'reviewed_at' => now()->subDays(fake()->numberBetween(1, 60)),
+                'result' => $high ? WorkReviewResult::SpecialCare->value : WorkReviewResult::Good->value,
+                'risk_score' => $high ? fake()->numberBetween(8, 16) : fake()->numberBetween(0, 2),
+                'risk_level' => $high ? RiskLevel::High->value : RiskLevel::Low->value,
+            ]);
+
+            // 생활 체크리스트 — 사람마다 진행 정도가 다르다
+            $checklist = LifeChecklistItem::query()->active()->get();
+            foreach ($checklist->random(fake()->numberBetween(0, $checklist->count())) as $item) {
+                LifeChecklistCheck::create([
+                    'worker_id' => $w->id,
+                    'life_checklist_item_id' => $item->id,
+                    'checked_at' => now()->subDays(fake()->numberBetween(0, 20)),
+                ]);
             }
-            $mi->create(['worker_id' => $w->id]);
 
             // 절반 민원 / 절반 정착
             if (fake()->boolean(50)) {

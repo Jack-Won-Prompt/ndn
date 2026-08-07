@@ -5,7 +5,6 @@ declare(strict_types=1);
 use App\Domains\Demand\Http\Controllers\Api\CityController;
 use App\Domains\Matching\Http\Controllers\Api\MyPlacementController;
 use App\Domains\Monitoring\Http\Controllers\Api\LifeChecklistController;
-use App\Domains\Monitoring\Http\Controllers\Api\MonthlyInterviewController;
 use App\Domains\Onboarding\Http\Controllers\Api\ConsentController;
 use App\Domains\Onboarding\Http\Controllers\Api\OnboardingController;
 use App\Domains\Onboarding\Http\Controllers\Api\RequiredDocumentController;
@@ -105,11 +104,8 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'worker', 'docs.agreed'])->grou
     Route::post('/device-tokens', [DeviceTokenController::class, 'store']);
     Route::delete('/device-tokens', [DeviceTokenController::class, 'destroy']);
 
-    // 근로 생활 평가 (월별 점검 6항목) — 본인 이력 조회 + 자가 평가 제출
-    Route::get('/interviews', [MonthlyInterviewController::class, 'index']);
-    Route::post('/interviews', [MonthlyInterviewController::class, 'store']);
-
     // 한국 생활 체크리스트 (입국 후 1주일 이내 확인사항) — 본인이 체크한다
+    // 월별 자가 평가 6항목(/interviews)이 있던 자리다. 그쪽은 폐기됐다.
     Route::get('/life-checklist', [LifeChecklistController::class, 'index']);
     Route::post('/life-checklist', [LifeChecklistController::class, 'store']);
 

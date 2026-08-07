@@ -67,7 +67,7 @@
                 <div id="fv-preview" class="fv-preview"></div>
             </div>
             <div class="fv-field fv-field--full">
-                <label>근로자 인터뷰 <span style="font-weight:400;color:var(--mv2-text-faint)">(6항목 · 체크=양호, 미체크=이상)</span></label>
+                <label>이 농가의 근로자 <span style="font-weight:400;color:var(--mv2-text-faint)">(사람별 점검은 [근무상태 점검표]에서 작성합니다)</span></label>
                 <div id="fv-workers" class="fv-workers"><div class="fv-workers__empty">농가를 선택하면 배정 근로자가 표시됩니다.</div></div>
             </div>
         </div>
@@ -196,11 +196,10 @@
         var token = document.querySelector('meta[name="csrf-token"]').content;
         var BASE = '{{ url('admin/farm-visits') }}';
         var input = document.getElementById('fv-photos');
-        var ITEMS = @json($itemLabels);
 
         function esc(s) { return (s == null ? '' : String(s)); }
 
-        // 농가 선택 → 배정 근로자별 인터뷰(6항목) 폼 로드
+        // 농가 선택 → 배정 근로자 명단 (사람별 점검은 근무상태 점검표 화면에서 한다)
         var farmSel = document.getElementById('fv-farm');
         function loadWorkers() {
             var box = document.getElementById('fv-workers');
@@ -213,14 +212,10 @@
                     if (!ws.length) { box.innerHTML = '<div class="fv-workers__empty">이 농가에 배정 확정된 근로자가 없습니다. (농가 정보만 등록됩니다)</div>'; return; }
                     box.innerHTML = '';
                     ws.forEach(function (w) {
-                        var chks = ITEMS.map(function (it) {
-                            return '<label class="fv-chk"><input type="checkbox" data-item="' + it.key + '" checked> ' + esc(it.label) + '</label>';
-                        }).join('');
                         var card = document.createElement('div');
                         card.className = 'fv-worker'; card.setAttribute('data-wid', w.id);
-                        card.innerHTML = '<div class="fv-worker__head"><span class="fv-worker__name">' + esc(w.name) + '</span><span class="fv-worker__nat">' + esc(w.nationality) + '</span></div>'
-                            + '<div class="fv-chks">' + chks + '</div>'
-                            + '<input type="text" class="fv-worker__memo" placeholder="인터뷰 메모(선택)">';
+                        card.innerHTML = '<div class="fv-worker__head"><span class="fv-worker__name">' + esc(w.name) + '</span>'
+                            + '<span class="fv-worker__nat">' + esc(w.nationality) + '</span></div>';
                         box.appendChild(card);
                     });
                 });
@@ -255,15 +250,6 @@
             });
             [].forEach.call(input.files, function (f) { fd.append('photos[]', f); });
 
-            // 근로자별 인터뷰 (체크=양호=1, 미체크=이상=0)
-            [].forEach.call(document.querySelectorAll('#fv-workers .fv-worker'), function (card) {
-                var wid = card.getAttribute('data-wid');
-                [].forEach.call(card.querySelectorAll('input[data-item]'), function (chk) {
-                    fd.append('interviews[' + wid + '][' + chk.getAttribute('data-item') + ']', chk.checked ? '1' : '0');
-                });
-                fd.append('interviews[' + wid + '][memo]', card.querySelector('.fv-worker__memo').value.trim());
-            });
-
             var btn = document.getElementById('fv-save'); btn.disabled = true; btn.textContent = '저장 중…';
             fetch(BASE, { method: 'POST', headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': token }, body: fd })
                 .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
@@ -280,31 +266,28 @@
 
         // 상세 모달
         function riskCls(v) { return 'fv-risk--' + (v || 'low'); }
-        function renderIv(iv) {
-            var items = iv.items.map(function (it) {
-                return '<span class="' + (it.ok ? 'fv-tag-ok' : 'fv-tag-bad') + '">' + esc(it.label) + '</span>';
-            }).join('');
+        function renderReview(r) {
             return '<div class="fv-iv">'
-                + '<div class="fv-iv__head"><span class="fv-iv__worker">' + esc(iv.worker) + '</span>'
-                + '<span class="fv-iv__right"><span class="fv-risk ' + riskCls(iv.risk_level) + '">이탈 ' + esc(iv.risk) + '</span>'
-                + '<button type="button" class="fv-histbtn" data-hist="' + iv.worker_id + '">이력</button></span></div>'
-                + '<div class="fv-iv__items">' + items + '</div>'
-                + (iv.memo ? '<div class="fv-iv__memo">' + esc(iv.memo) + '</div>' : '')
-                + '<div class="fv-hist" data-histbox="' + iv.worker_id + '" style="display:none"></div>'
+                + '<div class="fv-iv__head"><span class="fv-iv__worker">' + esc(r.worker) + '</span>'
+                + '<span class="fv-iv__right"><span class="fv-risk ' + riskCls(r.risk_level) + '">이탈 ' + esc(r.risk) + '</span>'
+                + '<button type="button" class="fv-histbtn" data-hist="' + r.worker_id + '">이력</button></span></div>'
+                + '<div class="fv-iv__items"><span class="fv-tag-ok">' + esc(r.type) + '</span>'
+                + '<span class="fv-tag-ok">' + esc(r.result) + '</span>'
+                + '<span class="' + (r.score ? 'fv-tag-bad' : 'fv-tag-ok') + '">' + r.score + '점</span></div>'
+                + '<div class="fv-hist" data-histbox="' + r.worker_id + '" style="display:none"></div>'
                 + '</div>';
         }
         function loadHistory(wid, box) {
             if (box.getAttribute('data-loaded')) { box.style.display = (box.style.display === 'none') ? '' : 'none'; return; }
             box.style.display = ''; box.innerHTML = '<div class="fv-hist__row">불러오는 중…</div>';
-            fetch(BASE + '/workers/' + wid + '/interviews', { headers: { 'Accept': 'application/json' } })
+            fetch(BASE + '/workers/' + wid + '/reviews', { headers: { 'Accept': 'application/json' } })
                 .then(function (r) { return r.json(); })
                 .then(function (j) {
                     var rows = (j.history || []).map(function (h) {
-                        var neg = h.items.filter(function (i) { return !i.ok; }).length;
                         return '<div class="fv-hist__row"><b>' + esc(h.date) + '</b>'
                             + '<span class="fv-risk ' + riskCls(h.risk_level) + '">' + esc(h.risk) + '</span>'
-                            + '<span>' + esc(h.source) + (h.farm ? ' · ' + esc(h.farm) : '') + '</span>'
-                            + (neg ? '<span>이상 ' + neg + '항목</span>' : '<span>전항목 양호</span>') + '</div>';
+                            + '<span>' + esc(h.type) + (h.farm ? ' · ' + esc(h.farm) : '') + '</span>'
+                            + '<span>' + esc(h.result) + ' · ' + h.score + '점</span></div>';
                     }).join('') || '<div class="fv-hist__row">이력이 없습니다.</div>';
                     box.innerHTML = rows; box.setAttribute('data-loaded', '1');
                 });
@@ -330,9 +313,9 @@
                         d.photos.forEach(function (p) { html += '<a href="' + p.url + '" target="_blank"><img src="' + p.url + '" alt="' + esc(p.name) + '" loading="lazy"></a>'; });
                         html += '</div>';
                     }
-                    if (d.interviews && d.interviews.length) {
-                        html += '<div class="fv-ivs"><div class="fv-ivs__title">근로자 인터뷰 (' + d.interviews.length + '명)</div>';
-                        d.interviews.forEach(function (iv) { html += renderIv(iv); });
+                    if (d.reviews && d.reviews.length) {
+                        html += '<div class="fv-ivs"><div class="fv-ivs__title">이 방문의 근무상태 점검표 (' + d.reviews.length + '명)</div>';
+                        d.reviews.forEach(function (r) { html += renderReview(r); });
                         html += '</div>';
                     }
                     document.getElementById('fv-detail').innerHTML = html;
@@ -343,7 +326,7 @@
         document.getElementById('fv-table').addEventListener('dblclick', function (e) {
             var tr = e.target.closest('tr[data-id]'); if (tr) openDetail(tr.getAttribute('data-id'));
         });
-        // 근로자 인터뷰 '이력' 토글 (상세 탭 위임)
+        // 근로자별 점검 '이력' 토글 (상세 탭 위임)
         document.getElementById('fv-detail').addEventListener('click', function (e) {
             var b = e.target.closest('[data-hist]'); if (!b) return;
             var box = document.querySelector('[data-histbox="' + b.getAttribute('data-hist') + '"]');

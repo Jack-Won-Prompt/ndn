@@ -12,7 +12,7 @@ use App\Domains\Matching\Enums\PlacementStatus;
 use App\Domains\Matching\Models\Placement;
 use App\Domains\Monitoring\Enums\RiskLevel;
 use App\Domains\Monitoring\Models\FarmVisit;
-use App\Domains\Monitoring\Models\MonthlyInterview;
+use App\Domains\Monitoring\Models\WorkReview;
 use App\Domains\Onboarding\Enums\OnboardingStatus;
 use App\Domains\Onboarding\Models\OnboardingSubmission;
 use App\Domains\Recruitment\Enums\WorkerStatus;
@@ -115,12 +115,12 @@ class DashboardAdminController extends Controller
                             now()->endOfMonth()->toDateString(),
                         ])->count(),
 
-                    // 고위험 평가 — 이탈 징후가 있는 근로자
-                    'high_risk' => PortalScope::byWorker(MonthlyInterview::query(), $actor)
+                    // 고위험 점검 — 이탈 징후가 있는 근로자 (근무상태 종합 점검표 기준)
+                    'high_risk' => PortalScope::byWorker(WorkReview::query(), $actor)
                         ->where('risk_level', RiskLevel::High->value)
-                        ->whereBetween('interviewed_on', [
-                            now()->subMonth()->toDateString(),
-                            now()->toDateString(),
+                        ->whereBetween('reviewed_at', [
+                            now()->subMonth()->startOfDay(),
+                            now()->endOfDay(),
                         ])->count(),
                 ],
             ],

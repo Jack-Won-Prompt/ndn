@@ -15,7 +15,6 @@ use App\Http\Controllers\Admin\FarmVisitController;
 use App\Http\Controllers\Admin\InquiryController;
 use App\Http\Controllers\Admin\InvitationController;
 use App\Http\Controllers\Admin\LifeChecklistController;
-use App\Http\Controllers\Admin\MonitoringController;
 use App\Http\Controllers\Admin\NoticeController;
 use App\Http\Controllers\Admin\RegionController;
 use App\Http\Controllers\Admin\RequiredDocumentAdminController;
@@ -216,10 +215,8 @@ Route::prefix('admin')->group(function () {
         Route::post('/service-requests/{serviceRequest}/status', [ServiceRequestController::class, 'updateStatus'])
             ->whereNumber('serviceRequest')->name('admin.service-requests.status');
 
-        // 월별 점검 — 본사 직접 입력
-        Route::post('/monitoring/interviews', [MonitoringController::class, 'store'])->name('admin.monitoring.store');
-
         // 근무상태 종합 점검표 — 작성·상세
+        // 월별 점검(6항목) 직접 입력이 있던 자리다. 그쪽은 폐기됐다.
         Route::post('/work-reviews', [WorkReviewController::class, 'store'])->name('admin.work-reviews.store');
         Route::get('/work-reviews/{workReview}', [WorkReviewController::class, 'show'])
             ->whereNumber('workReview')->name('admin.work-reviews.show');
@@ -232,7 +229,7 @@ Route::prefix('admin')->group(function () {
         Route::post('/farm-visits', [FarmVisitController::class, 'store'])->name('admin.farm-visits.store');
         Route::get('/farm-visits/farms/{farm}/workers', [FarmVisitController::class, 'workers'])
             ->whereNumber('farm')->name('admin.farm-visits.workers');
-        Route::get('/farm-visits/workers/{worker}/interviews', [FarmVisitController::class, 'workerHistory'])
+        Route::get('/farm-visits/workers/{worker}/reviews', [FarmVisitController::class, 'workerHistory'])
             ->whereNumber('worker')->name('admin.farm-visits.worker-history');
         Route::get('/farm-visits/{farmVisit}', [FarmVisitController::class, 'show'])
             ->whereNumber('farmVisit')->name('admin.farm-visits.show');

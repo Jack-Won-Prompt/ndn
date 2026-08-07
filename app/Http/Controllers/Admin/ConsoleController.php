@@ -9,7 +9,7 @@ use App\Domains\Demand\Models\City;
 use App\Domains\Demand\Models\DemandRequest;
 use App\Domains\Demand\Models\Farm;
 use App\Domains\Matching\Enums\PlacementStatus;
-use App\Domains\Monitoring\Models\MonthlyInterview;
+use App\Domains\Monitoring\Models\WorkReview;
 use App\Domains\Onboarding\Enums\OnboardingStatus;
 use App\Domains\Onboarding\Models\OnboardingSubmission;
 use App\Domains\Recruitment\Enums\WorkerStatus;
@@ -89,7 +89,6 @@ class ConsoleController extends Controller
                 'group' => '정착·사후관리',
                 'items' => [
                     ['key' => 'settlement', 'label' => '정착 처리보드', 'icon' => 'grid'],
-                    ['key' => 'monitoring', 'label' => '월별 점검', 'icon' => 'clipboard'],
                     ['key' => 'life-checklist', 'label' => '생활 체크리스트', 'icon' => 'clipboard'],
                     ['key' => 'work-reviews', 'label' => '근무상태 점검표', 'icon' => 'clipboard'],
                     ['key' => 'farmvisits', 'label' => '농가 방문 점검', 'icon' => 'clipboard'],
@@ -152,7 +151,6 @@ class ConsoleController extends Controller
             ]),
             'onboarding' => $this->onboarding($request),
             'settlement' => $this->settlement($request),
-            'monitoring' => $this->monitoring($request),
             'life-checklist' => view('admin.screens.life-checklist', [
                 'rows' => LifeChecklistController::rows(),
                 'itemRows' => LifeChecklistController::itemRows(),
@@ -169,7 +167,6 @@ class ConsoleController extends Controller
                 'rows' => FarmVisitController::rows(),
                 'farms' => FarmVisitController::farmOptions(),
                 'statuses' => FarmVisitController::statusOptions(),
-                'itemLabels' => FarmVisitController::itemLabels(),
             ]),
             'tickets' => $this->tickets($request),
             'account-deletions' => view('admin.screens.account-deletions', ['rows' => AccountDeletionAdminController::rows()]),
@@ -255,42 +252,6 @@ class ConsoleController extends Controller
         }
 
         return response()->json(['ok' => true]);
-    }
-
-    private function monitoring(Request $request): View
-    {
-        // 근로자 소속(시·농가) = 확정 배정 → 농가 → 시. N+1 방지로 즉시 로딩.
-        $rows = MonthlyInterview::with(['worker.placements' => function ($q) {
-            $q->where('status', PlacementStatus::Confirmed->value)->latest('id')->with('farm.city');
-        }])->latest('id')->limit(1000)->get()
-            ->map(function (MonthlyInterview $iv) {
-                $placement = $iv->worker?->placements->first();
-                $farm = $placement?->farm;
-
-                return [
-                    'id' => $iv->id,
-                    'worker' => $iv->worker?->name ?? '—',
-                    'city' => $farm?->city?->name ?? '—',
-                    'farm' => $farm?->name ?? '—',
-                    'date' => $iv->interviewed_on?->format('Y-m-d'),
-                    'pay' => $iv->pay_received ? '양호' : '이상',
-                    'discrim' => $iv->no_discrimination ? '양호' : '이상',
-                    'rules' => $iv->follows_rules ? '양호' : '이상',
-                    'group' => $iv->adapts_group ? '양호' : '이상',
-                    'health' => $iv->health_ok ? '양호' : '이상',
-                    'flight' => $iv->no_flight_signs ? '양호' : '이상',
-                    'risk' => match ($iv->risk_level?->value) {
-                        'high' => '고위험', 'medium' => '주의', default => '낮음'
-                    },
-                    'memo' => $iv->memo,
-                ];
-            })->all();
-
-        return view('admin.screens.monitoring', [
-            'rows' => $rows,
-            'workers' => MonitoringController::workerOptions(),
-            'itemLabels' => MonitoringController::itemLabels(),
-        ]);
     }
 
     private function tickets(Request $request): View
@@ -400,14 +361,16 @@ class ConsoleController extends Controller
             $farm = $placement?->farm;
             $arrival = $placement?->arrival;
 
-            $interviews = MonthlyInterview::where('worker_id', $worker->id)
-                ->latest('interviewed_on')->latest('id')->limit(24)->get()
-                ->map(fn (MonthlyInterview $iv) => [
-                    'date' => $iv->interviewed_on?->format('Y-m-d'),
-                    'source' => $iv->source?->label() ?? '—',
-                    'risk' => $iv->risk_level?->label() ?? '—',
-                    'risk_level' => $iv->risk_level?->value ?? 'low',
-                    'negatives' => collect(MonthlyInterview::ITEMS)->filter(fn ($it) => ! $iv->{$it})->count(),
+            // 점검 이력 — 월별 인터뷰 6항목이 있던 자리다. 근무상태 종합 점검표로 바뀌었다.
+            $reviews = WorkReview::where('worker_id', $worker->id)
+                ->latest('reviewed_at')->latest('id')->limit(24)->get()
+                ->map(fn (WorkReview $r) => [
+                    'date' => $r->reviewed_at?->timezone(config('ndn.timezone'))->format('Y-m-d'),
+                    'type' => $r->review_type->label(),
+                    'result' => $r->result->label(),
+                    'risk' => $r->risk_level->label(),
+                    'risk_level' => $r->risk_level->value,
+                    'score' => $r->risk_score,
                 ])->all();
 
             return response()->json([
@@ -427,7 +390,7 @@ class ConsoleController extends Controller
                     'airport' => $arrival->airport,
                     'scheduled' => LocalTime::format($arrival->scheduled_arrival_at),
                 ] : null,
-                'interviews' => $interviews,
+                'reviews' => $reviews,
             ]);
         }
 

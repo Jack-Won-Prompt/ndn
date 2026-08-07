@@ -8,7 +8,11 @@ use App\Domains\Demand\Enums\DemandStatus;
 use App\Domains\Demand\Models\City;
 use App\Domains\Demand\Models\DemandRequest;
 use App\Domains\Demand\Models\Farm;
-use App\Domains\Monitoring\Models\MonthlyInterview;
+use App\Domains\Monitoring\Enums\RiskLevel;
+use App\Domains\Monitoring\Enums\WorkReviewResult;
+use App\Domains\Monitoring\Models\LifeChecklistCheck;
+use App\Domains\Monitoring\Models\LifeChecklistItem;
+use App\Domains\Monitoring\Models\WorkReview;
 use App\Domains\Onboarding\Enums\OnboardingStatus;
 use App\Domains\Onboarding\Models\OnboardingSubmission;
 use App\Domains\Recruitment\Enums\CandidateStatus;
@@ -17,6 +21,7 @@ use App\Domains\Recruitment\Models\Worker;
 use App\Domains\Settlement\Enums\SettlementStatus;
 use App\Domains\Settlement\Models\SettlementRequest;
 use App\Domains\Support\Models\SupportTicket;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -95,19 +100,48 @@ class DemoDataSeeder extends Seeder
             ]);
         });
 
-        // 월별 점검 32건 (대부분 저위험, 일부 고위험)
-        $workers->take(32)->each(function ($w) {
-            $factory = MonthlyInterview::factory();
-            if (fake()->boolean(18)) {
-                $factory = $factory->highRisk();
-            }
-            $factory->create(['worker_id' => $w->id]);
-        });
+        // 근무상태 점검표 32건 (대부분 저위험, 일부 고위험)
+        $workers->take(32)->each(fn ($w) => $this->demoReview($w));
+
+        // 생활 체크리스트 — 사람마다 진행 정도가 다르다 (콘솔 정렬을 보려면 필요하다)
+        $items = LifeChecklistItem::query()->active()->get();
+        if ($items->isNotEmpty()) {
+            $workers->take(30)->each(function ($w) use ($items) {
+                foreach ($items->random(fake()->numberBetween(0, $items->count())) as $item) {
+                    LifeChecklistCheck::create([
+                        'worker_id' => $w->id,
+                        'life_checklist_item_id' => $item->id,
+                        'checked_at' => now()->subDays(fake()->numberBetween(0, 20)),
+                    ]);
+                }
+            });
+        }
 
         // 민원 15건
         $workers->random(15)->each(function ($w) {
             SupportTicket::factory()->create(['worker_id' => $w->id]);
         });
+    }
+
+    /**
+     * 데모용 근무상태 점검표 1건.
+     *
+     * 항목별 응답까지 만들지는 않는다 — 화면에서 보는 것은 목록의 등급·점수이고,
+     * 43항목을 사람마다 채우면 시드가 느려진다. 실제 응답은 콘솔에서 작성해 본다.
+     */
+    private function demoReview(Worker $worker): void
+    {
+        $high = fake()->boolean(18);
+
+        WorkReview::factory()->create([
+            'worker_id' => $worker->id,
+            'farm_id' => Farm::inRandomOrder()->value('id') ?? Farm::factory(),
+            'inspector_user_id' => User::query()->value('id') ?? User::factory(),
+            'reviewed_at' => now()->subDays(fake()->numberBetween(1, 60)),
+            'result' => $high ? WorkReviewResult::SpecialCare->value : WorkReviewResult::Good->value,
+            'risk_score' => $high ? fake()->numberBetween(8, 16) : fake()->numberBetween(0, 2),
+            'risk_level' => $high ? RiskLevel::High->value : RiskLevel::Low->value,
+        ]);
     }
 
     /** 데모용 전자서명 PNG 를 private 디스크에 생성하고 경로 반환 */

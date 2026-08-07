@@ -7,7 +7,6 @@ namespace App\Domains\Monitoring\Actions;
 use App\Domains\Demand\Models\Farm;
 use App\Domains\Monitoring\Enums\FarmVisitStatus;
 use App\Domains\Monitoring\Models\FarmVisit;
-use App\Domains\Recruitment\Models\Worker;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -17,21 +16,21 @@ use Illuminate\Support\Facades\DB;
  *
  * 방문 기록 생성과 현장 사진(private 저장) 업로드를 한 트랜잭션으로 처리한다.
  * 위치정보는 저장하지 않는다(§7-2).
+ *
+ * 근로자 개개인의 상태는 여기서 받지 않는다. 방문 중에 사람별로 남길 것이 있으면
+ * 근무상태 종합 점검표(WorkReview)를 farm_visit_id 로 이 방문에 묶어 작성한다.
  */
 class RecordFarmVisitAction
 {
     private const DISK = 'local';
 
-    public function __construct(private RecordMonthlyInterviewAction $interviews) {}
-
     /**
      * @param  array<string, mixed>  $data
      * @param  array<int, UploadedFile|null>  $photos
-     * @param  array<int, array{worker_id:int, items?:array<string,bool>, memo?:string|null}>  $interviews  근로자별 인터뷰
      */
-    public function execute(Farm $farm, User $inspector, array $data, array $photos = [], array $interviews = []): FarmVisit
+    public function execute(Farm $farm, User $inspector, array $data, array $photos = []): FarmVisit
     {
-        return DB::transaction(function () use ($farm, $inspector, $data, $photos, $interviews) {
+        return DB::transaction(function () use ($farm, $inspector, $data, $photos) {
             $visit = FarmVisit::create([
                 'farm_id' => $farm->id,
                 'visited_by' => $inspector->id,
@@ -54,23 +53,6 @@ class RecordFarmVisitAction
                     'mime' => $file->getMimeType(),
                     'created_at' => now(),
                 ]);
-            }
-
-            // 방문 시 근로자 개개인 인터뷰(6항목) — 방문에 묶어 기록
-            foreach ($interviews as $entry) {
-                $worker = Worker::find($entry['worker_id'] ?? null);
-                if ($worker === null) {
-                    continue;
-                }
-                $this->interviews->execute(
-                    $worker,
-                    $inspector,
-                    (string) $data['visited_on'],
-                    $entry['items'] ?? [],
-                    $entry['memo'] ?? null,
-                    null,
-                    $visit->id,
-                );
             }
 
             return $visit;

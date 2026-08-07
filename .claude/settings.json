@@ -343,7 +343,9 @@
       "PowerShell(cd e:\\\\xampp\\\\htdocs\\\\ndn; Get-Content storage\\\\logs\\\\laravel.log -Tail 400 | Select-String -Pattern 'local\\\\.ERROR' | Select-Object -Last 3 | ForEach-Object { $_.Line.Substring\\(0,[Math]::Min\\(400,$_.Line.Length\\)\\) })",
       "PowerShell(Get-ChildItem \"e:\\\\xampp\\\\htdocs\\\\ndn\\\\app\\\\Domains\\\\Site\" -Recurse -File | ForEach-Object { $_.FullName.Replace\\(\"e:\\\\xampp\\\\htdocs\\\\ndn\\\\\",\"\"\\) }; Write-Output \"--- Onboarding ---\"; Get-ChildItem \"e:\\\\xampp\\\\htdocs\\\\ndn\\\\app\\\\Domains\\\\Onboarding\" -Recurse -File | ForEach-Object { $_.FullName.Replace\\(\"e:\\\\xampp\\\\htdocs\\\\ndn\\\\\",\"\"\\) })",
       "PowerShell(Get-ChildItem \"e:\\\\xampp\\\\htdocs\\\\ndn\\\\database\\\\migrations\" | Where-Object { $_.Name -match 'site|required_doc' } | Select-Object Name; Write-Output \"--- admin screens ---\"; Get-ChildItem \"e:\\\\xampp\\\\htdocs\\\\ndn\\\\resources\\\\views\\\\admin\\\\screens\" | Select-Object Name)",
-      "PowerShell(Get-ChildItem \"e:\\\\xampp\\\\htdocs\\\\ndn\\\\app\\\\Domains\\\\Support\" -Recurse -File | ForEach-Object { $_.FullName.Replace\\(\"e:\\\\xampp\\\\htdocs\\\\ndn\\\\\",\"\"\\) })"
+      "PowerShell(Get-ChildItem \"e:\\\\xampp\\\\htdocs\\\\ndn\\\\app\\\\Domains\\\\Support\" -Recurse -File | ForEach-Object { $_.FullName.Replace\\(\"e:\\\\xampp\\\\htdocs\\\\ndn\\\\\",\"\"\\) })",
+      "PowerShell(e:; cd e:\\\\xampp\\\\htdocs\\\\ndn; Get-ChildItem app\\\\Console -Recurse -File | ForEach-Object { $_.FullName.Replace\\(\"e:\\\\xampp\\\\htdocs\\\\ndn\\\\\",\"\"\\) })",
+      "PowerShell(e:; cd e:\\\\xampp\\\\htdocs\\\\ndn; foreach \\($f in Get-ChildItem lang -Recurse -Filter worker.php\\) { $c = Get-Content $f.FullName -Raw -Encoding UTF8; $c = \\($c -split \"`r?`n\" | Where-Object { $_ -notmatch \"'monthly_interview'\" }\\) -join \"`r`n\"; Set-Content -Path $f.FullName -Value $c -Encoding UTF8 -NoNewline }; php artisan translations:check)"
     ],
     "additionalDirectories": [
       "\\tmp"

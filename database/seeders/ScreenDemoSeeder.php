@@ -10,11 +10,14 @@ use App\Domains\Demand\Models\City;
 use App\Domains\Demand\Models\DemandRequest;
 use App\Domains\Demand\Models\Farm;
 use App\Domains\Matching\Models\Placement;
-use App\Domains\Monitoring\Actions\RecordMonthlyInterviewAction;
+use App\Domains\Monitoring\Actions\RecordWorkReviewAction;
 use App\Domains\Monitoring\Enums\FarmVisitStatus;
-use App\Domains\Monitoring\Enums\InterviewSource;
+use App\Domains\Monitoring\Enums\WorkReviewResult;
+use App\Domains\Monitoring\Enums\WorkReviewType;
 use App\Domains\Monitoring\Models\FarmVisit;
-use App\Domains\Monitoring\Models\MonthlyInterview;
+use App\Domains\Monitoring\Models\LifeChecklistCheck;
+use App\Domains\Monitoring\Models\LifeChecklistItem;
+use App\Domains\Monitoring\Models\WorkReviewItem;
 use App\Domains\Onboarding\Enums\OnboardingStatus;
 use App\Domains\Onboarding\Models\OnboardingSubmission;
 use App\Domains\Recruitment\Enums\CandidateStatus;
@@ -121,15 +124,18 @@ class ScreenDemoSeeder extends Seeder
         });
         $this->counts['정착 처리보드'] = 12;
 
-        // ── 월별 점검 10 (근로자 자가 평가) ──
-        $workers->take(self::N)->each(function (Worker $w) {
-            $f = MonthlyInterview::factory();
-            if (fake()->boolean(20)) {
-                $f = $f->highRisk();
+        // ── 생활 체크리스트 10 (근로자 본인이 체크한 것) ──
+        $checklist = LifeChecklistItem::query()->active()->get();
+        $workers->take(self::N)->each(function (Worker $w) use ($checklist) {
+            foreach ($checklist->random(fake()->numberBetween(0, $checklist->count())) as $item) {
+                LifeChecklistCheck::create([
+                    'worker_id' => $w->id,
+                    'life_checklist_item_id' => $item->id,
+                    'checked_at' => now()->subDays(fake()->numberBetween(0, 20)),
+                ]);
             }
-            $f->create(['worker_id' => $w->id, 'source' => InterviewSource::Self->value]);
         });
-        $this->counts['월별 점검(자가)'] = self::N;
+        $this->counts['생활 체크리스트'] = self::N;
 
         // ── 민원 10 ──
         $workers->random(min(self::N, $workers->count()))->each(fn (Worker $w) => SupportTicket::factory()->create(['worker_id' => $w->id]));
@@ -201,7 +207,9 @@ class ScreenDemoSeeder extends Seeder
             $farmIds->push(Farm::inRandomOrder()->value('id'));
         }
 
-        $iv = app(RecordMonthlyInterviewAction::class);
+        $review = app(RecordWorkReviewAction::class);
+        $items = WorkReviewItem::query()->active()->get();
+
         foreach ($farmIds->take(self::N) as $farmId) {
             $visit = FarmVisit::create([
                 'farm_id' => $farmId,
@@ -221,13 +229,25 @@ class ScreenDemoSeeder extends Seeder
                 $visit->photos()->create(['path' => $path, 'original_name' => "현장{$n}.png", 'size' => Storage::disk('local')->size($path), 'mime' => 'image/png', 'created_at' => now()]);
                 $this->files['farm_photo']++;
             }
-            // 그 농가 배정 근로자 인터뷰 (source=inspector, farm_visit_id 연결)
+            // 그 농가 배정 근로자별 근무상태 점검표 (farm_visit_id 로 이 방문에 묶는다)
             foreach (($byFarm[$farmId] ?? collect()) as $p) {
-                $items = [];
-                foreach (MonthlyInterview::ITEMS as $it) {
-                    $items[$it] = fake()->boolean(85);
-                }
-                $iv->execute($p->worker, $admin ?? User::first(), $visit->visited_on->toDateString(), $items, fake()->boolean(30) ? '특이사항 확인' : null, null, $visit->id);
+                $answers = $items->mapWithKeys(fn (WorkReviewItem $i) => [
+                    $i->id => $i->section->isRating()
+                        ? fake()->randomElement(['high', 'high', 'high', 'mid', 'low'])
+                        : ($i->adverse ? fake()->randomElement(['no', 'no', 'no', 'yes']) : fake()->randomElement(['yes', 'yes', 'yes', 'no'])),
+                ])->all();
+
+                $review->execute($p->worker, $admin ?? User::first(), [
+                    'farm_id' => $farmId,
+                    'farm_visit_id' => $visit->id,
+                    'reviewed_at' => $visit->visited_on->toDateTimeString(),
+                    'review_type' => WorkReviewType::Regular->value,
+                    'result' => fake()->randomElement([
+                        WorkReviewResult::Good->value, WorkReviewResult::Good->value,
+                        WorkReviewResult::Fair->value, WorkReviewResult::NeedsImprovement->value,
+                    ]),
+                    'notable' => fake()->boolean(30) ? '특이사항 확인' : null,
+                ], $answers);
             }
         }
         $this->counts['농가 방문 점검'] = self::N;

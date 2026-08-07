@@ -10,7 +10,6 @@ use App\Domains\Monitoring\Enums\FarmVisitStatus;
 use App\Domains\Monitoring\Models\FarmVisit;
 use App\Domains\Monitoring\Models\FarmVisitPhoto;
 use App\Domains\Monitoring\Models\InspectionCheckin;
-use App\Domains\Monitoring\Models\MonthlyInterview;
 use App\Domains\Recruitment\Models\Worker;
 use App\Http\Controllers\Api\Admin\Concerns\ScopesPortalQueries;
 use App\Http\Controllers\Controller;
@@ -73,7 +72,6 @@ class FieldWorkAdminController extends Controller
                     fn (FarmVisitStatus $s) => ['value' => $s->value, 'label' => $s->label()],
                     FarmVisitStatus::cases(),
                 ),
-                'items' => MonthlyInterview::ITEMS,
                 'can_decide' => PortalScope::canDecide($actor),
             ],
         ]);
@@ -87,7 +85,7 @@ class FieldWorkAdminController extends Controller
         $query = FarmVisit::query()
             ->whereHas('farm', fn ($f) => PortalScope::farms($f, $actor))
             ->with(['farm:id,name', 'visitedBy:id,name', 'photos:id,farm_visit_id'])
-            ->withCount('interviews')
+            ->withCount('workReviews')
             ->orderByDesc('visited_on')
             ->orderByDesc('id');
 
@@ -108,8 +106,9 @@ class FieldWorkAdminController extends Controller
     /**
      * 방문 점검 등록 (multipart).
      *
-     * 사진은 photos[] 로, 근로자 인터뷰는 interviews[] JSON 으로 받는다.
-     * 사진 저장은 private 디스크이며 경로만 DB 에 남는다.
+     * 사진은 photos[] 로 받는다. 사진 저장은 private 디스크이며 경로만 DB 에 남는다.
+     * 근로자 개개인의 상태는 여기서 받지 않는다 — 근무상태 종합 점검표
+     * (POST /api/v1/admin/work-reviews)를 farm_visit_id 로 이 방문에 묶어 올린다.
      */
     public function store(Request $request, RecordFarmVisitAction $action): JsonResponse
     {
@@ -127,46 +126,21 @@ class FieldWorkAdminController extends Controller
             'memo' => ['nullable', 'string', 'max:2000'],
             'photos' => ['nullable', 'array', 'max:10'],
             'photos.*' => ['file', 'image', 'max:8192'],
-            // 근로자별 6항목 인터뷰 (선택)
-            'interviews' => ['nullable', 'array'],
-            'interviews.*.worker_id' => ['required', 'integer'],
-            'interviews.*.memo' => ['nullable', 'string', 'max:1000'],
-            'interviews.*.items' => ['nullable', 'array'],
-            'interviews.*.items.*' => ['boolean'],
         ]);
 
         $farm = PortalScope::farms(Farm::query()->whereKey($data['farm_id']), $actor)->first();
         abort_if($farm === null, 404, '해당 농가를 찾을 수 없습니다.');
-
-        // validated() 는 규칙이 걸린 키만 돌려주므로 items 의 개별 항목이 잘려 나간다.
-        // 검증은 위에서 하고 값은 원본에서 가져온다.
-        // 아울러 스코프 밖 근로자가 인터뷰 대상에 섞이지 않게 거른다.
-        $interviews = collect((array) $request->input('interviews', []))
-            ->filter(fn ($entry) => is_array($entry) && isset($entry['worker_id']))
-            ->filter(fn (array $entry) => PortalScope::canSeeWorker($actor, (int) $entry['worker_id']))
-            ->map(fn (array $entry) => [
-                'worker_id' => (int) $entry['worker_id'],
-                // 6항목만 남긴다 — 알 수 없는 키가 리스크 계산에 섞이지 않게
-                'items' => collect((array) ($entry['items'] ?? []))
-                    ->only(MonthlyInterview::ITEMS)
-                    ->map(fn ($v) => filter_var($v, FILTER_VALIDATE_BOOLEAN))
-                    ->all(),
-                'memo' => $entry['memo'] ?? null,
-            ])
-            ->values()
-            ->all();
 
         $visit = $action->execute(
             $farm,
             $actor,
             $data,
             $request->file('photos') ?? [],
-            $interviews,
         );
 
         return response()->json([
             'data' => $this->present(
-                $visit->load(['farm:id,name', 'visitedBy:id,name', 'photos'])->loadCount('interviews')
+                $visit->load(['farm:id,name', 'visitedBy:id,name', 'photos'])->loadCount('workReviews')
             ),
         ], 201);
     }
@@ -250,7 +224,7 @@ class FieldWorkAdminController extends Controller
             'issue_note' => $visit->issue_note,
             'action_note' => $visit->action_note,
             'memo' => $visit->memo,
-            'interview_count' => $visit->interviews_count ?? 0,
+            'review_count' => $visit->work_reviews_count ?? 0,
             'photos' => $visit->relationLoaded('photos')
                 ? $visit->photos->map(fn (FarmVisitPhoto $p) => [
                     'id' => $p->id,

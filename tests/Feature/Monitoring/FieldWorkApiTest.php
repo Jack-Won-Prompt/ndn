@@ -7,7 +7,7 @@ use App\Domains\Demand\Models\Farm;
 use App\Domains\Matching\Models\Placement;
 use App\Domains\Monitoring\Models\FarmVisit;
 use App\Domains\Monitoring\Models\InspectionCheckin;
-use App\Domains\Monitoring\Models\MonthlyInterview;
+use App\Domains\Monitoring\Models\WorkReview;
 use App\Domains\Recruitment\Models\Worker;
 use App\Models\User;
 use App\Shared\Enums\UserRole;
@@ -42,8 +42,7 @@ it('방문할 농가와 배정 근로자 목록을 조회한다', function () {
     $farm = collect($response->json('data'))->firstWhere('id', $this->farm->id);
 
     expect($farm['name'])->toBe('햇살농장')
-        ->and(collect($farm['workers'])->pluck('id'))->toContain($this->worker->id)
-        ->and($response->json('meta.items'))->toBe(MonthlyInterview::ITEMS);
+        ->and(collect($farm['workers'])->pluck('id'))->toContain($this->worker->id);
 });
 
 it('농가 방문 점검을 사진과 함께 등록한다', function () {
@@ -70,70 +69,25 @@ it('농가 방문 점검을 사진과 함께 등록한다', function () {
     Storage::disk('local')->assertExists($visit->photos->first()->path);
 });
 
-it('방문 시 근로자 6항목 인터뷰를 함께 기록한다', function () {
+it('방문에 묶인 근무상태 점검표 건수가 함께 나온다', function () {
+    // 사람별 점검은 방문 등록에 섞지 않고 따로 올린다. 방문 응답은 건수만 알려 준다.
     $this->postJson('/api/v1/admin/farm-visits', [
         'farm_id' => $this->farm->id,
         'visited_on' => now()->toDateString(),
-        'interviews' => [
-            [
-                'worker_id' => $this->worker->id,
-                'items' => ['pay_received' => false, 'health_ok' => false],
-                'memo' => '급여 지연 확인',
-            ],
-        ],
-    ])->assertCreated()->assertJsonPath('data.interview_count', 1);
+    ])->assertCreated()->assertJsonPath('data.review_count', 0);
 
-    $interview = MonthlyInterview::where('worker_id', $this->worker->id)->first();
+    $visit = FarmVisit::first();
 
-    expect($interview)->not->toBeNull()
-        ->and($interview->risk_score)->toBe(2)
-        ->and($interview->farm_visit_id)->toBe(FarmVisit::first()->id);
-});
-
-it('인터뷰 6항목이 잘리지 않고 리스크 계산에 들어간다', function () {
-    // validated() 를 그대로 쓰면 규칙 없는 중첩 키(items.*)가 사라져 리스크가
-    // 항상 0 이 된다. 전 항목 부정으로 최대 점수가 나오는지 확인한다.
-    $this->postJson('/api/v1/admin/farm-visits', [
+    WorkReview::factory()->create([
+        'worker_id' => $this->worker->id,
         'farm_id' => $this->farm->id,
-        'visited_on' => now()->toDateString(),
-        'interviews' => [[
-            'worker_id' => $this->worker->id,
-            'items' => array_fill_keys(MonthlyInterview::ITEMS, false),
-        ]],
-    ])->assertCreated();
+        'inspector_user_id' => User::query()->value('id'),
+        'farm_visit_id' => $visit->id,
+    ]);
 
-    expect(MonthlyInterview::first()->risk_score)->toBe(count(MonthlyInterview::ITEMS));
-});
-
-it('알 수 없는 인터뷰 항목은 무시된다', function () {
-    $this->postJson('/api/v1/admin/farm-visits', [
-        'farm_id' => $this->farm->id,
-        'visited_on' => now()->toDateString(),
-        'interviews' => [[
-            'worker_id' => $this->worker->id,
-            'items' => ['pay_received' => false, 'bogus_item' => false],
-        ]],
-    ])->assertCreated();
-
-    // 알 수 없는 키가 점수에 섞이면 2 가 된다
-    expect(MonthlyInterview::first()->risk_score)->toBe(1);
-});
-
-it('스코프 밖 근로자는 인터뷰 대상에서 걸러진다', function () {
-    $outsider = Worker::factory()->create();
-
-    $officer = User::factory()->create(['city_id' => $this->farm->city_id]);
-    $officer->assignRole(UserRole::NdnAdmin->value);
-    Sanctum::actingAs($officer);
-
-    $this->postJson('/api/v1/admin/farm-visits', [
-        'farm_id' => $this->farm->id,
-        'visited_on' => now()->toDateString(),
-        'interviews' => [['worker_id' => $outsider->id]],
-    ])->assertCreated();
-
-    // ndn_admin 은 전체를 보므로 기록된다 — 스코프가 좁은 역할로 다시 확인
-    expect(MonthlyInterview::where('worker_id', $outsider->id)->exists())->toBeTrue();
+    $this->getJson('/api/v1/admin/farm-visits')
+        ->assertOk()
+        ->assertJsonPath('data.0.review_count', 1);
 });
 
 it('농가는 방문 점검을 등록할 수 없다 (조회 전용)', function () {

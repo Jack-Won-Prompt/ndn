@@ -10,7 +10,6 @@ return [
     'greeting' => '안녕하세요',
     'new_notice' => '새 공지가 :count건 있습니다.',
     'login_to_view' => '자세한 내용은 로그인 후 확인하세요.',
-    'monthly_interview' => '이번 달 인터뷰가 예정되어 있습니다.',
     'sos_received' => 'SOS 요청이 접수되었습니다. 담당자가 곧 연락합니다.',
     'register_pending' => '가입 신청이 접수되었습니다. 관리자 승인 후 로그인할 수 있습니다.',
     'pending_approval' => '아직 승인되지 않은 계정입니다. 관리자 승인을 기다려 주세요.',

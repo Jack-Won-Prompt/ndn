@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Reporting\Actions;
 
 use App\Domains\Monitoring\Enums\RiskLevel;
-use App\Domains\Monitoring\Models\MonthlyInterview;
+use App\Domains\Monitoring\Models\WorkReview;
 use App\Domains\Recruitment\Enums\WorkerStatus;
 use App\Domains\Recruitment\Models\Worker;
 use App\Domains\Support\Models\SupportTicket;
@@ -30,16 +30,17 @@ class GenerateMonthlyReportAction
         $start = CarbonImmutable::create($year, $month, 1)->startOfMonth();
         $end = $start->endOfMonth();
 
-        $interviews = MonthlyInterview::whereBetween('interviewed_on', [$start->toDateString(), $end->toDateString()]);
+        // 점검 집계의 근거는 근무상태 종합 점검표다. 월별 인터뷰 6항목은 폐기됐다.
+        $reviews = WorkReview::whereBetween('reviewed_at', [$start->startOfDay(), $end->endOfDay()]);
 
         return [
             'year' => $year,
             'month' => $month,
             'generated_at' => LocalTime::format(now()),
             'active_workers' => Worker::where('status', WorkerStatus::Active->value)->count(),
-            'interview_total' => (clone $interviews)->count(),
-            'risk_high' => (clone $interviews)->where('risk_level', RiskLevel::High->value)->count(),
-            'risk_medium' => (clone $interviews)->where('risk_level', RiskLevel::Medium->value)->count(),
+            'interview_total' => (clone $reviews)->count(),
+            'risk_high' => (clone $reviews)->where('risk_level', RiskLevel::High->value)->count(),
+            'risk_medium' => (clone $reviews)->where('risk_level', RiskLevel::Medium->value)->count(),
             'tickets_open' => SupportTicket::where('status', 'open')
                 ->whereBetween('created_at', [$start, $end])->count(),
             'tickets_total' => SupportTicket::whereBetween('created_at', [$start, $end])->count(),

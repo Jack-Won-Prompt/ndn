@@ -7,9 +7,10 @@ use App\Domains\Arrival\Models\ArrivalRecord;
 use App\Domains\Demand\Models\City;
 use App\Domains\Demand\Models\Farm;
 use App\Domains\Matching\Models\Placement;
-use App\Domains\Monitoring\Enums\InterviewSource;
 use App\Domains\Monitoring\Enums\RiskLevel;
-use App\Domains\Monitoring\Models\MonthlyInterview;
+use App\Domains\Monitoring\Models\LifeChecklistCheck;
+use App\Domains\Monitoring\Models\LifeChecklistItem;
+use App\Domains\Monitoring\Models\WorkReview;
 use App\Domains\Onboarding\Enums\OnboardingStatus;
 use App\Domains\Onboarding\Models\OnboardingSubmission;
 use App\Domains\Recruitment\Enums\WorkerStatus;
@@ -20,6 +21,7 @@ use App\Domains\Support\Models\SosAlert;
 use App\Domains\Support\Models\SupportTicket;
 use App\Models\User;
 use App\Shared\Enums\UserRole;
+use Database\Seeders\LifeChecklistSeeder;
 use Laravel\Sanctum\Sanctum;
 use Spatie\Permission\Models\Role;
 
@@ -79,7 +81,7 @@ it('배정이 없는 근로자도 대시보드가 열린다', function () {
         ->assertOk()
         ->assertJsonPath('data.placement', null)
         ->assertJsonPath('data.arrival', null)
-        ->assertJsonPath('data.assessment.submitted_this_month', false);
+        ->assertJsonPath('data.life_checklist.checked', 0);
 });
 
 it('확정 배정과 입국 진행 단계를 보여 준다', function () {
@@ -111,34 +113,45 @@ it('제안 상태 배정은 대시보드에 나오지 않는다 (확정만)', fu
     $this->getJson('/api/v1/dashboard')->assertOk()->assertJsonPath('data.placement', null);
 });
 
-it('이번 달 자가 평가 제출 여부를 알려 준다', function () {
+it('생활 체크리스트 진행 정도를 알려 준다', function () {
+    $this->seed(LifeChecklistSeeder::class);
     $worker = Worker::factory()->create(['status' => WorkerStatus::Active]);
-    MonthlyInterview::factory()->create([
-        'worker_id' => $worker->id,
-        'source' => InterviewSource::Self,
-        'interviewed_on' => now()->startOfMonth()->addDay(),
-    ]);
+
+    foreach (LifeChecklistItem::query()->active()->take(3)->get() as $item) {
+        LifeChecklistCheck::factory()->create([
+            'worker_id' => $worker->id,
+            'life_checklist_item_id' => $item->id,
+        ]);
+    }
 
     Sanctum::actingAs($worker);
 
     $this->getJson('/api/v1/dashboard')
         ->assertOk()
-        ->assertJsonPath('data.assessment.submitted_this_month', true);
+        ->assertJsonPath('data.life_checklist.total', 12)
+        ->assertJsonPath('data.life_checklist.checked', 3)
+        ->assertJsonPath('data.life_checklist.completed', false);
 });
 
-it('지난달 자가 평가는 이번 달 제출로 세지 않는다', function () {
+it('꺼 둔 항목은 진행 계산에서 빠진다', function () {
+    $this->seed(LifeChecklistSeeder::class);
     $worker = Worker::factory()->create(['status' => WorkerStatus::Active]);
-    MonthlyInterview::factory()->create([
-        'worker_id' => $worker->id,
-        'source' => InterviewSource::Self,
-        'interviewed_on' => now()->subMonth()->startOfMonth(),
-    ]);
+
+    foreach (LifeChecklistItem::query()->active()->get() as $item) {
+        LifeChecklistCheck::factory()->create([
+            'worker_id' => $worker->id,
+            'life_checklist_item_id' => $item->id,
+        ]);
+    }
+    LifeChecklistItem::where('code', 'living_costs')->update(['active' => false]);
 
     Sanctum::actingAs($worker);
 
     $this->getJson('/api/v1/dashboard')
         ->assertOk()
-        ->assertJsonPath('data.assessment.submitted_this_month', false);
+        ->assertJsonPath('data.life_checklist.total', 11)
+        ->assertJsonPath('data.life_checklist.checked', 11)
+        ->assertJsonPath('data.life_checklist.completed', true);
 });
 
 it('진행 중인 민원만 건수에 잡힌다', function () {
@@ -305,23 +318,19 @@ it('NDN 관리자만 판단 권한 플래그를 받는다', function () {
         ->assertJsonPath('meta.role', UserRole::NdnAdmin->value);
 });
 
-it('최근 한 달 고위험 평가만 현황에 잡힌다', function () {
-    [, $worker] = dashboardFarmWorker();
-    MonthlyInterview::factory()->create([
+it('최근 한 달 고위험 점검만 현황에 잡힌다', function () {
+    [$farm, $worker] = dashboardFarmWorker();
+
+    $review = fn (RiskLevel $level, $at) => WorkReview::factory()->create([
         'worker_id' => $worker->id,
-        'risk_level' => RiskLevel::High,
-        'interviewed_on' => now()->subDays(3),
+        'farm_id' => $farm->id,
+        'risk_level' => $level,
+        'reviewed_at' => $at,
     ]);
-    MonthlyInterview::factory()->create([
-        'worker_id' => $worker->id,
-        'risk_level' => RiskLevel::High,
-        'interviewed_on' => now()->subMonths(6),
-    ]);
-    MonthlyInterview::factory()->create([
-        'worker_id' => $worker->id,
-        'risk_level' => RiskLevel::Low,
-        'interviewed_on' => now()->subDays(3),
-    ]);
+
+    $review(RiskLevel::High, now()->subDays(3));
+    $review(RiskLevel::High, now()->subMonths(6));
+    $review(RiskLevel::Low, now()->subDays(3));
 
     dashboardAdmin();
 

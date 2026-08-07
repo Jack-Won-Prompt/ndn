@@ -10,7 +10,7 @@ use App\Domains\Monitoring\Actions\RecordFarmVisitAction;
 use App\Domains\Monitoring\Enums\FarmVisitStatus;
 use App\Domains\Monitoring\Models\FarmVisit;
 use App\Domains\Monitoring\Models\FarmVisitPhoto;
-use App\Domains\Monitoring\Models\MonthlyInterview;
+use App\Domains\Monitoring\Models\WorkReview;
 use App\Domains\Recruitment\Models\Worker;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
@@ -28,16 +28,6 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class FarmVisitController extends Controller
 {
     private const DISK = 'local';
-
-    /** 월별 인터뷰 6항목 한국어 라벨 (true=양호). */
-    public const ITEM_LABELS = [
-        'pay_received' => '급여 수령',
-        'no_discrimination' => '차별 없음',
-        'follows_rules' => '생활 규칙',
-        'adapts_group' => '단체생활',
-        'health_ok' => '건강',
-        'no_flight_signs' => '이탈징후 없음',
-    ];
 
     /** 방문 점검 목록. */
     public static function rows(): array
@@ -70,13 +60,7 @@ class FarmVisitController extends Controller
         return FarmVisitStatus::options();
     }
 
-    /** 6항목 라벨 목록 [key,label] (폼 렌더용). */
-    public static function itemLabels(): array
-    {
-        return array_map(fn ($k, $v) => ['key' => $k, 'label' => $v], array_keys(self::ITEM_LABELS), self::ITEM_LABELS);
-    }
-
-    /** 특정 농가의 배정 확정 근로자 (방문 시 인터뷰 대상). */
+    /** 특정 농가의 배정 확정 근로자 (방문 대상 명단). */
     public function workers(Farm $farm): JsonResponse
     {
         return response()->json(['workers' => $this->farmWorkers($farm)]);
@@ -112,52 +96,19 @@ class FarmVisitController extends Controller
             'memo' => ['nullable', 'string', 'max:2000'],
             'photos' => ['nullable', 'array', 'max:20'],
             'photos.*' => ['file', 'image', 'max:10240'], // 장당 10MB
-            'interviews' => ['nullable', 'array'],
         ]);
 
         $farm = Farm::findOrFail($data['farm_id']);
-        $interviews = $this->parseInterviews($request, $farm);
 
-        $visit = $action->execute($farm, Auth::user(), $data, $request->file('photos', []), $interviews);
+        $visit = $action->execute($farm, Auth::user(), $data, $request->file('photos', []));
 
         return response()->json(['ok' => true, 'id' => $visit->id]);
     }
 
-    /**
-     * 요청의 근로자별 인터뷰를 파싱한다. 보안상 그 농가 배정 근로자에 한해서만 허용한다.
-     * 체크된 항목=양호(true), 미체크=이상(false).
-     *
-     * @return array<int, array{worker_id:int, items:array<string,bool>, memo:?string}>
-     */
-    private function parseInterviews(Request $request, Farm $farm): array
-    {
-        $raw = $request->input('interviews', []);
-        if (! is_array($raw)) {
-            return [];
-        }
-        $allowed = collect($this->farmWorkers($farm))->pluck('id')->all();
-
-        $out = [];
-        foreach ($raw as $workerId => $entry) {
-            $wid = (int) $workerId;
-            if (! in_array($wid, $allowed, true) || ! is_array($entry)) {
-                continue;
-            }
-            $items = [];
-            foreach (MonthlyInterview::ITEMS as $item) {
-                $items[$item] = filter_var($entry[$item] ?? false, FILTER_VALIDATE_BOOLEAN);
-            }
-            $memo = isset($entry['memo']) ? mb_substr(trim((string) $entry['memo']), 0, 1000) : null;
-            $out[] = ['worker_id' => $wid, 'items' => $items, 'memo' => $memo ?: null];
-        }
-
-        return $out;
-    }
-
-    /** 방문 상세 (사진 URL + 근로자별 인터뷰 포함) — 상세 모달용. */
+    /** 방문 상세 (사진 URL + 이 방문에 묶인 근무상태 점검표) — 상세 모달용. */
     public function show(FarmVisit $farmVisit): JsonResponse
     {
-        $farmVisit->load(['farm', 'visitedBy', 'photos', 'interviews.worker']);
+        $farmVisit->load(['farm', 'visitedBy', 'photos', 'workReviews.worker']);
 
         return response()->json([
             'id' => $farmVisit->id,
@@ -175,20 +126,19 @@ class FarmVisitController extends Controller
                 'url' => route('admin.farm-visits.photo', ['farmVisit' => $farmVisit->id, 'photo' => $p->id]),
                 'name' => $p->original_name,
             ])->all(),
-            'interviews' => $farmVisit->interviews->map(fn (MonthlyInterview $iv) => $this->interviewRow($iv, true))->all(),
+            'reviews' => $farmVisit->workReviews->map(fn (WorkReview $r) => $this->reviewRow($r, true))->all(),
         ]);
     }
 
-    /** 특정 근로자의 인터뷰 이력 (방문 점검 + 자가 평가 포함, 최신순). */
+    /** 특정 근로자의 근무상태 점검 이력 (최신순). */
     public function workerHistory(Worker $worker): JsonResponse
     {
-        $history = MonthlyInterview::where('worker_id', $worker->id)
-            ->with('farmVisit.farm')
-            ->latest('interviewed_on')->latest('id')->limit(60)->get()
-            ->map(function (MonthlyInterview $iv) {
-                $row = $this->interviewRow($iv);
-                $row['source'] = $iv->source?->label() ?? '—';
-                $row['farm'] = $iv->farmVisit?->farm?->name;
+        $history = WorkReview::where('worker_id', $worker->id)
+            ->with('farm')
+            ->latest('reviewed_at')->latest('id')->limit(60)->get()
+            ->map(function (WorkReview $r) {
+                $row = $this->reviewRow($r);
+                $row['farm'] = $r->farm?->name;
 
                 return $row;
             })->all();
@@ -196,24 +146,21 @@ class FarmVisitController extends Controller
         return response()->json(['worker' => $worker->name, 'history' => $history]);
     }
 
-    /** 인터뷰 1건을 표시용 배열로 변환 (6항목 양호/이상 + 리스크). */
-    private function interviewRow(MonthlyInterview $iv, bool $withWorker = false): array
+    /** 점검표 1건을 표시용 배열로 변환. */
+    private function reviewRow(WorkReview $r, bool $withWorker = false): array
     {
-        $items = [];
-        foreach (self::ITEM_LABELS as $key => $label) {
-            $items[] = ['label' => $label, 'ok' => (bool) $iv->{$key}];
-        }
         $row = [
-            'id' => $iv->id,
-            'date' => $iv->interviewed_on?->format('Y-m-d'),
-            'risk' => $iv->risk_level?->label() ?? '—',
-            'risk_level' => $iv->risk_level?->value ?? 'low',
-            'items' => $items,
-            'memo' => $iv->memo,
+            'id' => $r->id,
+            'date' => $r->reviewed_at?->timezone(config('ndn.timezone'))->format('Y-m-d'),
+            'type' => $r->review_type->label(),
+            'result' => $r->result->label(),
+            'risk' => $r->risk_level->label(),
+            'risk_level' => $r->risk_level->value,
+            'score' => $r->risk_score,
         ];
         if ($withWorker) {
-            $row['worker_id'] = $iv->worker_id;
-            $row['worker'] = $iv->worker?->name ?? '—';
+            $row['worker_id'] = $r->worker_id;
+            $row['worker'] = $r->worker?->name ?? '—';
         }
 
         return $row;
