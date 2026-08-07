@@ -88,6 +88,8 @@ class ConsoleController extends Controller
             [
                 'group' => '정착·사후관리',
                 'items' => [
+                    // 긴급 대응이라 이 그룹 맨 위에 둔다.
+                    ['key' => 'sos', 'label' => '긴급 SOS', 'icon' => 'inbox'],
                     ['key' => 'settlement', 'label' => '정착 처리보드', 'icon' => 'grid'],
                     ['key' => 'life-checklist', 'label' => '생활 체크리스트', 'icon' => 'clipboard'],
                     ['key' => 'work-reviews', 'label' => '근무상태 점검표', 'icon' => 'clipboard'],
@@ -128,6 +130,8 @@ class ConsoleController extends Controller
     public static function badgeCounts(): array
     {
         return [
+            // 아직 아무도 확인하지 않은 긴급 요청 — 가장 먼저 눈에 띄어야 한다.
+            'sos' => SosController::openCount(),
             'inquiries' => app(ChatService::class)->unreadInquiryCount(),
             'signups' => Worker::where('status', WorkerStatus::Pending->value)->count(),
             'account-deletions' => AccountDeletionRequest::where('status', AccountDeletionRequest::STATUS_PENDING)->count(),
@@ -151,6 +155,7 @@ class ConsoleController extends Controller
             ]),
             'onboarding' => $this->onboarding($request),
             'settlement' => $this->settlement($request),
+            'sos' => $this->sos(),
             'life-checklist' => view('admin.screens.life-checklist', [
                 'rows' => LifeChecklistController::rows(),
                 'itemRows' => LifeChecklistController::itemRows(),
@@ -252,6 +257,18 @@ class ConsoleController extends Controller
         }
 
         return response()->json(['ok' => true]);
+    }
+
+    /** 긴급 SOS 상황판 — 목록에 근로자 이름이 보이므로 열람 기록을 남긴다(§7-6). */
+    private function sos(): View
+    {
+        $rows = SosController::rows();
+        SosController::logAccess(Auth::user(), $rows);
+
+        return view('admin.screens.sos', [
+            'rows' => $rows,
+            'openCount' => SosController::openCount(),
+        ]);
     }
 
     private function tickets(Request $request): View

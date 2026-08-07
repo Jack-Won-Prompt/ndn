@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\RegionController;
 use App\Http\Controllers\Admin\RequiredDocumentAdminController;
 use App\Http\Controllers\Admin\ServiceRequestController;
 use App\Http\Controllers\Admin\SignupApprovalController;
+use App\Http\Controllers\Admin\SosController;
 use App\Http\Controllers\Admin\TicketGridController;
 use App\Http\Controllers\Admin\WorkerGridController;
 use App\Http\Controllers\Admin\WorkReviewController;
@@ -214,6 +215,10 @@ Route::prefix('admin')->group(function () {
             ->whereNumber('serviceRequest')->name('admin.service-requests.reply');
         Route::post('/service-requests/{serviceRequest}/status', [ServiceRequestController::class, 'updateStatus'])
             ->whereNumber('serviceRequest')->name('admin.service-requests.status');
+
+        // 긴급 SOS — 확인·종료 처리 (상황판은 화면 디스패치가 그린다)
+        Route::post('/sos/{sos}/status', [SosController::class, 'updateStatus'])
+            ->whereNumber('sos')->name('admin.sos.status');
 
         // 근무상태 종합 점검표 — 작성·상세
         // 월별 점검(6항목) 직접 입력이 있던 자리다. 그쪽은 폐기됐다.
