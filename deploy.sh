@@ -69,6 +69,11 @@ log "캐시 재생성 (config/route/view/event)"
 log "큐 워커 재시작"
 "$PHP" artisan queue:restart || true
 
+# 배포가 실제로 끝났는지 확인한다. 코드만 올라가고 마이그레이션이 돌지 않은 채
+# 넘어가면 화면이 500·404 로 깨지는데, 그 원인이 어디에도 드러나지 않는다.
+log "배포 상태 점검"
+"$PHP" artisan ndn:deploy-check || die "배포가 덜 끝났습니다. 위 안내대로 처리한 뒤 다시 실행하세요."
+
 log "점검 모드 해제"
 "$PHP" artisan up
 trap - EXIT   # 정상 종료: 위에서 이미 up 했으므로 트랩 해제

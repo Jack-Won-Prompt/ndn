@@ -29,6 +29,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use App\Models\User;
 use App\Shared\Enums\UserRole;
+use App\Shared\Support\DeployState;
 use App\Shared\Support\LocalTime;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
@@ -119,6 +120,8 @@ class ConsoleController extends Controller
             'menu' => self::menu(),
             'user' => Auth::user(),
             'badges' => self::badgeCounts(),
+            // 배포가 덜 끝났으면 띠로 알린다 (§배포: 같은 원인으로 장애 세 번).
+            'deployProblems' => DeployState::problems(),
         ]);
     }
 

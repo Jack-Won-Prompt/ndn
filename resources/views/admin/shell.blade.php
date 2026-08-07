@@ -39,6 +39,13 @@
 </style>
 <link rel="stylesheet" href="{{ asset('admin-assets/css/ui.css') }}?v={{ @filemtime(public_path('admin-assets/css/ui.css')) }}">
 <link rel="stylesheet" href="{{ asset('admin-assets/css/admin.css') }}?v={{ @filemtime(public_path('admin-assets/css/admin.css')) }}">
+<style>
+    .deploy-warn{background:#FDECEC;border-bottom:1px solid #F5C2C0;color:#8A1F1C;
+        padding:11px 22px;font-size:13px;line-height:1.7;}
+    .deploy-warn b{font-weight:800;margin-right:6px;}
+    .deploy-warn span{margin-right:6px;}
+    .deploy-warn code{background:#fff;border:1px solid #F0C9C7;border-radius:4px;padding:1px 6px;font-size:12.5px;}
+</style>
 </head>
 <body>
 <div class="app">
@@ -88,6 +95,17 @@
                 </form>
             </div>
         </header>
+
+        {{-- 배포가 덜 끝난 상태를 눈에 보이게 한다. 같은 원인으로 장애 보고가
+             세 번 왔는데, 그때마다 증상만 달랐고 원인은 어디에도 드러나지 않았다. --}}
+        @if (! empty($deployProblems))
+            <div class="deploy-warn">
+                <b>배포가 덜 끝났습니다.</b>
+                @foreach ($deployProblems as $p)<span>{{ $p }}</span>@endforeach
+                <code>php artisan migrate --force</code> 를 먼저, 그다음 <code>php artisan optimize</code> 를 실행하세요.
+                순서를 바꾸면 라우트만 살아나고 테이블이 없어 다른 이유로 500 이 납니다.
+            </div>
+        @endif
 
         <div class="tabbar" id="tabbar"></div>
         <div class="tabpanes" id="tabpanes"></div>

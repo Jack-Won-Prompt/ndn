@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Console\Commands\DumpMonthlyInterviews;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
@@ -26,8 +27,10 @@ return new class extends Migration
             return;
         }
 
-        $path = DumpMonthlyInterviews::dump();
-        if ($path !== null) {
+        // 행이 있을 때만 덤프한다. 빈 표를 뜬 파일은 되살릴 것이 없고, 테스트마다
+        // 새 DB 를 만드는 환경에서는 빈 파일만 쌓인다.
+        if (DB::table('monthly_interviews')->exists()) {
+            $path = DumpMonthlyInterviews::dump();
             // 배포 로그에 남겨 둔다. 나중에 어느 파일을 찾아야 하는지 알아야 한다.
             echo PHP_EOL.'  monthly_interviews 덤프: '.$path.PHP_EOL;
         }
