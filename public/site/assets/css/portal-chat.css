@@ -1,0 +1,78 @@
+/* ============================================================================
+   협력 포털 채팅 — 새 디자인으로 보이게 하는 얇은 겹
+   ----------------------------------------------------------------------------
+   채팅 마크업은 chat.js 가 만든다. 클래스 이름도 거기 박혀 있다(chat-conv,
+   chat-bubble, chat-quote, chat-ac__item … 60여 개). 그래서 클래스를 새로 짜면
+   JS 까지 손대야 하고, 송수신·폴링·첨부·수정·삭제를 전부 다시 검증해야 한다.
+
+   그런데 chat.css 는 색·모서리·글자크기를 전부 --mv2-* 토큰에서 읽는다.
+   **토큰만 갈아끼우면** 규칙 60개가 그대로 새 색으로 그려진다.
+   그래서 여기서는 토큰만 바꾼다. chat.css 도 chat.js 도 건드리지 않는다.
+   운영 콘솔은 자기 토큰을 그대로 쓰므로 영향이 없다.
+
+   포털 화면(.nd-app) 안에서만 적용된다.
+   ========================================================================== */
+
+.nd-app {
+    /* 면·선 */
+    --mv2-border-default: var(--nd-line-2);
+    --mv2-border-soft:    var(--nd-line);
+    --mv2-slate-25:       var(--nd-paper-2);
+
+    /* 글 */
+    --mv2-text-strong: var(--nd-text);
+    --mv2-text-muted:  var(--nd-text-2);
+    --mv2-text-faint:  var(--nd-text-3);
+
+    /* 강조 — 내 말풍선·보낸 버튼·활성 대화.
+       액센트 레드를 여기 쓰면 메시지마다 붉어져 강조가 사라진다. 잉크를 쓴다. */
+    --mv2-primary-400: var(--nd-line-2);
+    --mv2-primary-500: var(--nd-ink);
+    --mv2-primary-600: var(--nd-ink-3);
+    --mv2-primary-50:  var(--nd-paper-3);
+
+    /* 안 읽음 배지 — 이건 눈에 띄어야 하므로 액센트 */
+    --mv2-pill-err-bg: var(--nd-accent-050);
+    --mv2-pill-err-fg: var(--nd-accent);
+
+    /* 형태·글자크기 */
+    --mv2-r-sm: var(--nd-r-sm);
+    --mv2-r-lg: var(--nd-r);
+    --mv2-fz-md: 15px;
+    --mv2-fz-sm: 14.5px;
+    --mv2-fz-xs: 13px;
+}
+
+/* 토큰으로 덮이지 않는 몇 곳만 손본다 --------------------------------------- */
+
+/* 판 그림자를 사이트 것과 맞춘다 */
+.nd-app .chat-wrap { box-shadow: var(--nd-shadow-1); }
+
+/* 버튼은 사이트 버튼과 같은 알약 모양으로 */
+.nd-app .chat-newbtn,
+.nd-app .chat-sendbtn { border-radius: var(--nd-r-pill); font-weight: 700; }
+.nd-app .chat-sendbtn { padding: 0 22px; }
+
+/* 내 말풍선이 잉크색이라 그 안의 인용·첨부는 밝게 유지된다(chat.css 가 이미 처리).
+   보낸 시각만 대비를 조금 올린다. */
+.nd-app .chat-msg--mine .chat-bubble__meta { color: rgba(255,255,255,.8); }
+
+/* 답장·수정·삭제 단추가 말풍선 첫 줄을 덮고 있었다(top:-12px). 위로 완전히 뺀다.
+   ※ 콘솔에도 같은 문제가 있다. 여기서는 포털만 고친다 — 콘솔 모양을 이번에
+     건드리지 않기로 했다. */
+.nd-app .chat-acts { top: -27px; }
+
+/* 첨부 버튼이 눌러야 할 크기로 보이게. 폭만 주면 클립 모양이 눌린 채로 나온다. */
+.nd-app .chat-attachbtn {
+    width: 44px; min-width: 44px; height: 40px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px; line-height: 1; border-radius: var(--nd-r-sm);
+}
+
+/* 화면 높이에 맞춰 채운다 — 상단바(60) + 본문 위아래 여백 */
+.nd-app .chat-wrap { height: calc(100vh - 60px - 96px); min-height: 460px; }
+
+@media (max-width: 760px) {
+    .nd-app .chat-list-pane { width: 220px; flex-basis: 220px; }
+    .nd-app .chat-wrap { height: calc(100vh - 60px - 68px); }
+}
