@@ -127,6 +127,60 @@
         });
     });
 
+    /* ---------- 사이드바 그룹 접기 ----------
+       6그룹 22항목이라 한 화면에 다 들어가지 않는다. 접은 상태는 브라우저에
+       남겨 다음 접속에도 유지한다. 접힌 그룹에 조치할 건(배지)이 있으면
+       머리글에 점을 찍어 놓친 일이 숨지 않게 한다. */
+    var COLLAPSE_KEY = 'ndn.admin.collapsedGroups';
+
+    function collapsedGroups() {
+        try { return JSON.parse(localStorage.getItem(COLLAPSE_KEY)) || []; } catch (e) { return []; }
+    }
+
+    function saveCollapsed(list) {
+        try { localStorage.setItem(COLLAPSE_KEY, JSON.stringify(list)); } catch (e) { /* 시크릿 모드 등 */ }
+    }
+
+    // 접힌 그룹 안에 0 보다 큰 배지가 있으면 머리글에 점을 찍는다.
+    function syncGroupBadges() {
+        document.querySelectorAll('.nav-group').forEach(function (g) {
+            var has = Array.prototype.slice.call(g.querySelectorAll('.nav-badge')).some(function (b) {
+                return !b.hidden && parseInt(b.textContent, 10) > 0;
+            });
+            g.classList.toggle('has-badge', has);
+        });
+    }
+
+    (function initGroups() {
+        var collapsed = collapsedGroups();
+
+        document.querySelectorAll('.nav-group[data-group]').forEach(function (group) {
+            var name = group.getAttribute('data-group');
+            var toggle = group.querySelector('[data-group-toggle]');
+            if (!toggle) return;   // 그룹 이름이 없는 묶음(대시보드)은 항상 펼쳐 둔다
+
+            if (collapsed.indexOf(name) > -1) {
+                group.classList.add('is-collapsed');
+                toggle.setAttribute('aria-expanded', 'false');
+            }
+
+            toggle.addEventListener('click', function () {
+                var nowCollapsed = group.classList.toggle('is-collapsed');
+                toggle.setAttribute('aria-expanded', nowCollapsed ? 'false' : 'true');
+
+                var list = collapsedGroups().filter(function (n) { return n !== name; });
+                if (nowCollapsed) list.push(name);
+                saveCollapsed(list);
+                syncGroupBadges();
+            });
+        });
+
+        syncGroupBadges();
+    })();
+
+    // 배지가 갱신되면(Pusher 알림 등) 접힌 그룹의 점도 다시 맞춘다.
+    window.ndnSyncGroupBadges = syncGroupBadges;
+
     // 탭바 클릭 (활성/닫기)
     tabbar.addEventListener('click', function (e) {
         var closeKey = e.target.getAttribute && e.target.getAttribute('data-close');
@@ -144,7 +198,18 @@
 
     // 초기 복원 (없으면 대시보드)
     var titles = window.NDN_ADMIN.titles || {};
+
+    // 사이드바에 실제로 있는 화면 키. 없어진 화면의 탭이 저장돼 있으면 404 가
+    // 뜨므로(월별 점검처럼 기능이 폐기되는 일이 있다) 복원에서 걸러낸다.
+    var known = {};
+    document.querySelectorAll('.nav-item[data-screen]').forEach(function (n) {
+        known[n.getAttribute('data-screen')] = true;
+    });
+
     var saved = restore();
+    if (saved && saved.order.length) {
+        saved.order = saved.order.filter(function (key) { return known[key.split('/')[0]]; });
+    }
     if (saved && saved.order.length) {
         saved.order.forEach(function (key) {
             var topKey = key.split('/')[0];

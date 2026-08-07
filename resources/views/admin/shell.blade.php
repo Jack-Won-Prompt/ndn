@@ -55,10 +55,20 @@
         </div>
         <nav class="sidebar__nav">
             @foreach ($menu as $group)
-                <div class="nav-group">
+                {{-- 그룹이 6개 22항목으로 늘어 한 화면에 다 들어가지 않는다. 접을 수 있게 한다.
+                     펼침 상태는 localStorage 에 남겨 다음 접속에도 유지된다(console.js). --}}
+                <div class="nav-group" data-group="{{ $group['group'] }}">
                     @if ($group['group'] !== '')
-                        <div class="nav-group__label">{{ $group['group'] }}</div>
+                        <button type="button" class="nav-group__label" data-group-toggle
+                                aria-expanded="true">
+                            <span>{{ $group['group'] }}</span>
+                            <svg class="nav-group__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M6 9l6 6 6-6"/>
+                            </svg>
+                        </button>
                     @endif
+                    <div class="nav-group__items">
                     @foreach ($group['items'] as $item)
                         @php $bc = ($badges ?? [])[$item['key']] ?? 0; @endphp
                         <button type="button" class="nav-item"
@@ -70,6 +80,7 @@
                             <span class="nav-badge" data-badge-for="{{ $item['key'] }}" {{ $bc > 0 ? '' : 'hidden' }}>{{ $bc }}</span>
                         </button>
                     @endforeach
+                    </div>
                 </div>
             @endforeach
         </nav>
@@ -132,6 +143,8 @@
             var el = document.querySelector('.nav-badge[data-badge-for="' + key + '"]');
             if (!el) return;
             if (n > 0) { el.textContent = n; el.hidden = false; } else { el.hidden = true; }
+            // 그룹이 접혀 있으면 머리글 점으로만 보인다. 함께 갱신한다.
+            if (window.ndnSyncGroupBadges) window.ndnSyncGroupBadges();
         }
         function bumpBadge(key) {
             var el = document.querySelector('.nav-badge[data-badge-for="' + key + '"]');

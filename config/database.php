@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Str;
+use Pdo\Mysql;
 
 return [
 
@@ -57,8 +58,11 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
+            // PHP 8.5 에서 PDO::MYSQL_ATTR_SSL_CA 가 deprecated 됐다. 상수를 직접
+            // 쓰면 경고가 모든 요청·테스트 출력에 섞인다(운영에서 display_errors 가
+            // 켜져 있으면 JSON 응답까지 깨진다). 8.5 이상은 새 상수를 쓴다.
             'options' => extension_loaded('pdo_mysql') ? array_filter([
-                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+                (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
         ],
 
@@ -77,8 +81,11 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
+            // PHP 8.5 에서 PDO::MYSQL_ATTR_SSL_CA 가 deprecated 됐다. 상수를 직접
+            // 쓰면 경고가 모든 요청·테스트 출력에 섞인다(운영에서 display_errors 가
+            // 켜져 있으면 JSON 응답까지 깨진다). 8.5 이상은 새 상수를 쓴다.
             'options' => extension_loaded('pdo_mysql') ? array_filter([
-                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+                (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
         ],
 

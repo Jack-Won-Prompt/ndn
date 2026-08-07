@@ -24,7 +24,7 @@
                     <th style="width:180px">소속</th>
                     <th style="width:150px">발신 시각</th>
                     <th style="width:110px">경과·대응</th>
-                    <th style="width:190px">좌표</th>
+                    <th style="width:220px">좌표</th>
                     <th>확인</th>
                     <th style="width:150px"></th>
                 </tr>
@@ -44,7 +44,7 @@
                         <td class="c {{ $r['status'] === 'open' && $r['minutes'] >= 30 ? 'sos-late' : '' }}">
                             {{ $r['elapsed'] }}
                         </td>
-                        <td class="c">
+                        <td class="c sos-coord">
                             @if ($r['map_url'])
                                 <span class="sos-dim">{{ $r['coords'] }}</span>
                                 <a class="sos-map" href="{{ $r['map_url'] }}" target="_blank" rel="noopener">지도</a>
@@ -99,6 +99,8 @@
         .sos-badge--open{background:#FDECEC;color:#8A1F1C;}
         .sos-badge--acknowledged{background:#FFF4E0;color:#8A5A00;}
         .sos-badge--closed{background:#F1F3F7;color:#6B7280;}
+        /* 좌표와 [지도] 가 갈라져 두 줄이 되지 않게 한 덩어리로 둔다 */
+        .sos-coord{white-space:nowrap;}
         .sos-map{display:inline-block;margin-left:6px;padding:2px 9px;border-radius:100px;font-size:12px;font-weight:700;
             background:var(--mv2-slate-25);border:1px solid var(--mv2-border-default);color:var(--mv2-text-strong);text-decoration:none;}
         .sos-map:hover{border-color:var(--mv2-text-strong);}

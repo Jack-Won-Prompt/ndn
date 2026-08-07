@@ -48,6 +48,15 @@ it('콘솔에 경고 띠가 뜬다', function () {
         ->assertSee('php artisan migrate --force');
 });
 
+it('사이드바 그룹은 접을 수 있게 그려진다', function () {
+    // 6그룹 22항목이라 한 화면에 다 들어가지 않는다.
+    actingAs($this->admin)
+        ->get('/admin')
+        ->assertOk()
+        ->assertSee('data-group-toggle', false)
+        ->assertSee('nav-group__items', false);
+});
+
 it('정상 상태에서는 경고 띠가 없다', function () {
     DeployState::problems(fresh: true);
 
