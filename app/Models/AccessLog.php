@@ -16,7 +16,7 @@ class AccessLog extends Model
 
     protected $fillable = [
         'user_id', 'actor', 'actor_email', 'method', 'path', 'route_name',
-        'status', 'ip', 'user_agent', 'referer', 'created_at',
+        'status', 'ip', 'country', 'user_agent', 'referer', 'created_at',
     ];
 
     protected function casts(): array

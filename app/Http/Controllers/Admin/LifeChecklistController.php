@@ -10,6 +10,7 @@ use App\Domains\Monitoring\Models\LifeChecklistItem;
 use App\Domains\Recruitment\Enums\WorkerStatus;
 use App\Domains\Recruitment\Models\Worker;
 use App\Http\Controllers\Controller;
+use App\Shared\Support\LocalTime;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -67,7 +68,7 @@ class LifeChecklistController extends Controller
                     $pending->isEmpty() => '완료',
                     default => '진행 중',
                 },
-                'last_checked' => $mine->max('checked_at')?->timezone(config('ndn.timezone'))->format('Y-m-d H:i') ?? '—',
+                'last_checked' => LocalTime::format($mine->max('checked_at')) ?? '—',
                 // 남은 항목은 상세 모달에서 그대로 보여 준다.
                 'pending' => $pending->pluck('label')->values()->all(),
             ];

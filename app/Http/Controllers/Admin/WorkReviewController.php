@@ -14,6 +14,7 @@ use App\Domains\Monitoring\Models\WorkReviewItem;
 use App\Domains\Recruitment\Enums\WorkerStatus;
 use App\Domains\Recruitment\Models\Worker;
 use App\Http\Controllers\Controller;
+use App\Shared\Support\LocalTime;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -42,7 +43,7 @@ class WorkReviewController extends Controller
                 'nationality' => $r->worker?->nationality ?? '—',
                 'city' => $r->farm?->city?->name ?? '—',
                 'farm' => $r->farm?->name ?? '—',
-                'date' => $r->reviewed_at?->timezone(config('ndn.timezone'))->format('Y-m-d H:i'),
+                'date' => LocalTime::format($r->reviewed_at),
                 'type' => $r->review_type->label(),
                 'result' => $r->result->label(),
                 'risk' => $r->risk_level->label(),
@@ -191,7 +192,7 @@ class WorkReviewController extends Controller
             'farm' => $workReview->farm?->name,
             'city' => $workReview->farm?->city?->name,
             'inspector' => $workReview->inspector?->name,
-            'reviewed_at' => $workReview->reviewed_at?->timezone(config('ndn.timezone'))->format('Y-m-d H:i'),
+            'reviewed_at' => LocalTime::format($workReview->reviewed_at),
             'place' => $workReview->place,
             'type' => $workReview->review_type->label(),
             'result' => $workReview->result->label(),

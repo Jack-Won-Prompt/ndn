@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Middleware;
 
 use App\Models\AccessLog;
+use App\Shared\Support\IpCountry;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -50,6 +51,9 @@ class RecordAccessLog
                 'route_name' => $request->route()?->getName(),
                 'status' => $response->getStatusCode(),
                 'ip' => $request->ip(),
+                // 접속 당시의 판별을 그대로 남긴다. 판별표가 갱신되면 나중에 계산한
+                // 값과 달라지므로 표시할 때 계산하지 않는다.
+                'country' => IpCountry::of($request->ip()),
                 'user_agent' => mb_substr((string) $request->userAgent(), 0, 500),
                 'referer' => mb_substr((string) $request->headers->get('referer'), 0, 500) ?: null,
                 'created_at' => now(),

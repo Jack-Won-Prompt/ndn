@@ -192,6 +192,9 @@ class ConsoleController extends Controller
             'accesslog' => view('admin.screens.accesslog', [
                 'rows' => AccessLogController::rows(),
                 'summary' => AccessLogController::summary(),
+                'byCountry' => AccessLogController::byCountry(),
+                'displayTz' => AccessLogController::displayTz(),
+                'hasGeoData' => AccessLogController::hasGeoData(),
             ]),
             default => abort(404),
         };
