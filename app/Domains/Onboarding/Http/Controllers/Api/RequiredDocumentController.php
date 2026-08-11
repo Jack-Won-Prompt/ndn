@@ -10,8 +10,9 @@ use App\Domains\Recruitment\Models\Worker;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use RuntimeException;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * 근로자 앱 — 필수 확인·동의 문서 (CLAUDE.md §6, §9).
@@ -60,7 +61,7 @@ class RequiredDocumentController extends Controller
      * 한글·벵골어·키릴 파일명이 브라우저에서 깨지지 않도록 RFC 5987 로 인코딩한다.
      * 파일은 public/ 밖에 있으므로 이 라우트를 통해서만 나간다.
      */
-    public function download(Request $request, RequiredDocument $requiredDocument): BinaryFileResponse
+    public function download(Request $request, RequiredDocument $requiredDocument): StreamedResponse
     {
         abort_unless($requiredDocument->active, 404);
         abort_unless($requiredDocument->hasFile(), 404, '원본 파일이 없습니다.');
@@ -69,10 +70,8 @@ class RequiredDocumentController extends Controller
         $worker = $request->user();
         $locale = $worker->locale ?: 'ko';
 
-        return response()->download(
-            storage_path('app/'.RequiredDocument::DIR.'/'.$requiredDocument->file),
-            $requiredDocument->downloadName($locale),
-        );
+        return Storage::disk(RequiredDocument::DISK)
+            ->download($requiredDocument->file, $requiredDocument->downloadName($locale));
     }
 
     /** 동의 제출 — 체크한 문서들을 현재 버전으로 기록한다. */

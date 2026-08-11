@@ -201,6 +201,11 @@ Route::prefix('admin')->group(function () {
             ->whereNumber('requiredDocument')->name('admin.required-documents.file');
         Route::post('/required-documents/{requiredDocument}', [RequiredDocumentAdminController::class, 'update'])
             ->whereNumber('requiredDocument')->name('admin.required-documents.update');
+        // 원본 서식 올리기·떼기 — 이걸 붙이면 본문을 옮겨 적지 않고도 문서를 켤 수 있다
+        Route::post('/required-documents/{requiredDocument}/file', [RequiredDocumentAdminController::class, 'uploadFile'])
+            ->whereNumber('requiredDocument')->name('admin.required-documents.file.upload');
+        Route::delete('/required-documents/{requiredDocument}/file', [RequiredDocumentAdminController::class, 'removeFile'])
+            ->whereNumber('requiredDocument')->name('admin.required-documents.file.remove');
 
         // 지역별 모집·배치 — 시군 드릴다운(농가별 배치 인원)
         Route::get('/regions/{city}', [RegionController::class, 'show'])

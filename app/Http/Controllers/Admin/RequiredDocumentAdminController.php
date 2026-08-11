@@ -10,7 +10,9 @@ use App\Shared\Support\LocalTime;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * 필수 확인·동의 문서 관리 (근로자 의무사항·표준근로계약서 등).
@@ -52,14 +54,84 @@ class RequiredDocumentAdminController extends Controller
      * 근로자에게 내려가는 것과 같은 파일이다. 관리자는 한국어 파일명으로 받는다.
      * 파일은 public/ 밖에 있으므로 이 라우트를 통해서만 나간다.
      */
-    public function download(RequiredDocument $requiredDocument): BinaryFileResponse
+    public function download(RequiredDocument $requiredDocument): StreamedResponse
     {
         abort_unless($requiredDocument->hasFile(), 404, '원본 파일이 없습니다.');
 
-        return response()->download(
-            storage_path('app/'.RequiredDocument::DIR.'/'.$requiredDocument->file),
-            $requiredDocument->downloadName('ko'),
-        );
+        return Storage::disk(RequiredDocument::DISK)
+            ->download($requiredDocument->file, $requiredDocument->downloadName('ko'));
+    }
+
+    /**
+     * 원본 서식 올리기 / 바꾸기.
+     *
+     * 법적 서식은 화면에 옮겨 적지 않고 원본을 그대로 받게 한다(§근로 동의서와 같은
+     * 방식). 옮겨 적으면 문안이 원본과 달라질 수 있고 그건 법적 문서에서 사고다.
+     * 이걸 붙여야 본문을 타이핑하지 않고도 문서를 켤 수 있다.
+     */
+    public function uploadFile(Request $request, RequiredDocument $requiredDocument): JsonResponse
+    {
+        $request->validate([
+            // 원본은 PDF·워드·한글 서식으로 온다. 이미지·실행 파일은 받지 않는다.
+            'file' => ['required', 'file', 'max:20480', 'mimes:pdf,doc,docx,hwp,hwpx'],
+        ]);
+
+        $upload = $request->file('file');
+        $ext = strtolower($upload->getClientOriginalExtension());
+
+        // 저장 이름은 ASCII 로 짓는다 — 원본 파일명이 한글이면 서버·백업에서 깨진다.
+        // 근로자에게는 어차피 자기 언어의 제목으로 내려간다(downloadName).
+        $name = $requiredDocument->code.'_'.Str::random(8).'.'.$ext;
+        $upload->storeAs('', $name, ['disk' => RequiredDocument::DISK]);
+
+        $previous = $requiredDocument->file;
+        $requiredDocument->file = $name;
+        $requiredDocument->save();
+
+        // 예전 파일은 지우지 않는다. 이미 그 서식에 동의한 근로자가 있으면
+        // 무엇에 동의했는지가 남아 있어야 한다.
+        activity('required-document')
+            ->performedOn($requiredDocument)
+            ->causedBy(Auth::user())
+            ->withProperties(['file' => $name, 'previous' => $previous])
+            ->log('필수 문서 원본 서식 올림');
+
+        return response()->json([
+            'ok' => true,
+            'message' => '원본 서식을 올렸습니다.',
+            'file' => $name,
+            'file_url' => route('admin.required-documents.file', $requiredDocument),
+            'rows' => self::rows(),
+        ]);
+    }
+
+    /**
+     * 붙여 둔 원본 떼기.
+     *
+     * 켜져 있는데 본문도 없는 문서에서 파일을 떼면 근로자가 빈 화면에 동의하게
+     * 된다. 그건 막는다.
+     */
+    public function removeFile(RequiredDocument $requiredDocument): JsonResponse
+    {
+        if ($requiredDocument->active && ! filled($requiredDocument->body('ko'))) {
+            return response()->json([
+                'ok' => false,
+                'message' => '사용 중이고 본문도 없는 문서입니다. 먼저 사용을 끄거나 본문을 입력하세요.',
+            ], 422);
+        }
+
+        $previous = $requiredDocument->file;
+        $requiredDocument->file = null;
+        $requiredDocument->save();
+
+        // 파일 자체는 남긴다 — 이미 동의한 근로자가 무엇에 동의했는지의 증빙이다.
+        activity('required-document')
+            ->performedOn($requiredDocument)
+            ->causedBy(Auth::user())
+            ->withProperties(['previous' => $previous])
+            ->log('필수 문서 원본 서식 뗌');
+
+        return response()->json(['ok' => true, 'message' => '원본 서식을 뗐습니다.', 'rows' => self::rows()]);
     }
 
     /** 언어별 본문 (편집 화면용) */

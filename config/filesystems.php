@@ -38,6 +38,23 @@ return [
             'report' => false,
         ],
 
+        /*
+         * 근로자 필수 동의 문서의 원본 서식 (근로 동의서 등).
+         *
+         * 'local' 디스크 루트는 storage/app/private 인데 이 서식들은 저장소에
+         * 함께 배포되는 storage/app/worker-documents 에 있다. 전용 디스크로
+         * 그 자리를 가리켜, 올리기·내려받기·존재 확인이 한 곳을 보게 한다.
+         * (예전에는 확인만 경로를 직접 조립해 디스크와 갈라져 있었다.)
+         *
+         * public/ 이 아니다 — 근로자 개인 대상 문서라 인증 라우트로만 나간다(§9).
+         */
+        'worker-documents' => [
+            'driver' => 'local',
+            'root' => storage_path('app/worker-documents'),
+            'throw' => false,
+            'report' => false,
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),

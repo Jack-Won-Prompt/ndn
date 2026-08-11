@@ -86,6 +86,8 @@
         .rd-nofile{color:var(--mv2-text-faint);}
         .rd-fileline{margin:14px 0 4px;padding:12px 14px;border-radius:var(--mv2-r-sm);
             background:var(--mv2-slate-25);font-size:13.5px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+        .rd-filehelp{margin:0 0 6px;font-size:12.5px;line-height:1.75;color:var(--mv2-text-muted);}
+        .rd-filehelp b{color:var(--mv2-text-strong);}
         .rd-langtabs{display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap;}
         .rd-langtab{font-family:inherit;font-size:var(--mv2-fz-xs);font-weight:700;padding:5px 12px;border:1px solid var(--mv2-border-default);background:#fff;border-radius:100px;cursor:pointer;}
         .rd-langtab.is-active{background:var(--mv2-ink,#0F172A);color:#fff;border-color:transparent;}
@@ -119,13 +121,23 @@
                         + '<div class="dtl-head__actions"><button type="button" class="dtl-back" onclick="window.ndnSwitchTab(\'list\')">← 목록</button></div></div>';
 
                     // 원본이 붙은 문서는 본문을 옮겨 적지 않는다 — 파일을 받아 읽는다.
+                    html += '<div class="rd-fileline"><b>원본 서식</b>';
                     if (d.file_url) {
-                        html += '<div class="rd-fileline"><b>원본 서식</b>'
-                            + '<span>' + esc(d.file) + '</span>'
+                        html += '<span>' + esc(d.file) + '</span>'
                             + '<a class="rd-file" href="' + d.file_url + '">내려받기</a>'
-                            + '<span style="color:var(--mv2-text-faint)">근로자에게는 각자 언어의 파일명으로 나갑니다.</span>'
-                            + '</div>';
+                            + '<button type="button" class="rd-btn" id="rd-file-remove">떼기</button>';
+                    } else {
+                        html += '<span style="color:var(--mv2-text-faint)">붙어 있지 않음</span>';
                     }
+                    html += '<input type="file" id="rd-file-input" accept=".pdf,.doc,.docx,.hwp,.hwpx" hidden>'
+                        + '<button type="button" class="rd-btn" id="rd-file-pick">'
+                        + (d.file_url ? '다른 파일로 바꾸기' : '원본 올리기') + '</button>'
+                        + '</div>'
+                        + '<p class="rd-filehelp">'
+                        + '법적 서식은 <b>옮겨 적지 말고 원본을 올리십시오.</b> 손으로 옮기면 문안이 원본과 달라집니다.<br>'
+                        + '원본을 붙이면 <b>본문을 비워 둔 채로도 문서를 켤 수 있습니다.</b> '
+                        + '근로자에게는 각자 언어의 파일명으로 내려갑니다. (PDF·DOC·DOCX·HWP, 20MB 이하)'
+                        + '</p>';
 
                     html += '<div class="rd-langtabs">';
                     LOCALES.forEach(function (l, i) {
@@ -163,7 +175,59 @@
             if (tr) openDoc(tr.getAttribute('data-id'));
         });
 
+        // 원본 서식 올리기·떼기
+        document.getElementById('rd-edit').addEventListener('change', function (e) {
+            if (e.target.id !== 'rd-file-input' || !e.target.files.length) return;
+
+            var fd = new FormData();
+            fd.append('file', e.target.files[0]);
+
+            fetch(BASE + '/' + doc.id + '/file', {
+                method: 'POST',
+                headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': token },
+                body: fd,
+            })
+                .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+                .then(function (res) {
+                    if (res.ok && res.j.ok) {
+                        ndnToast(res.j.message, { type: 'success' });
+                        window.location.reload();
+                    } else {
+                        var m = res.j.message
+                            || (res.j.errors ? Object.values(res.j.errors)[0][0] : '올리지 못했습니다.');
+                        ndnToast(m, { type: 'error' });
+                    }
+                })
+                .catch(function () { ndnToast('올리지 못했습니다.', { type: 'error' }); });
+        });
+
         document.getElementById('rd-edit').addEventListener('click', function (e) {
+            if (e.target.id === 'rd-file-pick') {
+                document.getElementById('rd-file-input').click();
+                return;
+            }
+
+            if (e.target.id === 'rd-file-remove') {
+                ndnConfirm('붙여 둔 원본 서식을 뗍니다. 파일 자체는 남습니다.',
+                    { title: '원본 떼기', okText: '떼기', danger: true }).then(function (ok) {
+                        if (!ok) return;
+                        fetch(BASE + '/' + doc.id + '/file', {
+                            method: 'DELETE',
+                            headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': token },
+                        })
+                            .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+                            .then(function (res) {
+                                if (res.ok && res.j.ok) {
+                                    ndnToast(res.j.message, { type: 'success' });
+                                    window.location.reload();
+                                } else {
+                                    ndnToast(res.j.message || '떼지 못했습니다.', { type: 'error' });
+                                }
+                            });
+                    });
+                return;
+            }
+
             var lang = e.target.closest('.rd-langtab');
             if (lang) {
                 var loc = lang.getAttribute('data-loc');

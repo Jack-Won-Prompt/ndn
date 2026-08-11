@@ -351,7 +351,10 @@
       "PowerShell(e:; cd e:\\\\xampp\\\\htdocs\\\\ndn; php -r \"$c=file_get_contents\\('public/site/assets/css/ndn.css'\\); $i=strpos\\($c,'.nd-app__body'\\); echo substr\\($c,$i-200,400\\);\")",
       "PowerShell(e:; cd e:\\\\xampp\\\\htdocs\\\\ndn; git diff --stat public/site/assets/css/ndn.css; \\(Get-Content public\\\\site\\\\assets\\\\css\\\\ndn.css | Measure-Object -Line\\).Lines)",
       "mcp__playwright__browser_hover",
-      "mcp__playwright__browser_drag"
+      "mcp__playwright__browser_drag",
+      "PowerShell(cd e:\\\\xampp\\\\htdocs\\\\ndn; Select-String -Path storage\\\\logs\\\\laravel.log -Pattern \"local.ERROR\" | Select-Object -Last 3 | ForEach-Object { $_.Line.Substring\\(0, [Math]::Min\\(300, $_.Line.Length\\)\\) })",
+      "PowerShell(cd e:\\\\xampp\\\\htdocs\\\\ndn; Get-Content storage\\\\logs\\\\laravel.log -Tail 400 | Select-String -Pattern \"^\\\\[2026-08-11\" | Select-Object -Last 4 | ForEach-Object { $_.Line.Substring\\(0, [Math]::Min\\(260, $_.Line.Length\\)\\) })",
+      "PowerShell(cd e:\\\\xampp\\\\htdocs\\\\ndn; \"bootstrap/cache/config.php 존재: \" + \\(Test-Path bootstrap\\\\cache\\\\config.php\\); \".env 존재: \" + \\(Test-Path .env\\); \"APP_KEY 설정됨: \" + \\(\\(Select-String -Path .env -Pattern \"^APP_KEY=.+\"\\).Count -gt 0\\); \"APP_ENV: \" + \\(Select-String -Path .env -Pattern \"^APP_ENV=\"\\).Line; Write-Output \"--- .env 권한 ---\"; \\(Get-Acl .env\\).Access | Where-Object { $_.IdentityReference -match \"Users|Everyone|IIS|SYSTEM\" } | Select-Object IdentityReference, FileSystemRights -First 5)"
     ],
     "additionalDirectories": [
       "\\tmp"

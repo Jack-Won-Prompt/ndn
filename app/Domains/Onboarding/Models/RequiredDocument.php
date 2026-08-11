@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * 근로자가 반드시 읽고 동의해야 하는 문서 (약관·계약서·약정서).
@@ -99,10 +100,23 @@ class RequiredDocument extends Model
             ->get();
     }
 
-    /** 내려받을 원본이 붙어 있는가. */
+    /**
+     * 저장 디스크 — 올리기·내려받기·존재 확인이 모두 이걸 쓴다.
+     *
+     * 'local' 이 아니다. 그쪽 루트는 storage/app/private 인데 이 서식들은
+     * storage/app/worker-documents 에 있다. 전용 디스크로 그 자리를 가리킨다.
+     */
+    public const DISK = 'worker-documents';
+
+    /**
+     * 내려받을 원본이 붙어 있는가.
+     *
+     * 파일시스템 경로를 직접 조립하지 않고 디스크로 확인한다. 올리기·내려받기가
+     * 디스크를 쓰는데 확인만 따로 놀면 둘이 갈라진다.
+     */
     public function hasFile(): bool
     {
-        return filled($this->file) && is_file(storage_path('app/'.self::DIR.'/'.$this->file));
+        return filled($this->file) && Storage::disk(self::DISK)->exists($this->file);
     }
 
     /**
