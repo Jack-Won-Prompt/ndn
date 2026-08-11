@@ -58,6 +58,20 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
+            /*
+             * DB 세션 타임존을 앱과 같은 UTC 로 못박는다.
+             *
+             * 없으면 세션 타임존이 SYSTEM 이라 서버 OS 시계를 따라간다. 그러면
+             * PHP 가 넣은 값은 UTC, DB 가 채운 값(DEFAULT current_timestamp,
+             * NOW())은 서버 지역시간이 되어 한 표에 9시간 어긋난 값이 섞인다.
+             * 화면은 둘 다 UTC 로 보고 다시 +9 하므로 어떤 행은 9시간,
+             * 어떤 행은 18시간 뒤로 보인다.
+             *
+             * 이름 있는 지역(Asia/Seoul)이 아니라 숫자 오프셋을 쓴다 — 이름은
+             * MySQL 시간대 표(mysql.time_zone)가 적재돼 있어야 먹는데 xampp 는
+             * 비어 있다. '+00:00' 은 표 없이도 언제나 통한다.
+             */
+            'timezone' => env('DB_TIMEZONE', '+00:00'),
             // PHP 8.5 에서 PDO::MYSQL_ATTR_SSL_CA 가 deprecated 됐다. 상수를 직접
             // 쓰면 경고가 모든 요청·테스트 출력에 섞인다(운영에서 display_errors 가
             // 켜져 있으면 JSON 응답까지 깨진다). 8.5 이상은 새 상수를 쓴다.
@@ -81,6 +95,20 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
+            /*
+             * DB 세션 타임존을 앱과 같은 UTC 로 못박는다.
+             *
+             * 없으면 세션 타임존이 SYSTEM 이라 서버 OS 시계를 따라간다. 그러면
+             * PHP 가 넣은 값은 UTC, DB 가 채운 값(DEFAULT current_timestamp,
+             * NOW())은 서버 지역시간이 되어 한 표에 9시간 어긋난 값이 섞인다.
+             * 화면은 둘 다 UTC 로 보고 다시 +9 하므로 어떤 행은 9시간,
+             * 어떤 행은 18시간 뒤로 보인다.
+             *
+             * 이름 있는 지역(Asia/Seoul)이 아니라 숫자 오프셋을 쓴다 — 이름은
+             * MySQL 시간대 표(mysql.time_zone)가 적재돼 있어야 먹는데 xampp 는
+             * 비어 있다. '+00:00' 은 표 없이도 언제나 통한다.
+             */
+            'timezone' => env('DB_TIMEZONE', '+00:00'),
             // PHP 8.5 에서 PDO::MYSQL_ATTR_SSL_CA 가 deprecated 됐다. 상수를 직접
             // 쓰면 경고가 모든 요청·테스트 출력에 섞인다(운영에서 display_errors 가
             // 켜져 있으면 JSON 응답까지 깨진다). 8.5 이상은 새 상수를 쓴다.
