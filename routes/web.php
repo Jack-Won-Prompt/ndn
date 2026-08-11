@@ -220,11 +220,14 @@ Route::prefix('admin')->group(function () {
         Route::post('/sos/{sos}/status', [SosController::class, 'updateStatus'])
             ->whereNumber('sos')->name('admin.sos.status');
 
-        // 근무상태 종합 점검표 — 작성·상세
+        // 근무상태 종합 점검표 — 작성·상세·서명 이미지(§12)
         // 월별 점검(6항목) 직접 입력이 있던 자리다. 그쪽은 폐기됐다.
         Route::post('/work-reviews', [WorkReviewController::class, 'store'])->name('admin.work-reviews.store');
         Route::get('/work-reviews/{workReview}', [WorkReviewController::class, 'show'])
             ->whereNumber('workReview')->name('admin.work-reviews.show');
+        // 서명 파일은 storage 에 있어 이 라우트로만 나간다
+        Route::get('/work-reviews/{workReview}/signature/{role}', [WorkReviewController::class, 'signature'])
+            ->whereNumber('workReview')->whereAlpha('role')->name('admin.work-reviews.signature');
 
         // 생활 체크리스트 — 항목 문구 편집 (체크는 근로자 본인만 한다)
         Route::post('/life-checklist/items/{item}', [LifeChecklistController::class, 'updateItem'])

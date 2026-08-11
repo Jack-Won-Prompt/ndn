@@ -100,7 +100,8 @@
 
 /* ---------- 메시지 액션 (답장/수정/삭제) ---------- */
 .chat-bubble { position: relative; }
-.chat-acts { display: none; position: absolute; top: -12px; gap: 2px; background: #fff; border: 1px solid var(--mv2-border-soft); border-radius: 8px; padding: 2px; box-shadow: 0 4px 12px rgba(15,23,42,.12); }
+/* 말풍선 위로 완전히 빼낸다. -12px 이면 첫 줄 글씨를 덮어 읽을 수 없다. */
+.chat-acts { display: none; position: absolute; top: -27px; gap: 2px; background: #fff; border: 1px solid var(--mv2-border-soft); border-radius: 8px; padding: 2px; box-shadow: 0 4px 12px rgba(15,23,42,.12); }
 .chat-msg--mine .chat-acts { left: -4px; }
 .chat-msg:not(.chat-msg--mine) .chat-acts { right: -4px; }
 .chat-bubble:hover .chat-acts { display: flex; }

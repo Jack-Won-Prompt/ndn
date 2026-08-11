@@ -350,7 +350,8 @@
       "PowerShell(e:; cd e:\\\\xampp\\\\htdocs\\\\ndn; Get-ChildItem resources\\\\views\\\\demand,resources\\\\views\\\\portal -Recurse -File | ForEach-Object { \"{0}  \\({1} lines\\)\" -f $_.FullName.Replace\\(\"E:\\\\xampp\\\\htdocs\\\\ndn\\\\resources\\\\views\\\\\",\"\"\\), \\(Get-Content $_.FullName | Measure-Object -Line\\).Lines })",
       "PowerShell(e:; cd e:\\\\xampp\\\\htdocs\\\\ndn; php -r \"$c=file_get_contents\\('public/site/assets/css/ndn.css'\\); $i=strpos\\($c,'.nd-app__body'\\); echo substr\\($c,$i-200,400\\);\")",
       "PowerShell(e:; cd e:\\\\xampp\\\\htdocs\\\\ndn; git diff --stat public/site/assets/css/ndn.css; \\(Get-Content public\\\\site\\\\assets\\\\css\\\\ndn.css | Measure-Object -Line\\).Lines)",
-      "mcp__playwright__browser_hover"
+      "mcp__playwright__browser_hover",
+      "mcp__playwright__browser_drag"
     ],
     "additionalDirectories": [
       "\\tmp"

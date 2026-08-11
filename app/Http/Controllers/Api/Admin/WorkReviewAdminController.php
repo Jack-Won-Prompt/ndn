@@ -128,6 +128,10 @@ class WorkReviewAdminController extends Controller
             'signed_interpreter' => ['nullable', 'string', 'max:100'],
 
             'answers' => ['nullable', 'array'],
+
+            // §12 서명란 — 현장 태블릿의 서명 캔버스가 만든 base64 PNG
+            'signatures' => ['nullable', 'array'],
+            'signatures.*' => ['nullable', 'string'],
         ]);
 
         // 스코프 밖 근로자를 점검 대상으로 넣을 수 없다.
@@ -136,7 +140,13 @@ class WorkReviewAdminController extends Controller
         $worker = Worker::findOrFail($data['worker_id']);
 
         try {
-            $review = $action->execute($worker, $actor, $data, (array) $request->input('answers', []));
+            $review = $action->execute(
+                $worker,
+                $actor,
+                $data,
+                (array) $request->input('answers', []),
+                (array) $request->input('signatures', []),
+            );
         } catch (RuntimeException $e) {
             return response()->json(['message' => $e->getMessage()], 422);
         }
@@ -163,6 +173,8 @@ class WorkReviewAdminController extends Controller
             'risk_label' => $r->risk_level->label(),
             'risk_score' => $r->risk_score,
             'recheck_on' => $r->recheck_on?->toDateString(),
+            // 제출 자료라 서명이 몇 칸 들어왔는지 목록에서 바로 보여 준다.
+            'signature_count' => $r->signatureCount(),
         ];
     }
 }

@@ -10,6 +10,7 @@ use App\Domains\Monitoring\Enums\WorkReviewResult;
 use App\Domains\Monitoring\Enums\WorkReviewType;
 use App\Domains\Recruitment\Models\Worker;
 use App\Models\User;
+use App\Shared\Support\SignatureImage;
 use Database\Factories\WorkReviewFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -42,7 +43,20 @@ class WorkReview extends Model
         'action_due_on', 'action_assignee', 'recheck_on',
         'report_city', 'report_immigration', 'action_note',
         'signed_inspector', 'signed_farm', 'signed_worker', 'signed_interpreter',
+        'signature_inspector', 'signature_farm', 'signature_worker', 'signature_interpreter',
         'risk_score', 'risk_level',
+    ];
+
+    /**
+     * 서명란 (원본 §12). 순서는 원본과 같다.
+     *
+     * 키는 역할, 값은 [이름 컬럼, 서명 파일 컬럼, 화면 라벨].
+     */
+    public const SIGNATURE_ROLES = [
+        'inspector' => ['signed_inspector', 'signature_inspector', '점검자'],
+        'farm' => ['signed_farm', 'signature_farm', '농가 대표'],
+        'worker' => ['signed_worker', 'signature_worker', '외국인근로자'],
+        'interpreter' => ['signed_interpreter', 'signature_interpreter', '통역인'],
     ];
 
     protected function casts(): array
@@ -97,5 +111,32 @@ class WorkReview extends Model
     public function answers(): HasMany
     {
         return $this->hasMany(WorkReviewAnswer::class);
+    }
+
+    /** 이 역할의 서명 파일 경로 (없으면 null). */
+    public function signaturePath(string $role): ?string
+    {
+        $column = self::SIGNATURE_ROLES[$role][1] ?? null;
+
+        return $column === null ? null : $this->{$column};
+    }
+
+    /** 서명 파일이 실제로 있는가. */
+    public function hasSignature(string $role): bool
+    {
+        return SignatureImage::exists($this->signaturePath($role));
+    }
+
+    /** 서명이 하나라도 들어온 점검표인가 (목록에서 증빙 유무를 보여 준다). */
+    public function signatureCount(): int
+    {
+        $n = 0;
+        foreach (array_keys(self::SIGNATURE_ROLES) as $role) {
+            if ($this->hasSignature($role)) {
+                $n++;
+            }
+        }
+
+        return $n;
     }
 }

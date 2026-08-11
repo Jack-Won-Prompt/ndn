@@ -57,11 +57,6 @@
    보낸 시각만 대비를 조금 올린다. */
 .nd-app .chat-msg--mine .chat-bubble__meta { color: rgba(255,255,255,.8); }
 
-/* 답장·수정·삭제 단추가 말풍선 첫 줄을 덮고 있었다(top:-12px). 위로 완전히 뺀다.
-   ※ 콘솔에도 같은 문제가 있다. 여기서는 포털만 고친다 — 콘솔 모양을 이번에
-     건드리지 않기로 했다. */
-.nd-app .chat-acts { top: -27px; }
-
 /* 첨부 버튼이 눌러야 할 크기로 보이게. 폭만 주면 클립 모양이 눌린 채로 나온다. */
 .nd-app .chat-attachbtn {
     width: 44px; min-width: 44px; height: 40px;

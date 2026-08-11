@@ -151,13 +151,32 @@
             </div>
 
             <h2 class="wr-h2">확인 및 서명</h2>
-            <div class="wr-grid">
-                <div class="wr-field"><label>점검자</label><input type="text" id="wr-sign-inspector" maxlength="100" value="{{ $me }}"></div>
-                <div class="wr-field"><label>농가 대표</label><input type="text" id="wr-sign-farm" maxlength="100"></div>
-                <div class="wr-field"><label>외국인근로자</label><input type="text" id="wr-sign-worker" maxlength="100"></div>
-                <div class="wr-field"><label>통역인(해당 시)</label><input type="text" id="wr-sign-interpreter" maxlength="100"></div>
+            <p class="wr-help" style="margin-bottom:12px">
+                이 점검표는 관할 지자체·출입국이 요청하면 제출하는 자료입니다.
+                이름만 적힌 표는 증빙이 되지 않으니 <b>서명까지 받아 두십시오.</b>
+                통역인은 해당할 때만 받습니다.
+            </p>
+            <div class="wr-signs">
+                @foreach ([
+                    ['inspector', '점검자', $me],
+                    ['farm', '농가 대표', ''],
+                    ['worker', '외국인근로자', ''],
+                    ['interpreter', '통역인 (해당 시)', ''],
+                ] as [$role, $label, $prefill])
+                    <div class="wr-sign" data-role="{{ $role }}">
+                        <label>{{ $label }}</label>
+                        <input type="text" id="wr-sign-{{ $role }}" maxlength="100"
+                               placeholder="성명" value="{{ $prefill }}">
+                        {{-- 손가락·펜으로 그린다. 현장에서 태블릿으로 쓰는 화면이다. --}}
+                        <canvas class="wr-pad" data-pad="{{ $role }}" width="520" height="150"
+                                aria-label="{{ $label }} 서명란"></canvas>
+                        <div class="wr-sign__foot">
+                            <span class="wr-sign__hint">위 칸에 서명하세요</span>
+                            <button type="button" class="wr-sign__clear" data-clear="{{ $role }}">지우기</button>
+                        </div>
+                    </div>
+                @endforeach
             </div>
-            <p class="wr-help">서명란에는 확인한 사람의 이름을 적습니다. 서명 이미지는 아직 받지 않습니다.</p>
 
             <div class="wr-actions">
                 <button type="button" id="wr-save" class="wr-btn">점검표 저장</button>
@@ -188,7 +207,21 @@
         .wr-actions{display:flex;justify-content:flex-end;margin-top:22px;}
         .wr-btn{font-family:inherit;font-size:var(--mv2-fz-sm);font-weight:700;background:var(--mv2-primary-500);color:#fff;border:0;border-radius:var(--mv2-r-sm);padding:10px 22px;cursor:pointer;}
         .wr-btn:hover{background:var(--mv2-primary-600);}
-        @media (max-width:820px){.wr-grid{grid-template-columns:1fr;}}
+        .wr-signs{display:grid;grid-template-columns:1fr 1fr;gap:16px 18px;}
+        .wr-sign{display:flex;flex-direction:column;gap:6px;}
+        .wr-sign label{font-size:var(--mv2-fz-xs);font-weight:700;color:var(--mv2-text-muted);}
+        .wr-sign input{font-family:inherit;font-size:var(--mv2-fz-sm);padding:8px 10px;border:1px solid var(--mv2-border-default);border-radius:var(--mv2-r-sm);background:#fff;}
+        .wr-sign input:focus{outline:none;border-color:var(--mv2-primary-500);box-shadow:0 0 0 3px rgba(30,156,146,.15);}
+        /* 서명란은 종이처럼 보이게. 손으로 그리므로 touch-action 을 꺼야 스크롤로 먹히지 않는다. */
+        .wr-pad{width:100%;height:150px;border:1px dashed var(--mv2-border-default);border-radius:var(--mv2-r-sm);
+            background:#fff;cursor:crosshair;touch-action:none;}
+        .wr-pad.is-signed{border-style:solid;border-color:var(--mv2-primary-500);}
+        .wr-sign__foot{display:flex;align-items:center;justify-content:space-between;}
+        .wr-sign__hint{font-size:11px;color:var(--mv2-text-faint);}
+        .wr-sign__clear{font-family:inherit;font-size:11px;font-weight:700;color:var(--mv2-text-muted);
+            background:none;border:1px solid var(--mv2-border-default);border-radius:var(--mv2-r-sm);padding:3px 10px;cursor:pointer;}
+        .wr-sign__clear:hover{border-color:var(--mv2-text-strong);color:var(--mv2-text-strong);}
+        @media (max-width:820px){.wr-grid{grid-template-columns:1fr;}.wr-signs{grid-template-columns:1fr;}}
     </style>
 @endsection
 
@@ -200,6 +233,81 @@
 
         function val(id) { var el = document.getElementById(id); return el ? el.value.trim() : ''; }
         function tri(id) { var v = val(id); return v === '' ? null : v === '1'; }
+
+        /* ---------- 서명란 ----------
+           현장에서 태블릿으로 쓰는 화면이라 손가락·펜을 같이 받는다.
+           캔버스 해상도를 화면 크기에 맞춰 잡지 않으면 그린 선이 어긋난다. */
+        var pads = {};
+
+        function setupPad(canvas) {
+            var role = canvas.getAttribute('data-pad');
+            var ctx = canvas.getContext('2d');
+            var drawing = false;
+            var dirty = false;
+
+            function resize() {
+                // 그리던 내용은 버린다. 다시 그리는 편이 늘어난 그림보다 낫다.
+                var ratio = window.devicePixelRatio || 1;
+                var w = canvas.clientWidth;
+                var h = canvas.clientHeight;
+                if (!w || !h) return;
+                canvas.width = w * ratio;
+                canvas.height = h * ratio;
+                ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+                ctx.lineWidth = 2;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.strokeStyle = '#0F172A';
+            }
+
+            function pos(e) {
+                var r = canvas.getBoundingClientRect();
+                return { x: e.clientX - r.left, y: e.clientY - r.top };
+            }
+
+            canvas.addEventListener('pointerdown', function (e) {
+                drawing = true;
+                canvas.setPointerCapture(e.pointerId);
+                var p = pos(e);
+                ctx.beginPath();
+                ctx.moveTo(p.x, p.y);
+                e.preventDefault();
+            });
+            canvas.addEventListener('pointermove', function (e) {
+                if (!drawing) return;
+                var p = pos(e);
+                ctx.lineTo(p.x, p.y);
+                ctx.stroke();
+                if (!dirty) { dirty = true; canvas.classList.add('is-signed'); }
+                e.preventDefault();
+            });
+            ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (ev) {
+                canvas.addEventListener(ev, function () { drawing = false; });
+            });
+
+            resize();
+            // 탭으로 열리는 화면이라 처음에 폭이 0 일 수 있다. 보일 때 한 번 더 잡는다.
+            window.addEventListener('resize', resize);
+            if (window.ResizeObserver) { new ResizeObserver(resize).observe(canvas); }
+
+            pads[role] = {
+                clear: function () {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    dirty = false;
+                    canvas.classList.remove('is-signed');
+                },
+                // 그린 적 없으면 빈 PNG 를 보내지 않는다. 서버가 빈 서명을 저장하면
+                // '서명 받음'으로 보여 증빙이 아닌 것이 증빙이 된다.
+                data: function () { return dirty ? canvas.toDataURL('image/png') : null; },
+            };
+        }
+
+        [].forEach.call(document.querySelectorAll('.wr-pad'), setupPad);
+
+        document.addEventListener('click', function (e) {
+            var b = e.target.closest('[data-clear]');
+            if (b && pads[b.getAttribute('data-clear')]) { pads[b.getAttribute('data-clear')].clear(); }
+        });
 
         document.getElementById('wr-worker').addEventListener('change', function () {
             var opt = this.options[this.selectedIndex];
@@ -247,6 +355,12 @@
                 signed_worker: val('wr-sign-worker') || null,
                 signed_interpreter: val('wr-sign-interpreter') || null,
                 answers: answers,
+                signatures: {
+                    inspector: pads.inspector ? pads.inspector.data() : null,
+                    farm: pads.farm ? pads.farm.data() : null,
+                    worker: pads.worker ? pads.worker.data() : null,
+                    interpreter: pads.interpreter ? pads.interpreter.data() : null,
+                },
             };
 
             btn.disabled = true; btn.textContent = '저장 중…';
@@ -293,6 +407,7 @@
             { header: '이탈 리스크', name: 'risk', width: 100, align: 'center', sortable: true },
             { header: '점수', name: 'score', width: 70, align: 'center', sortable: true },
             { header: '점검자', name: 'inspector', width: 100 },
+            { header: '서명', name: 'signs', width: 70, align: 'center' },
             { header: '재점검', name: 'recheck', width: 100, align: 'center' },
             { header: '보고', name: 'report', width: 110, align: 'center' },
         ],
@@ -324,15 +439,17 @@
                         + ' · 재점검 ' + (d.actions.recheck_on || '—')]);
                     rows.push(['보고 필요', (d.actions.report_city ? '지자체 ' : '') + (d.actions.report_immigration ? '출입국' : '')
                         || '없음']);
-                    rows.push(['서명', ['점검자 ' + (d.signatures.inspector || '—'),
-                        '농가 ' + (d.signatures.farm || '—'),
-                        '근로자 ' + (d.signatures.worker || '—'),
-                        '통역 ' + (d.signatures.interpreter || '—')].join(' · ')]);
+                    rows.push(['서명', d.signatures.map(function (s) {
+                        return s.label + ' ' + (s.name || '—') + (s.image_url ? '' : ' (서명 없음)');
+                    }).join('\n')]);
 
                     ndnDetailModal({
                         title: '근무상태 점검표 #' + d.id,
                         subtitle: d.worker + ' · ' + d.reviewed_at,
                         rows: rows,
+                        // 서명 이미지는 새 탭으로 연다 — 제출용으로 그대로 쓴다.
+                        links: d.signatures.filter(function (s) { return s.image_url; })
+                            .map(function (s) { return { label: s.label + ' 서명', href: s.image_url }; }),
                     });
                 })
                 .catch(function () { ndnToast('점검표를 불러오지 못했습니다.', { type: 'error' }); });

@@ -15,11 +15,14 @@ use App\Domains\Recruitment\Enums\WorkerStatus;
 use App\Domains\Recruitment\Models\Worker;
 use App\Http\Controllers\Controller;
 use App\Shared\Support\LocalTime;
+use App\Shared\Support\SignatureImage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use RuntimeException;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * 근무상태 종합 점검표 — 콘솔 목록·작성·상세.
@@ -50,6 +53,8 @@ class WorkReviewController extends Controller
                 'risk_level' => $r->risk_level->value,
                 'score' => $r->risk_score,
                 'inspector' => $r->inspector?->name ?? '—',
+                // 제출 자료라 서명이 몇 칸 들어왔는지 목록에서 바로 보여 준다.
+                'signs' => $r->signatureCount().' / '.count(WorkReview::SIGNATURE_ROLES),
                 'recheck' => $r->recheck_on?->format('Y-m-d') ?? '—',
                 'report' => match (true) {
                     $r->report_city && $r->report_immigration => '지자체·출입국',
@@ -153,12 +158,22 @@ class WorkReviewController extends Controller
             'signed_interpreter' => ['nullable', 'string', 'max:100'],
 
             'answers' => ['nullable', 'array'],
+
+            // §12 서명란 — 서명 캔버스가 만든 base64 PNG
+            'signatures' => ['nullable', 'array'],
+            'signatures.*' => ['nullable', 'string'],
         ]);
 
         $worker = Worker::findOrFail($data['worker_id']);
 
         try {
-            $review = $action->execute($worker, Auth::user(), $data, $data['answers'] ?? []);
+            $review = $action->execute(
+                $worker,
+                Auth::user(),
+                $data,
+                $data['answers'] ?? [],
+                (array) $request->input('signatures', []),
+            );
         } catch (RuntimeException $e) {
             return response()->json(['ok' => false, 'message' => $e->getMessage()], 422);
         }
@@ -224,12 +239,19 @@ class WorkReviewController extends Controller
                 'report_immigration' => $workReview->report_immigration,
                 'note' => $workReview->action_note,
             ],
-            'signatures' => [
-                'inspector' => $workReview->signed_inspector,
-                'farm' => $workReview->signed_farm,
-                'worker' => $workReview->signed_worker,
-                'interpreter' => $workReview->signed_interpreter,
-            ],
+            // 이름과 서명 이미지를 한 묶음으로 준다. 이름만 있고 서명이 없으면
+            // 화면에서 '서명 없음'으로 드러나야 한다 — 제출 자료라 중요하다.
+            'signatures' => collect(WorkReview::SIGNATURE_ROLES)
+                ->map(fn (array $def, string $role) => [
+                    'role' => $role,
+                    'label' => $def[2],
+                    'name' => $workReview->{$def[0]},
+                    'image_url' => $workReview->hasSignature($role)
+                        ? route('admin.work-reviews.signature', [$workReview, $role])
+                        : null,
+                ])
+                ->values()
+                ->all(),
             'sections' => collect(WorkReviewSection::ordered())
                 ->map(fn (WorkReviewSection $s) => [
                     'label' => $s->label(),
@@ -237,5 +259,26 @@ class WorkReviewController extends Controller
                 ])
                 ->all(),
         ]);
+    }
+
+    /**
+     * 서명 이미지 스트리밍 (private 저장 · ndn_admin 전용 라우트).
+     *
+     * 서명은 본인을 특정하는 개인정보라 근로자 서명을 열면 열람 기록을 남긴다(§7-6).
+     */
+    public function signature(WorkReview $workReview, string $role): StreamedResponse
+    {
+        abort_unless(array_key_exists($role, WorkReview::SIGNATURE_ROLES), 404);
+
+        $path = $workReview->signaturePath($role);
+        abort_unless(SignatureImage::exists($path), 404);
+
+        if ($role === 'worker') {
+            $workReview->worker?->recordAccessBy(Auth::user(), 'work-review-signature');
+        }
+
+        return Storage::disk(SignatureImage::DISK)->response($path, null, [
+            'Content-Type' => SignatureImage::mime($path),
+        ], 'inline');
     }
 }

@@ -10,6 +10,7 @@ use App\Domains\Monitoring\Models\WorkReview;
 use App\Domains\Monitoring\Models\WorkReviewItem;
 use App\Domains\Recruitment\Models\Worker;
 use App\Models\User;
+use App\Shared\Support\SignatureImage;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -29,11 +30,17 @@ class RecordWorkReviewAction
     /**
      * @param  array<string, mixed>  $data  점검 개요·임금·종합의견·조치사항
      * @param  array<int|string, string|array{value: string, note?: string|null}>  $answers  항목 id => 응답
+     * @param  array<string, string|null>  $signatures  역할 => base64 PNG (§12 서명란)
      *
      * @throws RuntimeException 배정된 농가를 알 수 없을 때
      */
-    public function execute(Worker $worker, User $inspector, array $data, array $answers): WorkReview
-    {
+    public function execute(
+        Worker $worker,
+        User $inspector,
+        array $data,
+        array $answers,
+        array $signatures = [],
+    ): WorkReview {
         $farmId = $data['farm_id'] ?? $worker->currentPlacement()?->farm_id;
         if ($farmId === null) {
             throw new RuntimeException('점검할 농가를 알 수 없습니다. 배정을 먼저 확정하세요.');
@@ -41,7 +48,7 @@ class RecordWorkReviewAction
 
         $items = WorkReviewItem::query()->active()->get()->keyBy('id');
 
-        return DB::transaction(function () use ($worker, $inspector, $data, $answers, $items, $farmId) {
+        return DB::transaction(function () use ($worker, $inspector, $data, $answers, $signatures, $items, $farmId) {
             $review = WorkReview::create([
                 'worker_id' => $worker->id,
                 'farm_id' => $farmId,
@@ -120,9 +127,36 @@ class RecordWorkReviewAction
             $review->forceFill([
                 'risk_score' => $score,
                 'risk_level' => $critical ? RiskLevel::High : RiskLevel::fromReviewScore($score),
+                // 서명은 점검표 id 아래에 모아 둔다. id 는 create 뒤에야 정해지므로
+                // 여기서 저장한다.
+                ...$this->storeSignatures($review, $signatures),
             ])->save();
 
             return $review->refresh();
         });
+    }
+
+    /**
+     * §12 서명란 — base64 PNG 를 private 저장소에 넣고 경로 컬럼을 돌려준다.
+     *
+     * 서명하지 않은 칸은 그냥 비워 둔다. 통역인은 해당할 때만 서명하고,
+     * 근로자가 서명을 거부하는 상황도 그대로 기록으로 남는 편이 맞다.
+     *
+     * @param  array<string, string|null>  $signatures
+     * @return array<string, string> 컬럼 => 경로
+     */
+    private function storeSignatures(WorkReview $review, array $signatures): array
+    {
+        $columns = [];
+        $dir = 'work-reviews/'.$review->id.'/signatures';
+
+        foreach (WorkReview::SIGNATURE_ROLES as $role => [, $column]) {
+            $path = SignatureImage::store($signatures[$role] ?? null, $dir, $role);
+            if ($path !== null) {
+                $columns[$column] = $path;
+            }
+        }
+
+        return $columns;
     }
 }
