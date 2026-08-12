@@ -10,6 +10,8 @@ use App\Models\Setting;
 use App\Shared\Translation\GoogleTranslator;
 use App\Shared\Translation\SiteTranslator;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 /**
  * 근로자 안내 자료를 앱이 쓸 형태로 만든다.
@@ -76,10 +78,23 @@ class WorkerGuidePresenter
         ], $locale));
     }
 
-    /** 내용이 바뀌면 캐시가 저절로 무효화되도록 최종 수정 시각을 키에 넣는다. */
+    /**
+     * 내용이 바뀌면 캐시가 저절로 무효화되도록 최종 수정 시각을 키에 넣는다.
+     *
+     * 캐시가 죽어 있어도 안내 자료는 나와야 한다. 근로자가 보는 화면이라
+     * 느려질지언정 빈 화면이나 오류를 주면 안 된다.
+     */
     private function cached(string $prefix, string $locale, int $stamp, callable $build): array
     {
-        return Cache::remember(sprintf('%s:%s:%d', $prefix, $locale, $stamp), now()->addDay(), $build);
+        $key = sprintf('%s:%s:%d', $prefix, $locale, $stamp);
+
+        try {
+            return Cache::remember($key, now()->addDay(), $build);
+        } catch (Throwable $e) {
+            Log::warning('[WorkerGuide] 캐시를 쓰지 못해 매번 새로 만듭니다: '.$e->getMessage());
+
+            return $build();
+        }
     }
 
     private function locale(string $locale): string

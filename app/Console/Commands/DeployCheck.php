@@ -24,10 +24,16 @@ class DeployCheck extends Command
 
     public function handle(): int
     {
-        $problems = DeployState::problems();
+        $problems = DeployState::problems(fresh: true);
+
+        // 캐시는 설정만 봐서는 알 수 없다. 실제로 써 보고 확인한다.
+        $cacheOk = DeployState::cacheWritable();
+        if (! $cacheOk && ! in_array(DeployState::CACHE_PROBLEM, $problems, true)) {
+            $problems[] = DeployState::CACHE_PROBLEM;
+        }
 
         if ($problems === []) {
-            $this->info('배포 상태 정상 — 미적용 마이그레이션 없음.');
+            $this->info('배포 상태 정상 — 미적용 마이그레이션 없음, 캐시 저장소 정상.');
 
             return self::SUCCESS;
         }
@@ -42,6 +48,15 @@ class DeployCheck extends Command
         $this->line('    php artisan optimize');
         $this->newLine();
         $this->line('  캐시를 먼저 지우면 라우트만 살아나고 테이블이 없어 다른 이유로 500 이 난다.');
+
+        if (! $cacheOk) {
+            $this->newLine();
+            $this->line('  캐시 저장소 — 지금 설정은 <comment>'.config('cache.default').'</comment> 다.');
+            $this->line('    database : cache 표가 있어야 한다 → php artisan migrate --force');
+            $this->line('    file     : 웹 서버 사용자가 storage/ 에 쓸 수 있어야 한다');
+            $this->line('               → chown -R www-data:www-data storage bootstrap/cache');
+            $this->line('  이 프로젝트의 기본은 database 다(.env 의 CACHE_STORE).');
+        }
 
         return self::FAILURE;
     }

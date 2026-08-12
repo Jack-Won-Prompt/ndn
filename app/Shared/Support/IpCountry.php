@@ -138,35 +138,44 @@ class IpCountry
          */
         $key = 'ip_country:'.filemtime($path).':'.filesize($path);
 
-        return Cache::remember($key, now()->addDay(), function () use ($path) {
-            $rows = [];
-            $fh = fopen($path, 'r');
-            if ($fh === false) {
-                return [];
+        try {
+            return Cache::remember($key, now()->addDay(), fn () => self::readCsv($path));
+        } catch (\Throwable) {
+            // 캐시를 못 써도 판별은 되어야 한다. 접속 기록이 통째로 막히면 안 된다.
+            return self::readCsv($path);
+        }
+    }
+
+    /** @return list<array{0:int,1:int,2:string}> */
+    private static function readCsv(string $path): array
+    {
+        $rows = [];
+        $fh = fopen($path, 'r');
+        if ($fh === false) {
+            return [];
+        }
+
+        while (($cols = fgetcsv($fh)) !== false) {
+            if (count($cols) < 3) {
+                continue;
             }
-
-            while (($cols = fgetcsv($fh)) !== false) {
-                if (count($cols) < 3) {
-                    continue;
-                }
-                // IPv6 줄이 섞여 있으면 건너뛴다 (숫자가 아니거나 32비트를 넘는 값)
-                if (! is_numeric($cols[0]) || ! is_numeric($cols[1])) {
-                    continue;
-                }
-                $start = (int) $cols[0];
-                $end = (int) $cols[1];
-                $code = strtoupper(trim((string) $cols[2]));
-                if ($code === '' || $code === '-' || strlen($code) !== 2) {
-                    continue;
-                }
-                $rows[] = [$start, $end, $code];
+            // IPv6 줄이 섞여 있으면 건너뛴다 (숫자가 아니거나 32비트를 넘는 값)
+            if (! is_numeric($cols[0]) || ! is_numeric($cols[1])) {
+                continue;
             }
-            fclose($fh);
+            $start = (int) $cols[0];
+            $end = (int) $cols[1];
+            $code = strtoupper(trim((string) $cols[2]));
+            if ($code === '' || $code === '-' || strlen($code) !== 2) {
+                continue;
+            }
+            $rows[] = [$start, $end, $code];
+        }
+        fclose($fh);
 
-            usort($rows, fn ($a, $b) => $a[0] <=> $b[0]);
+        usort($rows, fn ($a, $b) => $a[0] <=> $b[0]);
 
-            return $rows;
-        });
+        return $rows;
     }
 
     /** 화면에 자주 나올 나라만. 없는 코드는 코드 그대로 보여 준다. */
