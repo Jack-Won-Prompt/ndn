@@ -233,6 +233,9 @@ Route::prefix('admin')->group(function () {
         // 서명 파일은 storage 에 있어 이 라우트로만 나간다
         Route::get('/work-reviews/{workReview}/signature/{role}', [WorkReviewController::class, 'signature'])
             ->whereNumber('workReview')->whereAlpha('role')->name('admin.work-reviews.signature');
+        // 관공서 제출용 PDF — 인적사항이 들어가므로 열람 기록을 남긴다
+        Route::get('/work-reviews/{workReview}/pdf', [WorkReviewController::class, 'pdf'])
+            ->whereNumber('workReview')->name('admin.work-reviews.pdf');
 
         // 생활 체크리스트 — 항목 문구 편집 (체크는 근로자 본인만 한다)
         Route::post('/life-checklist/items/{item}', [LifeChecklistController::class, 'updateItem'])

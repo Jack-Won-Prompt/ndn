@@ -39,7 +39,7 @@
         <h2>인원 및 점검 현황</h2>
         <table>
             <tr><td class="k">재직 근로자</td><td class="v">{{ number_format($r['active_workers']) }} 명</td></tr>
-            <tr><td class="k">당월 월별 인터뷰 실시</td><td class="v">{{ number_format($r['interview_total']) }} 건</td></tr>
+            <tr><td class="k">당월 근무상태 점검 실시</td><td class="v">{{ number_format($r['interview_total']) }} 건</td></tr>
         </table>
     </div>
 

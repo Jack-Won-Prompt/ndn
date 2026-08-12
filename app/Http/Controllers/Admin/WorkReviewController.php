@@ -13,11 +13,13 @@ use App\Domains\Monitoring\Models\WorkReview;
 use App\Domains\Monitoring\Models\WorkReviewItem;
 use App\Domains\Recruitment\Enums\WorkerStatus;
 use App\Domains\Recruitment\Models\Worker;
+use App\Domains\Reporting\Actions\GenerateWorkReviewPdfAction;
 use App\Http\Controllers\Controller;
 use App\Shared\Support\LocalTime;
 use App\Shared\Support\SignatureImage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -259,6 +261,21 @@ class WorkReviewController extends Controller
                 ])
                 ->all(),
         ]);
+    }
+
+    /**
+     * 제출용 PDF (원본 서식 그대로).
+     *
+     * 관공서 제출 서식이라 여권번호·생년월일 같은 인적사항이 들어간다.
+     * 파일로 저장하지 않고 요청할 때마다 만들어 내보낸다 — 저장하면 암호화
+     * 필드를 평문으로 복사해 쌓아 두는 셈이 된다(§7-1).
+     * 내려받는 순간 열람 기록을 남긴다(§7-6).
+     */
+    public function pdf(WorkReview $workReview, GenerateWorkReviewPdfAction $action): Response
+    {
+        $workReview->worker?->recordAccessBy(Auth::user(), 'work-review-pdf');
+
+        return $action->pdf($workReview)->download($action->filename($workReview));
     }
 
     /**

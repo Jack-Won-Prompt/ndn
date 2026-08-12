@@ -447,9 +447,10 @@
                         title: '근무상태 점검표 #' + d.id,
                         subtitle: d.worker + ' · ' + d.reviewed_at,
                         rows: rows,
-                        // 서명 이미지는 새 탭으로 연다 — 제출용으로 그대로 쓴다.
-                        links: d.signatures.filter(function (s) { return s.image_url; })
-                            .map(function (s) { return { label: s.label + ' 서명', href: s.image_url }; }),
+                        // 제출본을 여기서 바로 받는다. 서명 이미지도 그 안에 들어간다.
+                        links: [{ label: '제출용 PDF 내려받기', href: '{{ url('admin/work-reviews') }}/' + d.id + '/pdf' }]
+                            .concat(d.signatures.filter(function (s) { return s.image_url; })
+                                .map(function (s) { return { label: s.label + ' 서명', href: s.image_url }; })),
                     });
                 })
                 .catch(function () { ndnToast('점검표를 불러오지 못했습니다.', { type: 'error' }); });
