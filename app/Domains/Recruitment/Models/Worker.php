@@ -9,6 +9,7 @@ use App\Domains\Matching\Enums\PlacementStatus;
 use App\Domains\Matching\Models\Placement;
 use App\Domains\Onboarding\Models\ConsentRecord;
 use App\Domains\Recruitment\Enums\WorkerStatus;
+use App\Domains\Support\Models\WorkerExit;
 use App\Shared\Concerns\LogsPersonalDataAccess;
 use App\Shared\Concerns\MasksSensitiveData;
 use App\Shared\Enums\ConsentPurpose;
@@ -142,6 +143,16 @@ class Worker extends Model implements AuthenticatableContract
     public function placements(): HasMany
     {
         return $this->hasMany(Placement::class);
+    }
+
+    /**
+     * 조기 귀국·이탈 사건 이력 (업무흐름 §8).
+     *
+     * @return HasMany<WorkerExit, $this>
+     */
+    public function exits(): HasMany
+    {
+        return $this->hasMany(WorkerExit::class);
     }
 
     /** 현재 유효한 배정 (확정 건 중 최신). */

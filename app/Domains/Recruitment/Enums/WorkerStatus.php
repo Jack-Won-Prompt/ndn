@@ -15,6 +15,7 @@ enum WorkerStatus: string
     case Pending = 'pending';    // 가입 신청 — 승인 대기
     case Active = 'active';      // 재직(활성) — 로그인·업무 가능
     case Inactive = 'inactive';  // 비활성(정지)
+    case Absconded = 'absconded'; // 이탈 — 소재 불명 (WorkerExit 이 확정하면 여기로 온다)
     case Returned = 'returned';  // 귀국
     case Rejected = 'rejected';  // 가입 거절
 
@@ -25,6 +26,7 @@ enum WorkerStatus: string
             self::Pending => '승인 대기',
             self::Active => '재직',
             self::Inactive => '비활성',
+            self::Absconded => '이탈',
             self::Returned => '귀국',
             self::Rejected => '가입 거절',
         };

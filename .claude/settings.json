@@ -369,7 +369,8 @@
       "Bash(grep -n \"^#\\\\{2,3\\\\} \" docs/NDN_협력사_포털_사용매뉴얼.md)",
       "Bash(grep -oE '<\\(button|a|label\\)[^>]*>[^<]{1,25}' resources/views/admin/screens/required-documents.blade.php)",
       "Bash(grep -oE 'id=\"st-[a-z_-]+\"|<label[^>]*>[^<]{1,20}' resources/views/admin/screens/settings.blade.php)",
-      "Bash(grep -n '$fields\\\\|'\\\\''label'\\\\'' =>' app/Http/Controllers/Admin/ConsoleController.php)"
+      "Bash(grep -n '$fields\\\\|'\\\\''label'\\\\'' =>' app/Http/Controllers/Admin/ConsoleController.php)",
+      "Bash(./vendor/bin/pest --filter=WorkerExitTest)"
     ],
     "additionalDirectories": [
       "\\tmp"

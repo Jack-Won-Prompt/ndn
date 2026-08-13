@@ -25,6 +25,7 @@ use App\Domains\Support\Enums\TicketStatus;
 use App\Domains\Support\Models\AccountDeletionRequest;
 use App\Domains\Support\Models\SosAlert;
 use App\Domains\Support\Models\SupportTicket;
+use App\Domains\Support\Models\WorkerExit;
 use App\Domains\Support\Services\ChatService;
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
@@ -98,6 +99,7 @@ class ConsoleController extends Controller
                     ['key' => 'work-reviews', 'label' => '근무상태 점검표', 'icon' => 'clipboard'],
                     ['key' => 'farmvisits', 'label' => '농가 방문 점검', 'icon' => 'clipboard'],
                     ['key' => 'tickets', 'label' => '민원', 'icon' => 'inbox'],
+                    ['key' => 'exits', 'label' => '조기귀국·이탈', 'icon' => 'inbox'],
                     ['key' => 'inquiries', 'label' => '문의하기', 'icon' => 'inbox'],
                     ['key' => 'notices', 'label' => '공지사항', 'icon' => 'clipboard'],
                     ['key' => 'chat', 'label' => '채팅', 'icon' => 'inbox'],
@@ -139,6 +141,8 @@ class ConsoleController extends Controller
             'sos' => SosController::openCount(),
             'inquiries' => app(ChatService::class)->unreadInquiryCount(),
             'signups' => Worker::where('status', WorkerStatus::Pending->value)->count(),
+            // 결정이 안 난 조기귀국·소재 불명 — 오래 방치되면 신고 시기를 놓친다.
+            'exits' => WorkerExitController::openCount(),
             'account-deletions' => AccountDeletionRequest::where('status', AccountDeletionRequest::STATUS_PENDING)->count(),
         ];
     }
@@ -185,6 +189,13 @@ class ConsoleController extends Controller
                 'statuses' => FarmVisitController::statusOptions(),
             ]),
             'tickets' => $this->tickets($request),
+            'exits' => view('admin.screens.exits', [
+                'rows' => WorkerExitController::rows(),
+                'workers' => WorkerExitController::workerOptions(),
+                'typeOptions' => WorkerExitController::typeOptions(),
+                'reasonOptions' => WorkerExitController::reasonOptions(),
+                'pendingTickets' => WorkerExitController::pendingTickets(),
+            ]),
             'account-deletions' => view('admin.screens.account-deletions', ['rows' => AccountDeletionAdminController::rows()]),
             'required-documents' => view('admin.screens.required-documents', [
                 'rows' => RequiredDocumentAdminController::rows(),
@@ -422,6 +433,18 @@ class ConsoleController extends Controller
                     'scheduled' => LocalTime::format($arrival->scheduled_arrival_at),
                 ] : null,
                 'reviews' => $reviews,
+                // 조기 귀국·이탈 이력 — 계정 상태만 봐서는 왜 그렇게 됐는지 알 수 없다.
+                'exits' => $worker->exits()->with('decider:id,name')->latest('id')->limit(10)->get()
+                    ->map(fn (WorkerExit $e) => [
+                        'id' => $e->id,
+                        'type' => $e->type->label(),
+                        'status' => $e->status->label(),
+                        'tone' => $e->status->tone(),
+                        'reason' => $e->reason->label(),
+                        'date' => $e->occurred_on?->toDateString(),
+                        'label' => $e->type->occurredLabel(),
+                        'decided_by' => $e->decider?->name,
+                    ])->all(),
                 // 본사가 보관하는 개인 서류 (여권 사본·건강검진 등)
                 'files' => WorkerFileController::rows($worker),
                 'file_types' => WorkerFileType::options(),

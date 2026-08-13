@@ -202,6 +202,20 @@
                 } else { html += '<div class="dtl-empty">점검 이력이 없습니다.</div>'; }
                 html += '</div>';
 
+                // 조기 귀국·이탈 — 계정 상태만 봐서는 왜 그렇게 됐는지 알 수 없다.
+                // 이력이 있을 때만 보여 준다. 대부분의 근로자에게는 빈 칸이다.
+                if (d.exits && d.exits.length) {
+                    html += '<div class="dtl-sec"><div class="dtl-sec__title">조기귀국·이탈 (' + d.exits.length + '건)</div>';
+                    d.exits.forEach(function (e) {
+                        html += '<div class="dtl-hist__row"><b>' + wkEsc(e.date) + '</b>'
+                            + '<span class="dtl-badge">' + wkEsc(e.type) + '</span>'
+                            + '<span>' + wkEsc(e.status) + ' · ' + wkEsc(e.reason) + '</span>'
+                            + '<span>' + wkEsc(e.label) + (e.decided_by ? ' · 결정 ' + wkEsc(e.decided_by) : '') + '</span>'
+                            + '</div>';
+                    });
+                    html += '</div>';
+                }
+
                 // 본사가 보관하는 개인 서류 — 여권 사본·건강검진 등
                 html += '<div class="dtl-sec"><div class="dtl-sec__title">개인 서류 '
                     + '(<span id="wf-count">' + (d.files || []).length + '</span>건)</div>'

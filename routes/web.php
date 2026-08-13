@@ -23,6 +23,7 @@ use App\Http\Controllers\Admin\ServiceRequestController;
 use App\Http\Controllers\Admin\SignupApprovalController;
 use App\Http\Controllers\Admin\SosController;
 use App\Http\Controllers\Admin\TicketGridController;
+use App\Http\Controllers\Admin\WorkerExitController;
 use App\Http\Controllers\Admin\WorkerFileController;
 use App\Http\Controllers\Admin\WorkerGridController;
 use App\Http\Controllers\Admin\WorkReviewController;
@@ -260,6 +261,14 @@ Route::prefix('admin')->group(function () {
             ->whereNumber(['worker', 'file'])->name('admin.workers.files.show');
         Route::delete('/workers/{worker}/files/{file}', [WorkerFileController::class, 'destroy'])
             ->whereNumber(['worker', 'file'])->name('admin.workers.files.destroy');
+
+        // 조기 귀국·이탈 — 사건 등록과 결정. 결정이 근로자 상태·배정에 함께 반영된다.
+        Route::post('/worker-exits', [WorkerExitController::class, 'store'])
+            ->name('admin.worker-exits.store');
+        Route::get('/worker-exits/{workerExit}', [WorkerExitController::class, 'show'])
+            ->whereNumber('workerExit')->name('admin.worker-exits.show');
+        Route::post('/worker-exits/{workerExit}/advance', [WorkerExitController::class, 'advance'])
+            ->whereNumber('workerExit')->name('admin.worker-exits.advance');
 
         // 생활 체크리스트 — 항목 문구 편집 (체크는 근로자 본인만 한다)
         Route::post('/life-checklist/items/{item}', [LifeChecklistController::class, 'updateItem'])
