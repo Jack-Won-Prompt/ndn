@@ -361,7 +361,9 @@
       "Bash(./vendor/bin/pest --filter=ConsoleMatching)",
       "Bash(./vendor/bin/pest --filter=WorkReviewShare)",
       "Bash(./vendor/bin/pest --group=guard)",
-      "Bash(git stash *)"
+      "Bash(git stash *)",
+      "Bash(awk '/^\\\\[2026-08-13 03:45:08\\\\]/{c++; print NR\": \"substr\\($0,1,200\\)}' storage/logs/laravel.log)",
+      "Bash(./vendor/bin/pint -q)"
     ],
     "additionalDirectories": [
       "\\tmp"

@@ -60,6 +60,10 @@
         var box = document.getElementById('wf-list');
         if (!box) return;
 
+        // 올리거나 지운 뒤에도 머리글 건수가 맞아야 한다.
+        var count = document.getElementById('wf-count');
+        if (count) count.textContent = (files || []).length;
+
         if (!files || !files.length) {
             box.innerHTML = '<div class="dtl-empty">보관된 서류가 없습니다.</div>';
             return;
@@ -199,8 +203,8 @@
                 html += '</div>';
 
                 // 본사가 보관하는 개인 서류 — 여권 사본·건강검진 등
-                html += '<div class="dtl-sec"><div class="dtl-sec__title">개인 서류 ('
-                    + (d.files || []).length + '건)</div>'
+                html += '<div class="dtl-sec"><div class="dtl-sec__title">개인 서류 '
+                    + '(<span id="wf-count">' + (d.files || []).length + '</span>건)</div>'
                     + '<div id="wf-list"></div>'
                     + '<div class="wf-form">'
                     + '  <select id="wf-type">'

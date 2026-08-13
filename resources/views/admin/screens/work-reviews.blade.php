@@ -302,6 +302,8 @@
         .wrs-note{display:block;font-size:11px;color:var(--mv2-text-faint);margin-top:2px;}
         .wrs-emptyrow{text-align:center;color:var(--mv2-text-faint);padding:34px 0;}
         .wrs-modal{position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;z-index:900;padding:20px;}
+        /* display:flex 가 hidden 속성의 기본 display:none 을 이긴다. 명시하지 않으면 처음부터 떠 있다. */
+        .wrs-modal[hidden]{display:none;}
         .wrs-box{background:#fff;border-radius:var(--mv2-r-lg);padding:22px;width:min(560px,96vw);max-height:90vh;overflow:auto;box-shadow:0 20px 50px rgba(15,23,42,.25);}
         .wrs-box__title{font-size:var(--mv2-fz-md);font-weight:800;color:var(--mv2-text-strong);margin-bottom:10px;}
         .wrs-box__warn{font-size:var(--mv2-fz-xs);line-height:1.7;color:#8a6d00;background:#FEF3C7;border-radius:var(--mv2-r-sm);padding:10px 12px;margin:0 0 14px;}

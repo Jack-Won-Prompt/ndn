@@ -132,8 +132,10 @@
         .mt-cand:hover{border-color:var(--mv2-primary-500);}
         .mt-cand.is-on{border-color:var(--mv2-primary-500);background:var(--mv2-primary-50,#E9F6F4);}
         .mt-cand input{margin-top:3px;}
-        .mt-cand__name{font-weight:700;font-size:var(--mv2-fz-sm);color:var(--mv2-text-strong);}
-        .mt-cand__meta{font-size:11px;color:var(--mv2-text-muted);margin-top:2px;}
+        .mt-cand__name{display:block;font-weight:700;font-size:var(--mv2-fz-sm);color:var(--mv2-text-strong);}
+        .mt-cand__meta{display:block;font-size:11px;color:var(--mv2-text-muted);margin-top:2px;}
+        .mt-cand.is-off{display:none;}
+        .mt-find{font-family:inherit;font-size:var(--mv2-fz-xs);padding:5px 10px;border:1px solid var(--mv2-border-default);border-radius:var(--mv2-r-sm);width:180px;margin-left:auto;}
         .mt-m{font-size:10px;border-radius:100px;padding:1px 6px;margin-right:3px;}
         .mt-m--ok{background:#E7F6EC;color:#1B7F43;}
         .mt-m--no{background:var(--mv2-pill-err-bg);color:var(--mv2-pill-err-fg);}
@@ -219,8 +221,10 @@
                 + '<span class="mt-chip">' + dm.filled + ' / ' + dm.headcount + '명 (' + dm.remaining + ' 남음)</span>'
                 + '</span></div>';
 
+            // 미배정 인력이 수십 명이라 목록이 길다. 이름으로 좁힐 칸을 둔다.
             html += '<div class="mt-sec"><div class="mt-sec__title">추천 인력 <span class="mt-chip">' + (d.candidates || []).length + '명</span>'
-                + '<span class="mt-chip">기타 미배정 ' + (d.others || []).length + '명</span></div>';
+                + '<span class="mt-chip">기타 미배정 ' + (d.others || []).length + '명</span>'
+                + '<input type="search" class="mt-find" id="mt-find" placeholder="이름으로 찾기"></div>';
             html += cands.length
                 ? '<div class="mt-cands">' + cands.map(candCard).join('') + '</div>'
                 : '<div class="mt-empty">배정할 수 있는 미배정·재직 인력이 없습니다. [근로자] 화면에서 등록하거나 [가입 승인]에서 승인하세요.</div>';
@@ -260,6 +264,16 @@
         document.getElementById('mt-demands').addEventListener('click', function (e) {
             var tr = e.target.closest('tr[data-id]');
             if (tr) open(tr.getAttribute('data-id'));
+        });
+
+        // 이름으로 좁히기 — 체크한 사람은 숨기지 않는다(안 보이는 채로 배정되면 안 된다).
+        panel.addEventListener('input', function (e) {
+            if (e.target.id !== 'mt-find') return;
+            var q = e.target.value.trim().toLowerCase();
+            [].forEach.call(panel.querySelectorAll('.mt-cand'), function (c) {
+                var hit = !q || c.textContent.toLowerCase().indexOf(q) !== -1;
+                c.classList.toggle('is-off', !hit && !c.querySelector('input').checked);
+            });
         });
 
         // 후보 선택 → 버튼 활성화
