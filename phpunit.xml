@@ -18,6 +18,9 @@
         </include>
     </source>
     <php>
+        <!-- 점검표 PDF 테스트가 한글 폰트(NanumGothic) 글리프 테이블을 통째로 올린다.
+             전체 실행에서 여러 번 쌓이면 기본 128M 을 넘겨 스위트가 통째로 죽는다. -->
+        <ini name="memory_limit" value="512M"/>
         <env name="APP_ENV" value="testing"/>
         <!-- 테스트는 서브폴더(/ndn) 없이 루트에서 라우팅한다. 운영 APP_URL 의 /ndn
              경로가 route() 에 섞이면 테스트 라우트 매칭이 어긋나므로 여기서 덮어쓴다. -->

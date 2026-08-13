@@ -14,6 +14,8 @@ use App\Domains\Monitoring\Models\WorkReviewItem;
 use App\Domains\Recruitment\Enums\WorkerStatus;
 use App\Domains\Recruitment\Models\Worker;
 use App\Domains\Reporting\Actions\GenerateWorkReviewPdfAction;
+use App\Domains\Reporting\Actions\ShareWorkReviewsAction;
+use App\Domains\Reporting\Models\WorkReviewShare;
 use App\Http\Controllers\Controller;
 use App\Shared\Support\LocalTime;
 use App\Shared\Support\SignatureImage;
@@ -186,6 +188,89 @@ class WorkReviewController extends Controller
             'risk' => $review->risk_level->label(),
             'score' => $review->risk_score,
         ]);
+    }
+
+    /**
+     * 관계기관 제출 이력 — 발송 묶음(batch) 단위로 접어서 보여 준다.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public static function shareRows(): array
+    {
+        return WorkReviewShare::query()
+            ->with(['review.worker', 'sender'])
+            ->latest('sent_at')->latest('id')
+            ->limit(1000)
+            ->get()
+            ->groupBy(fn (WorkReviewShare $s) => $s->batch_id.'|'.$s->recipient_email)
+            ->map(function ($group) {
+                /** @var WorkReviewShare $first */
+                $first = $group->first();
+
+                return [
+                    'id' => $first->id,
+                    'sent_at' => LocalTime::format($first->sent_at),
+                    'org' => $first->recipient_org ?: '—',
+                    'email' => $first->recipient_email,
+                    'count' => $group->count(),
+                    // 어떤 점검표가 나갔는지 — 번호로 되짚는다(이름은 목록에 늘어놓지 않는다).
+                    'reviews' => $group->map(fn (WorkReviewShare $s) => '#'.$s->work_review_id)->implode(', '),
+                    'note' => $first->note ?: '—',
+                    'sender' => $first->sender?->name ?? '—',
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    /** 최근 보낸 곳 — 기관 주소를 매번 손으로 치지 않게. */
+    public static function recentRecipients(): array
+    {
+        return WorkReviewShare::query()
+            ->latest('sent_at')
+            ->limit(200)
+            ->get(['recipient_email', 'recipient_org'])
+            ->unique('recipient_email')
+            ->take(10)
+            ->map(fn (WorkReviewShare $s) => [
+                'email' => $s->recipient_email,
+                'org' => $s->recipient_org,
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * 선택한 점검표를 관계기관에 이메일로 제출한다.
+     *
+     * 첨부 PDF 에는 인적사항이 들어가고 메일 본문에는 들어가지 않는다 — 왜 그렇게
+     * 갈랐는지는 ShareWorkReviewsAction 주석에 적어 뒀다.
+     */
+    public function share(Request $request, ShareWorkReviewsAction $action): JsonResponse
+    {
+        $data = $request->validate([
+            'review_ids' => ['required', 'array', 'min:1'],
+            'review_ids.*' => ['integer', 'exists:work_reviews,id'],
+            'recipients' => ['required', 'array', 'min:1'],
+            'recipients.*.email' => ['required', 'email', 'max:190'],
+            'recipients.*.org' => ['nullable', 'string', 'max:100'],
+            'note' => ['nullable', 'string', 'max:1000'],
+            // 제출 근거를 확인했다는 담당자 체크 — 기록에 남는다.
+            'acknowledged' => ['accepted'],
+        ]);
+
+        try {
+            $result = $action->execute(
+                $data['review_ids'],
+                $data['recipients'],
+                $data['note'] ?? null,
+                Auth::user(),
+            );
+        } catch (RuntimeException $e) {
+            return response()->json(['ok' => false, 'message' => $e->getMessage()], 422);
+        }
+
+        return response()->json(['ok' => true] + $result);
     }
 
     /** 상세 — 항목별 응답까지. */

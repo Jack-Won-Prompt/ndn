@@ -47,6 +47,8 @@
      *   importUrl   {string}  엑셀 업로드 POST 엔드포인트 (editable 시)
      *   newRow      {object}  '신규 행' 기본값
      *   onRowDblClick {func}  읽기전용 상세 팝업 등 (row) => void
+     *   rowCheckbox {bool}    행 체크박스 강제 표시 (읽기전용 목록에서 골라 처리할 때)
+     *   buttons     {Array}   추가 툴바 버튼 [{ label, primary, onClick(grid) }]
      */
     window.wwConsole = function (cfg) {
         var host = document.getElementById(cfg.el);
@@ -65,7 +67,8 @@
             rowKey: 'id',
             height: cfg.height || fitHeight(host),
             editable: editable,
-            rowCheckbox: editable && cfg.canDelete !== false,
+            // 읽기전용 목록에서도 골라서 처리(공유·일괄 발송)해야 할 때가 있어 강제 옵션을 둔다.
+            rowCheckbox: cfg.rowCheckbox === true || (editable && cfg.canDelete !== false),
             rowNumber: true,
             summary: cfg.summary === true,
             toolbar: false,
@@ -148,6 +151,10 @@
 
         /* ---------- 툴바 구성 ---------- */
         bar.appendChild(btn('엑셀 다운로드', '', function () { grid.downloadExcel({ filename: cfg.title || 'export' }); }));
+        // 화면별 추가 동작 (예: 체크한 점검표를 관계기관에 공유)
+        (cfg.buttons || []).forEach(function (b) {
+            bar.appendChild(btn(b.label, b.primary ? 'ndn-gridbar__btn--primary' : '', function () { b.onClick(grid); }));
+        });
         if (editable) {
             if (cfg.importUrl) bar.insertBefore(btn('엑셀 업로드', '', excelUpload), bar.firstChild);
             var sep = document.createElement('span'); sep.style.cssText = 'width:1px;height:20px;background:var(--mv2-border-default);margin:0 4px;'; bar.appendChild(sep);

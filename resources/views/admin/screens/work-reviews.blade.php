@@ -12,10 +12,81 @@
     <div class="screen-tabs">
         <button type="button" class="screen-tab is-active" data-tab="list">점검 목록</button>
         <button type="button" class="screen-tab" data-tab="form">점검 작성</button>
+        <button type="button" class="screen-tab" data-tab="shares">제출 이력<span class="screen-tab__badge">{{ count($shares) }}</span></button>
     </div>
 
     <div data-tabpane="list">
         <div id="grid-workreviews"></div>
+    </div>
+
+    {{-- 관계기관 제출 이력 --}}
+    <div data-tabpane="shares" hidden>
+        <div class="wrs-listwrap">
+            <table class="wrs-table">
+                <thead>
+                    <tr>
+                        <th style="width:150px">보낸 일시</th>
+                        <th style="width:150px">받는 기관</th>
+                        <th style="width:220px">이메일</th>
+                        <th style="width:70px">건수</th>
+                        <th>점검표</th>
+                        <th style="width:100px">보낸 사람</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($shares as $s)
+                        <tr>
+                            <td class="c">{{ $s['sent_at'] }}</td>
+                            <td>{{ $s['org'] }}</td>
+                            <td>{{ $s['email'] }}</td>
+                            <td class="c">{{ $s['count'] }}건</td>
+                            <td>{{ $s['reviews'] }}@if ($s['note'] !== '—')<span class="wrs-note">{{ $s['note'] }}</span>@endif</td>
+                            <td class="c">{{ $s['sender'] }}</td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="6" class="wrs-emptyrow">아직 관계기관에 제출한 이력이 없습니다. [점검 목록]에서 점검표를 체크하고 <b>관계기관 제출</b>을 누르세요.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {{-- 제출 창 (점검 목록의 [관계기관 제출] 버튼이 연다) --}}
+    <div id="wrs-modal" class="wrs-modal" hidden>
+        <div class="wrs-box">
+            <div class="wrs-box__title">관계기관 제출</div>
+            <p class="wrs-box__warn">
+                첨부되는 점검표 PDF 에는 <b>여권번호·생년월일 등 인적사항</b>이 들어갑니다(관공서 제출 서식).
+                메일 본문과 첨부 파일명에는 인적사항을 넣지 않습니다. 보낸 기록은 이력에 남습니다.
+            </p>
+            <div class="wrs-picked" id="wrs-picked"></div>
+
+            <div class="wrs-field">
+                <label>받는 곳 <em>*</em> <span class="wrs-hint">기관명과 이메일. [+ 추가]로 최대 5곳</span></label>
+                <div id="wrs-recips"></div>
+                <button type="button" class="wrs-add" id="wrs-add">+ 받는 곳 추가</button>
+                @if (count($recentRecipients))
+                    <div class="wrs-recent">
+                        최근 보낸 곳:
+                        @foreach ($recentRecipients as $r)
+                            <button type="button" class="wrs-chip" data-email="{{ $r['email'] }}" data-org="{{ $r['org'] }}">{{ $r['org'] ?: $r['email'] }}</button>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+
+            <div class="wrs-field">
+                <label>안내 문구 <span class="wrs-hint">메일 본문에 붙습니다. 이름·연락처는 넣을 수 없습니다</span></label>
+                <textarea id="wrs-note" rows="3" maxlength="1000" placeholder="예: 요청하신 7월분 점검 결과를 제출합니다."></textarea>
+            </div>
+
+            <label class="wrs-ack"><input type="checkbox" id="wrs-ack"> 제출 근거(관계기관 요청·법령)를 확인했으며, 인적사항이 포함된 문서를 보냅니다.</label>
+
+            <div class="wrs-box__btns">
+                <button type="button" class="wrs-btn wrs-btn--ghost" id="wrs-close">닫기</button>
+                <button type="button" class="wrs-btn" id="wrs-send">제출 메일 보내기</button>
+            </div>
+        </div>
     </div>
 
     <div data-tabpane="form" hidden>
@@ -221,7 +292,42 @@
         .wr-sign__clear{font-family:inherit;font-size:11px;font-weight:700;color:var(--mv2-text-muted);
             background:none;border:1px solid var(--mv2-border-default);border-radius:var(--mv2-r-sm);padding:3px 10px;cursor:pointer;}
         .wr-sign__clear:hover{border-color:var(--mv2-text-strong);color:var(--mv2-text-strong);}
-        @media (max-width:820px){.wr-grid{grid-template-columns:1fr;}.wr-signs{grid-template-columns:1fr;}}
+        /* 관계기관 제출 */
+        .wrs-listwrap{border:1px solid var(--mv2-border-default);border-radius:var(--mv2-r-lg);overflow:hidden;background:#fff;box-shadow:0 1px 2px rgba(15,23,42,.04),0 6px 20px rgba(15,23,42,.05);}
+        .wrs-table{width:100%;border-collapse:collapse;font-size:var(--mv2-fz-sm);}
+        .wrs-table thead th{text-align:left;background:var(--mv2-slate-25);color:var(--mv2-text-muted);font-weight:700;font-size:var(--mv2-fz-xs);padding:10px 14px;border-bottom:1px solid var(--mv2-border-soft);white-space:nowrap;}
+        .wrs-table tbody td{padding:11px 14px;border-bottom:1px solid var(--mv2-border-soft);color:var(--mv2-text-strong);}
+        .wrs-table tbody tr:last-child td{border-bottom:0;}
+        .wrs-table td.c{text-align:center;}
+        .wrs-note{display:block;font-size:11px;color:var(--mv2-text-faint);margin-top:2px;}
+        .wrs-emptyrow{text-align:center;color:var(--mv2-text-faint);padding:34px 0;}
+        .wrs-modal{position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;z-index:900;padding:20px;}
+        .wrs-box{background:#fff;border-radius:var(--mv2-r-lg);padding:22px;width:min(560px,96vw);max-height:90vh;overflow:auto;box-shadow:0 20px 50px rgba(15,23,42,.25);}
+        .wrs-box__title{font-size:var(--mv2-fz-md);font-weight:800;color:var(--mv2-text-strong);margin-bottom:10px;}
+        .wrs-box__warn{font-size:var(--mv2-fz-xs);line-height:1.7;color:#8a6d00;background:#FEF3C7;border-radius:var(--mv2-r-sm);padding:10px 12px;margin:0 0 14px;}
+        .wrs-picked{font-size:var(--mv2-fz-xs);color:var(--mv2-text-muted);background:var(--mv2-slate-25);border-radius:var(--mv2-r-sm);padding:9px 12px;margin-bottom:14px;}
+        .wrs-field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+        .wrs-field>label{font-size:var(--mv2-fz-xs);font-weight:700;color:var(--mv2-text-muted);}
+        .wrs-field>label em{color:var(--mv2-pill-err-fg);font-style:normal;}
+        .wrs-hint{font-weight:400;color:var(--mv2-text-faint);}
+        .wrs-field textarea{font-family:inherit;font-size:var(--mv2-fz-sm);padding:8px 10px;border:1px solid var(--mv2-border-default);border-radius:var(--mv2-r-sm);resize:vertical;}
+        .wrs-recip{display:flex;gap:8px;margin-bottom:6px;}
+        .wrs-recip input{font-family:inherit;font-size:var(--mv2-fz-sm);padding:8px 10px;border:1px solid var(--mv2-border-default);border-radius:var(--mv2-r-sm);}
+        .wrs-recip input[data-org]{width:150px;flex:none;}
+        .wrs-recip input[data-email]{flex:1;}
+        .wrs-recip button{font-family:inherit;font-size:var(--mv2-fz-xs);color:var(--mv2-text-muted);background:none;border:1px solid var(--mv2-border-default);border-radius:var(--mv2-r-sm);padding:0 10px;cursor:pointer;}
+        .wrs-add{align-self:flex-start;font-family:inherit;font-size:var(--mv2-fz-xs);font-weight:700;color:var(--mv2-primary-600);background:none;border:1px dashed var(--mv2-border-default);border-radius:var(--mv2-r-sm);padding:5px 12px;cursor:pointer;}
+        .wrs-recent{font-size:11px;color:var(--mv2-text-faint);margin-top:8px;display:flex;flex-wrap:wrap;gap:5px;align-items:center;}
+        .wrs-chip{font-family:inherit;font-size:11px;font-weight:700;color:var(--mv2-text-muted);background:var(--mv2-slate-25);border:0;border-radius:100px;padding:3px 10px;cursor:pointer;}
+        .wrs-chip:hover{background:var(--mv2-primary-50,#E9F6F4);color:var(--mv2-primary-600);}
+        .wrs-ack{display:flex;align-items:flex-start;gap:7px;font-size:var(--mv2-fz-xs);color:var(--mv2-text-strong);line-height:1.6;cursor:pointer;}
+        .wrs-box__btns{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;}
+        .wrs-btn{font-family:inherit;font-size:var(--mv2-fz-sm);font-weight:700;background:var(--mv2-primary-500);color:#fff;border:0;border-radius:var(--mv2-r-sm);padding:9px 18px;cursor:pointer;}
+        .wrs-btn:hover{background:var(--mv2-primary-600);}
+        .wrs-btn:disabled{background:var(--mv2-slate-25);color:var(--mv2-text-faint);cursor:not-allowed;}
+        .wrs-btn--ghost{background:#fff;color:var(--mv2-text-muted);border:1px solid var(--mv2-border-default);}
+        .wrs-btn--ghost:hover{background:var(--mv2-slate-25);}
+        @media (max-width:820px){.wr-grid{grid-template-columns:1fr;}.wr-signs{grid-template-columns:1fr;}.wrs-recip{flex-wrap:wrap;}.wrs-recip input[data-org]{width:100%;}}
     </style>
 @endsection
 
@@ -385,6 +491,105 @@
                     btn.disabled = false; btn.textContent = '점검표 저장';
                 });
         });
+
+        /* ---------- 관계기관 제출 ----------
+           점검 목록에서 체크한 점검표를 PDF 로 첨부해 이메일로 보낸다.
+           그리드 툴바 버튼이 window.wrsOpen(ids) 를 부른다. */
+        var modal = document.getElementById('wrs-modal');
+        var recips = document.getElementById('wrs-recips');
+        var picked = [];
+
+        function recipRow(org, email) {
+            var row = document.createElement('div');
+            row.className = 'wrs-recip';
+            row.innerHTML = '<input type="text" data-org placeholder="기관명 (예: 당진시청)" maxlength="100">'
+                + '<input type="email" data-email placeholder="name@city.go.kr" maxlength="190">'
+                + '<button type="button" data-del title="이 줄 지우기">✕</button>';
+            if (org) row.querySelector('[data-org]').value = org;
+            if (email) row.querySelector('[data-email]').value = email;
+            recips.appendChild(row);
+            return row;
+        }
+
+        window.wrsOpen = function (ids) {
+            picked = ids;
+            document.getElementById('wrs-picked').textContent =
+                '선택한 점검표 ' + ids.length + '건 (#' + ids.join(', #') + ') — PDF ' + ids.length + '개가 첨부됩니다.';
+            recips.innerHTML = '';
+            recipRow();
+            document.getElementById('wrs-note').value = '';
+            document.getElementById('wrs-ack').checked = false;
+            modal.hidden = false;
+        };
+
+        function close() { modal.hidden = true; }
+        document.getElementById('wrs-close').addEventListener('click', close);
+        modal.addEventListener('click', function (e) { if (e.target === modal) close(); });
+
+        document.getElementById('wrs-add').addEventListener('click', function () {
+            if (recips.children.length >= 5) { ndnToast('받는 곳은 5곳까지입니다.', { type: 'info' }); return; }
+            recipRow();
+        });
+
+        recips.addEventListener('click', function (e) {
+            if (!e.target.hasAttribute('data-del')) return;
+            if (recips.children.length === 1) { ndnToast('받는 곳은 한 곳 이상 필요합니다.', { type: 'info' }); return; }
+            e.target.closest('.wrs-recip').remove();
+        });
+
+        // 최근 보낸 곳 → 빈 줄에 채우거나 새 줄로 추가
+        modal.addEventListener('click', function (e) {
+            var chip = e.target.closest('.wrs-chip');
+            if (!chip) return;
+            var empty = [].find.call(recips.querySelectorAll('.wrs-recip'), function (r) {
+                return !r.querySelector('[data-email]').value.trim();
+            });
+            var row = empty || (recips.children.length < 5 ? recipRow() : null);
+            if (!row) { ndnToast('받는 곳은 5곳까지입니다.', { type: 'info' }); return; }
+            row.querySelector('[data-org]').value = chip.getAttribute('data-org') || '';
+            row.querySelector('[data-email]').value = chip.getAttribute('data-email');
+        });
+
+        document.getElementById('wrs-send').addEventListener('click', function () {
+            var send = this;
+            var list = [].map.call(recips.querySelectorAll('.wrs-recip'), function (r) {
+                return { org: r.querySelector('[data-org]').value.trim(), email: r.querySelector('[data-email]').value.trim() };
+            }).filter(function (r) { return r.email; });
+
+            if (!list.length) { ndnToast('받는 이메일을 입력하세요.', { type: 'error' }); return; }
+            if (!document.getElementById('wrs-ack').checked) {
+                ndnToast('제출 근거 확인란에 체크해 주세요.', { type: 'error' }); return;
+            }
+
+            // PDF 를 그 자리에서 만들어 보내므로 시간이 걸린다. 두 번 눌리지 않게 잠근다.
+            send.disabled = true; send.textContent = '보내는 중…';
+            fetch('{{ route('admin.work-reviews.share') }}', {
+                method: 'POST',
+                headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token },
+                body: JSON.stringify({
+                    review_ids: picked,
+                    recipients: list,
+                    note: document.getElementById('wrs-note').value.trim(),
+                    acknowledged: 1,
+                }),
+            })
+                .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+                .then(function (res) {
+                    send.disabled = false; send.textContent = '제출 메일 보내기';
+                    if (!res.ok) {
+                        var msg = res.j.message || (res.j.errors ? Object.values(res.j.errors)[0][0] : '보내지 못했습니다.');
+                        ndnToast(msg, { type: 'error' });
+                        return;
+                    }
+                    close();
+                    ndnToast(res.j.reviews + '건을 ' + res.j.recipients + '곳에 제출했습니다.', { type: 'success' });
+                    setTimeout(function () { location.reload(); }, 1200);
+                })
+                .catch(function () {
+                    send.disabled = false; send.textContent = '제출 메일 보내기';
+                    ndnToast('보내지 못했습니다.', { type: 'error' });
+                });
+        });
     })();
 </script>
 @endsection
@@ -396,6 +601,18 @@
         editable: false,
         title: '근무상태점검표',
         data: @json($rows),
+        // 읽기전용 목록이지만 골라서 관계기관에 보내야 해 체크박스를 켠다.
+        rowCheckbox: true,
+        buttons: [{
+            label: '관계기관 제출',
+            primary: true,
+            onClick: function (grid) {
+                var ids = grid.getCheckedRows().map(function (r) { return r.id; });
+                if (!ids.length) { ndnToast('제출할 점검표를 체크하세요.', { type: 'info' }); return; }
+                if (ids.length > 10) { ndnToast('한 번에 10건까지 보낼 수 있습니다.', { type: 'error' }); return; }
+                window.wrsOpen(ids);
+            },
+        }],
         columns: [
             { header: '번호', name: 'id', width: 60, align: 'center', sortable: true },
             { header: '근로자', name: 'worker', width: 120, sortable: true },

@@ -6,6 +6,7 @@ use App\Domains\Settlement\Notifications\SettlementAssignedNotification;
 use App\Domains\Support\Notifications\NewNoticeNotification;
 use App\Domains\Support\Notifications\NoticeNotification;
 use App\Domains\Support\Notifications\ServiceRequestCompletedNotification;
+use App\Mail\WorkReviewShareMail;
 use App\Notifications\InvitationNotification;
 use App\Shared\Notifications\Contracts\PersonalDataFreeChannel;
 
@@ -46,6 +47,13 @@ it('근로자 알림 본문에 개인정보 패턴이 없다', function () {
         new NoticeNotification(noticeId: 1, noticeTitle: '안전 교육 안내', noticeBody: '이번 주 안전 교육이 있습니다.'),
         // SR 적용 완료 메일 — SR 번호 + 콘솔 링크만. 자유 입력인 제목·본문은 싣지 않는다.
         new ServiceRequestCompletedNotification(serviceRequestId: 12, consoleUrl: 'http://localhost/ndn/admin'),
+        // 관계기관 제출 메일 — 인적사항은 첨부 PDF 안에만 있고, 본문·첨부 파일명에는 없다.
+        new WorkReviewShareMail(
+            count: 3,
+            period: '2026-07-01 ~ 2026-08-10',
+            note: '요청하신 점검 결과를 제출합니다.',
+            documents: [['name' => '근무상태점검표_20260810_no12.pdf', 'bytes' => '']],
+        ),
     ];
 
     foreach ($notifications as $notification) {

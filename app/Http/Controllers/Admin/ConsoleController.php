@@ -12,6 +12,7 @@ use App\Domains\Matching\Enums\PlacementStatus;
 use App\Domains\Monitoring\Models\WorkReview;
 use App\Domains\Onboarding\Enums\OnboardingStatus;
 use App\Domains\Onboarding\Models\OnboardingSubmission;
+use App\Domains\Recruitment\Enums\WorkerFileType;
 use App\Domains\Recruitment\Enums\WorkerStatus;
 use App\Domains\Recruitment\Models\EvaluationItem;
 use App\Domains\Recruitment\Models\Worker;
@@ -75,6 +76,7 @@ class ConsoleController extends Controller
                 'group' => '모집·선발',
                 'items' => [
                     ['key' => 'candidates', 'label' => '후보자·평가', 'icon' => 'clipboard'],
+                    ['key' => 'matching', 'label' => '농가 매칭·배정', 'icon' => 'users'],
                 ],
             ],
             [
@@ -150,6 +152,10 @@ class ConsoleController extends Controller
             'baseinfo' => $this->baseinfo(),
             'regions' => view('admin.screens.regions', ['rows' => RegionController::rows()]),
             'candidates' => $this->candidates($request),
+            'matching' => view('admin.screens.matching', [
+                'rows' => MatchingController::rows(),
+                'placements' => MatchingController::placementRows(),
+            ]),
             'workers' => $this->workers($request),
             'signups' => view('admin.screens.signups', ['rows' => SignupApprovalController::rows()]),
             'invitations' => view('admin.screens.invitations', [
@@ -170,6 +176,8 @@ class ConsoleController extends Controller
                 'typeOptions' => WorkReviewController::typeOptions(),
                 'resultOptions' => WorkReviewController::resultOptions(),
                 'me' => Auth::user()?->name ?? '',
+                'shares' => WorkReviewController::shareRows(),
+                'recentRecipients' => WorkReviewController::recentRecipients(),
             ]),
             'farmvisits' => view('admin.screens.farmvisits', [
                 'rows' => FarmVisitController::rows(),
@@ -414,6 +422,10 @@ class ConsoleController extends Controller
                     'scheduled' => LocalTime::format($arrival->scheduled_arrival_at),
                 ] : null,
                 'reviews' => $reviews,
+                // 본사가 보관하는 개인 서류 (여권 사본·건강검진 등)
+                'files' => WorkerFileController::rows($worker),
+                'file_types' => WorkerFileType::options(),
+                'file_upload_url' => route('admin.workers.files.store', $worker),
             ]);
         }
 

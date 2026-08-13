@@ -18,13 +18,150 @@
         <div id="grid-workers"></div>
     </div>
     <div data-tabpane="detail" hidden>
-        <div id="wk-detail" class="dtl"><div class="dtl-empty">목록에서 <b>번호 열</b>을 더블클릭하면 상세(입국·생활점검)가 표시됩니다.</div></div>
+        <div id="wk-detail" class="dtl"><div class="dtl-empty">목록에서 <b>번호 열</b>을 더블클릭하면 상세(입국·점검·개인 서류)가 표시됩니다.</div></div>
     </div>
+
+    <style>
+        .wf-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+            padding: 9px 0; border-bottom: 1px solid var(--mv2-border-soft); font-size: var(--mv2-fz-sm); }
+        .wf-row:last-child { border-bottom: 0; }
+        .wf-type { font-weight: 700; min-width: 110px; color: var(--mv2-text-strong); }
+        .wf-name { flex: 1; min-width: 160px; word-break: break-all; }
+        .wf-meta { font-size: var(--mv2-fz-xs); color: var(--mv2-text-muted); }
+        .wf-note { flex-basis: 100%; font-size: var(--mv2-fz-xs); color: var(--mv2-text-muted); padding-left: 118px; }
+        .wf-flag { font-size: 11px; font-weight: 800; border-radius: 100px; padding: 2px 9px; }
+        .wf-flag--bad { background: var(--mv2-pill-err-bg); color: var(--mv2-pill-err-fg); }
+        .wf-flag--warn { background: #FFF4E0; color: #8A5A00; }
+        .wf-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+            margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--mv2-border-soft); }
+        .wf-form select, .wf-form input[type=text], .wf-form input[type=date] {
+            font-family: inherit; font-size: var(--mv2-fz-sm); padding: 7px 10px;
+            border: 1px solid var(--mv2-border-default); border-radius: var(--mv2-r-sm); background: #fff; }
+        .wf-form input[type=text] { flex: 1; min-width: 160px; }
+        .wf-btn { font-family: inherit; font-size: var(--mv2-fz-xs); font-weight: 700; text-decoration: none;
+            border: 1px solid var(--mv2-border-default); background: #fff; color: var(--mv2-text-strong);
+            border-radius: var(--mv2-r-sm); padding: 6px 13px; cursor: pointer; white-space: nowrap; }
+        .wf-btn:hover { border-color: var(--mv2-text-strong); }
+        .wf-btn--primary { background: var(--mv2-primary-500); color: #fff; border-color: transparent; }
+        .wf-btn--danger:hover { border-color: var(--mv2-pill-err-fg); color: var(--mv2-pill-err-fg); }
+        .wf-help { font-size: 12px; color: var(--mv2-text-muted); margin: 10px 0 0; line-height: 1.7; }
+    </style>
 @endsection
 
 @section('wwgrid')
 <script>
     function wkEsc(s) { return (s == null ? '' : String(s)); }
+
+    /* ---------- 개인 서류 ---------- */
+    var wfWorkerId = null;
+    var wfUploadUrl = null;
+
+    function wfRender(files) {
+        var box = document.getElementById('wf-list');
+        if (!box) return;
+
+        if (!files || !files.length) {
+            box.innerHTML = '<div class="dtl-empty">보관된 서류가 없습니다.</div>';
+            return;
+        }
+
+        box.innerHTML = files.map(function (f) {
+            // 만료된 서류는 눈에 띄어야 한다. 비자가 지난 줄 모르면 사고가 난다.
+            var flag = f.expired ? '<span class="wf-flag wf-flag--bad">만료</span>'
+                : (f.expiring ? '<span class="wf-flag wf-flag--warn">만료 임박</span>' : '');
+            var missing = f.missing ? '<span class="wf-flag wf-flag--bad">파일 없음</span>' : '';
+
+            return '<div class="wf-row">'
+                + '<span class="wf-type">' + wkEsc(f.type_label) + '</span>'
+                + '<span class="wf-name">' + wkEsc(f.name) + '</span>'
+                + '<span class="wf-meta">' + wkEsc(f.size)
+                + (f.expires_on ? ' · ~' + wkEsc(f.expires_on) : '') + '</span>'
+                + flag + missing
+                + '<span class="wf-meta">' + wkEsc(f.uploaded_by) + ' · ' + wkEsc(f.uploaded_at) + '</span>'
+                + '<a class="wf-btn" href="' + f.url + '">내려받기</a>'
+                + '<button type="button" class="wf-btn wf-btn--danger" data-wf-del="' + f.id + '">삭제</button>'
+                + (f.note ? '<div class="wf-note">' + wkEsc(f.note) + '</div>' : '')
+                + '</div>';
+        }).join('');
+    }
+
+    function wfBind(workerId, uploadUrl) {
+        wfWorkerId = workerId;
+        wfUploadUrl = uploadUrl;
+
+        var btn = document.getElementById('wf-upload');
+        if (btn) btn.addEventListener('click', wfUpload);
+
+        var list = document.getElementById('wf-list');
+        if (list) {
+            list.addEventListener('click', function (e) {
+                var del = e.target.closest('[data-wf-del]');
+                if (del) wfDelete(del.getAttribute('data-wf-del'));
+            });
+        }
+    }
+
+    function wfUpload() {
+        var input = document.getElementById('wf-file');
+        if (!input.files.length) { ndnToast('파일을 고르세요.', { type: 'error' }); return; }
+
+        var fd = new FormData();
+        fd.append('type', document.getElementById('wf-type').value);
+        fd.append('file', input.files[0]);
+        var exp = document.getElementById('wf-expires').value;
+        if (exp) fd.append('expires_on', exp);
+        var note = document.getElementById('wf-note').value.trim();
+        if (note) fd.append('note', note);
+
+        var btn = document.getElementById('wf-upload');
+        btn.disabled = true; btn.textContent = '올리는 중…';
+
+        fetch(wfUploadUrl, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            },
+            body: fd,
+        })
+            .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+            .then(function (res) {
+                btn.disabled = false; btn.textContent = '올리기';
+                if (res.ok && res.j.ok) {
+                    ndnToast(res.j.message, { type: 'success' });
+                    input.value = '';
+                    document.getElementById('wf-note').value = '';
+                    document.getElementById('wf-expires').value = '';
+                    wfRender(res.j.rows);
+                } else {
+                    var m = res.j.message || (res.j.errors ? Object.values(res.j.errors)[0][0] : '올리지 못했습니다.');
+                    ndnToast(m, { type: 'error' });
+                }
+            })
+            .catch(function () {
+                btn.disabled = false; btn.textContent = '올리기';
+                ndnToast('올리지 못했습니다.', { type: 'error' });
+            });
+    }
+
+    function wfDelete(fileId) {
+        ndnConfirm('이 서류를 지웁니다. 파일도 함께 삭제됩니다.',
+            { title: '서류 삭제', okText: '삭제', danger: true }).then(function (ok) {
+                if (!ok) return;
+                fetch('{{ url('admin/workers') }}/' + wfWorkerId + '/files/' + fileId, {
+                    method: 'DELETE',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    },
+                })
+                    .then(function (r) { return r.json(); })
+                    .then(function (j) {
+                        if (j.ok) { ndnToast(j.message, { type: 'success' }); wfRender(j.rows); }
+                        else { ndnToast(j.message || '지우지 못했습니다.', { type: 'error' }); }
+                    });
+            });
+    }
 
     function openWorker(id) {
         fetch('{{ url('admin/screen/workers') }}/' + id + '?format=json', { headers: { 'Accept': 'application/json' } })
@@ -61,7 +198,28 @@
                 } else { html += '<div class="dtl-empty">점검 이력이 없습니다.</div>'; }
                 html += '</div>';
 
+                // 본사가 보관하는 개인 서류 — 여권 사본·건강검진 등
+                html += '<div class="dtl-sec"><div class="dtl-sec__title">개인 서류 ('
+                    + (d.files || []).length + '건)</div>'
+                    + '<div id="wf-list"></div>'
+                    + '<div class="wf-form">'
+                    + '  <select id="wf-type">'
+                    + Object.keys(d.file_types).map(function (k) {
+                        return '<option value="' + k + '">' + wkEsc(d.file_types[k]) + '</option>';
+                    }).join('')
+                    + '  </select>'
+                    + '  <input type="date" id="wf-expires" title="유효기간(선택) — 비자·건강검진처럼 만료가 있는 서류">'
+                    + '  <input type="text" id="wf-note" maxlength="300" placeholder="메모(선택)">'
+                    + '  <input type="file" id="wf-file" accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.hwp,.hwpx">'
+                    + '  <button type="button" class="wf-btn wf-btn--primary" id="wf-upload">올리기</button>'
+                    + '</div>'
+                    + '<p class="wf-help">여권 사본은 그 자체로 민감정보입니다. '
+                    + '올린 서류는 관리자만 볼 수 있고, 열면 열람 기록이 남습니다. (20MB 이하)</p>'
+                    + '</div>';
+
                 document.getElementById('wk-detail').innerHTML = html;
+                wfRender(d.files);
+                wfBind(d.id, d.file_upload_url);
                 document.getElementById('wk-detail-tab').hidden = false;
                 window.ndnSwitchTab('detail');
             })

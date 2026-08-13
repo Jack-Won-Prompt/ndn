@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\FarmVisitController;
 use App\Http\Controllers\Admin\InquiryController;
 use App\Http\Controllers\Admin\InvitationController;
 use App\Http\Controllers\Admin\LifeChecklistController;
+use App\Http\Controllers\Admin\MatchingController;
 use App\Http\Controllers\Admin\NoticeController;
 use App\Http\Controllers\Admin\RegionController;
 use App\Http\Controllers\Admin\RequiredDocumentAdminController;
@@ -22,6 +23,7 @@ use App\Http\Controllers\Admin\ServiceRequestController;
 use App\Http\Controllers\Admin\SignupApprovalController;
 use App\Http\Controllers\Admin\SosController;
 use App\Http\Controllers\Admin\TicketGridController;
+use App\Http\Controllers\Admin\WorkerFileController;
 use App\Http\Controllers\Admin\WorkerGridController;
 use App\Http\Controllers\Admin\WorkReviewController;
 use App\Http\Controllers\ChatController;
@@ -207,6 +209,16 @@ Route::prefix('admin')->group(function () {
         Route::delete('/required-documents/{requiredDocument}/file', [RequiredDocumentAdminController::class, 'removeFile'])
             ->whereNumber('requiredDocument')->name('admin.required-documents.file.remove');
 
+        // 농가↔근로자 매칭 — 배정 생성·확정·취소. 지금까지 관리자 앱에만 있던 기능이다.
+        Route::get('/matching/{demand}', [MatchingController::class, 'show'])
+            ->whereNumber('demand')->name('admin.matching.show');
+        Route::post('/matching/placements', [MatchingController::class, 'store'])
+            ->name('admin.matching.store');
+        Route::post('/matching/placements/{placement}/confirm', [MatchingController::class, 'confirm'])
+            ->whereNumber('placement')->name('admin.matching.confirm');
+        Route::post('/matching/placements/{placement}/cancel', [MatchingController::class, 'cancel'])
+            ->whereNumber('placement')->name('admin.matching.cancel');
+
         // 지역별 모집·배치 — 시군 드릴다운(농가별 배치 인원)
         Route::get('/regions/{city}', [RegionController::class, 'show'])
             ->whereNumber('city')->name('admin.regions.show');
@@ -228,6 +240,9 @@ Route::prefix('admin')->group(function () {
         // 근무상태 종합 점검표 — 작성·상세·서명 이미지(§12)
         // 월별 점검(6항목) 직접 입력이 있던 자리다. 그쪽은 폐기됐다.
         Route::post('/work-reviews', [WorkReviewController::class, 'store'])->name('admin.work-reviews.store');
+        // 관계기관 제출 — 목록에서 고른 점검표를 PDF 로 첨부해 이메일로 보낸다
+        Route::post('/work-reviews/share', [WorkReviewController::class, 'share'])
+            ->name('admin.work-reviews.share');
         Route::get('/work-reviews/{workReview}', [WorkReviewController::class, 'show'])
             ->whereNumber('workReview')->name('admin.work-reviews.show');
         // 서명 파일은 storage 에 있어 이 라우트로만 나간다
@@ -236,6 +251,15 @@ Route::prefix('admin')->group(function () {
         // 관공서 제출용 PDF — 인적사항이 들어가므로 열람 기록을 남긴다
         Route::get('/work-reviews/{workReview}/pdf', [WorkReviewController::class, 'pdf'])
             ->whereNumber('workReview')->name('admin.work-reviews.pdf');
+
+        // 근로자 개인 서류 — 여권 사본·건강검진 등. 본사가 보관한다.
+        // 파일은 storage 에 있어 이 라우트로만 나가며 열람 기록을 남긴다(§7-6).
+        Route::post('/workers/{worker}/files', [WorkerFileController::class, 'store'])
+            ->whereNumber('worker')->name('admin.workers.files.store');
+        Route::get('/workers/{worker}/files/{file}', [WorkerFileController::class, 'show'])
+            ->whereNumber(['worker', 'file'])->name('admin.workers.files.show');
+        Route::delete('/workers/{worker}/files/{file}', [WorkerFileController::class, 'destroy'])
+            ->whereNumber(['worker', 'file'])->name('admin.workers.files.destroy');
 
         // 생활 체크리스트 — 항목 문구 편집 (체크는 근로자 본인만 한다)
         Route::post('/life-checklist/items/{item}', [LifeChecklistController::class, 'updateItem'])
