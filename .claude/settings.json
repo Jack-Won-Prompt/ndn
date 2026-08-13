@@ -363,7 +363,13 @@
       "Bash(./vendor/bin/pest --group=guard)",
       "Bash(git stash *)",
       "Bash(awk '/^\\\\[2026-08-13 03:45:08\\\\]/{c++; print NR\": \"substr\\($0,1,200\\)}' storage/logs/laravel.log)",
-      "Bash(./vendor/bin/pint -q)"
+      "Bash(./vendor/bin/pint -q)",
+      "Bash(grep -oE '<\\(button|a|input\\)[^>]*>[^<]{1,30}' resources/views/admin/screens/settlement.blade.php resources/views/admin/screens/accesslog.blade.php resources/views/admin/screens/dashboard.blade.php resources/views/admin/screens/settings.blade.php resources/views/admin/screens/account-deletions.blade.php resources/views/admin/screens/regions.blade.php)",
+      "Bash(grep -n \"^#\\\\{2,3\\\\} \" docs/NDN_근로자_앱_사용매뉴얼.md)",
+      "Bash(grep -n \"^#\\\\{2,3\\\\} \" docs/NDN_협력사_포털_사용매뉴얼.md)",
+      "Bash(grep -oE '<\\(button|a|label\\)[^>]*>[^<]{1,25}' resources/views/admin/screens/required-documents.blade.php)",
+      "Bash(grep -oE 'id=\"st-[a-z_-]+\"|<label[^>]*>[^<]{1,20}' resources/views/admin/screens/settings.blade.php)",
+      "Bash(grep -n '$fields\\\\|'\\\\''label'\\\\'' =>' app/Http/Controllers/Admin/ConsoleController.php)"
     ],
     "additionalDirectories": [
       "\\tmp"
