@@ -96,6 +96,8 @@ class BaseInfoGridController extends Controller
                 'main_crop' => $f->main_crop,
                 'contact_phone' => $f->contact_phone,
                 'address' => $f->address,
+                // 농업경영체 등록번호 — 지자체 배정 신청서에 함께 적어 내는 번호
+                'business_reg_no' => $f->business_reg_no,
             ])->all();
     }
 
@@ -108,9 +110,13 @@ class BaseInfoGridController extends Controller
             'main_crop' => ['nullable', 'string', 'max:100'],
             'contact_phone' => ['nullable', 'string', 'max:30'],
             'address' => ['nullable', 'string', 'max:200'],
+            // 숫자·하이픈만. 자리수를 고정하지 않는 이유는 발급 기관과 시기에 따라
+            // 표기가 달라서다 — 틀린 규칙으로 막으면 맞는 번호를 못 넣는다.
+            'business_reg_no' => ['nullable', 'string', 'max:30', 'regex:/^[0-9-]+$/'],
         ];
+        $messages = ['business_reg_no.regex' => '경영체등록번호는 숫자와 - 만 넣을 수 있습니다.'];
         try {
-            DB::transaction(function () use ($payload, $rules) {
+            DB::transaction(function () use ($payload, $rules, $messages) {
                 $del = collect($payload['deleted'] ?? [])->pluck('id')->filter()->all();
                 if ($del) {
                     Farm::whereIn('id', $del)->get()->each->delete();
@@ -121,12 +127,12 @@ class BaseInfoGridController extends Controller
                         continue;
                     }
                     $f = $this->farmFields($cur);
-                    $this->check($f, $rules, "농가 수정 {$i}행");
+                    $this->check($f, $rules, "농가 수정 {$i}행", $messages);
                     Farm::whereKey($cur['id'])->update($f);
                 }
                 foreach ($payload['added'] ?? [] as $i => $a) {
                     $f = $this->farmFields($a);
-                    $this->check($f, $rules, "농가 신규 {$i}행");
+                    $this->check($f, $rules, "농가 신규 {$i}행", $messages);
                     Farm::create($f);
                 }
             });
@@ -145,14 +151,19 @@ class BaseInfoGridController extends Controller
             'main_crop' => ($r['main_crop'] ?? '') ?: null,
             'contact_phone' => ($r['contact_phone'] ?? '') ?: null,
             'address' => ($r['address'] ?? '') ?: null,
+            // 보기 좋으라고 넣은 공백은 지운다. 같은 번호가 '1234567890' 과
+            // '123 456 7890' 으로 갈라지면 나중에 대조할 수 없다.
+            'business_reg_no' => trim(str_replace(' ', '', (string) ($r['business_reg_no'] ?? ''))) ?: null,
         ];
     }
 
     public function farmImport(Request $request): JsonResponse
     {
         $request->validate(['file' => ['required', 'file', 'mimes:xlsx,xls,csv,txt', 'max:5120']]);
+        // 받는 엑셀마다 머리글이 달라 흔한 표기를 모두 받는다.
         $map = ['농가' => 'name', '농가명' => 'name', '지자체' => 'city', '시청' => 'city',
-            '품목' => 'main_crop', '주작물' => 'main_crop', '연락처' => 'contact_phone', '전화' => 'contact_phone', '주소' => 'address'];
+            '품목' => 'main_crop', '주작물' => 'main_crop', '연락처' => 'contact_phone', '전화' => 'contact_phone', '주소' => 'address',
+            '경영체등록번호' => 'business_reg_no', '농업경영체등록번호' => 'business_reg_no', '경영체번호' => 'business_reg_no'];
         $cities = City::pluck('id', 'name');
         try {
             $ext = strtolower($request->file('file')->getClientOriginalExtension());
@@ -164,7 +175,12 @@ class BaseInfoGridController extends Controller
                 foreach ($sheet->getRowIterator() as $r) {
                     $cells = array_map(fn ($c) => (string) $c->getValue(), $r->getCells());
                     if ($header === null) {
-                        $header = array_map(fn ($h) => $map[trim($h)] ?? null, $cells);
+                        // 머리글의 공백은 무시한다 — '경영체등록번호' 와 '경영체 등록번호' 를
+                        // 다른 칸으로 보면 열 하나가 통째로 버려진다.
+                        $header = array_map(
+                            fn ($h) => $map[preg_replace('/\s+/u', '', trim($h))] ?? null,
+                            $cells,
+                        );
 
                         continue;
                     }
@@ -191,9 +207,10 @@ class BaseInfoGridController extends Controller
         return response()->json(['ok' => true, 'rows' => $rows]);
     }
 
-    private function check(array $fields, array $rules, string $label): void
+    /** @param  array<string, string>  $messages */
+    private function check(array $fields, array $rules, string $label, array $messages = []): void
     {
-        $v = Validator::make($fields, $rules);
+        $v = Validator::make($fields, $rules, $messages);
         if ($v->fails()) {
             throw new \RuntimeException($label.': '.$v->errors()->first());
         }

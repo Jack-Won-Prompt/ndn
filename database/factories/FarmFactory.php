@@ -39,6 +39,8 @@ class FarmFactory extends Factory
             'name' => fake()->randomElement(self::NAMES),
             'address' => fake()->randomElement(self::ADDR),
             'contact_phone' => fake()->numerify('010-####-####'),
+            // 농업경영체 등록번호 — 지자체 배정 신청서에 함께 적어 내는 번호
+            'business_reg_no' => fake()->numerify('##########'),
             'main_crop' => fake()->randomElement(['딸기', '토마토', '오이', '파프리카', '사과', '고추', '깻잎', '포도']),
         ];
     }

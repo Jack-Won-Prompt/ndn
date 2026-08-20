@@ -62,6 +62,9 @@
                 { header: '주작물', name: 'main_crop', width: 120, editor: 'text' },
                 { header: '연락처', name: 'contact_phone', width: 150, editor: 'text' },
                 { header: '주소', name: 'address', width: 260, editor: 'text' },
+                // 지자체 배정 신청서에 함께 적어 내는 번호. 숫자지만 앞자리 0 이 살아야 해
+                // number 가 아니라 text 로 둔다.
+                { header: '경영체등록번호', name: 'business_reg_no', width: 150, editor: 'text' },
             ],
         });
     }

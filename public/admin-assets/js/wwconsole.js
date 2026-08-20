@@ -82,6 +82,39 @@
             grid._wrapEl.style.height = fitHeight(host) + 'px';
         }
 
+        /* ---------- 콤보에서 고른 값의 타입을 되돌린다 ----------
+         * <select>.value 는 언제나 문자열이다. 그래서 지자체를 고르면 3 이 '3' 이 되고,
+         * wwGrid 는 라벨을 === 로 찾으므로 3 === '3' 이 아니라 라벨을 못 찾는다.
+         * 그 결과 칸에 이름 대신 **id 숫자**가, 모집 여부에 '중지' 대신 '0' 이 뜬다.
+         *
+         * 같은 이유로 고르던 값을 그대로 다시 골라도 1 !== '1' 이라 '변경됨' 으로 잡혀,
+         * 바꾼 것이 없는데 저장 대상이 된다.
+         *
+         * 고르기 전과 같은 타입으로 돌려놓아 두 가지를 함께 없앤다. wwGrid 는 여러
+         * 프로젝트가 함께 쓰는 라이브러리라 손대지 않고 이쪽에서 감싼다.
+         */
+        var typedOption = {};
+        (cfg.columns || []).forEach(function (col) {
+            var opts = col.editor === 'combo' ? col.options
+                : (col.editor === 'popup' && col.popup ? col.popup.items : null);
+            if (!opts) return;
+            var byText = {};
+            opts.forEach(function (o) {
+                var v = (o && typeof o === 'object') ? o.value : o;
+                byText[String(v)] = v;
+            });
+            typedOption[col.name] = byText;
+        });
+
+        var commitValue = grid._commitValue.bind(grid);
+        grid._commitValue = function (rowIndex, colName, value) {
+            var byText = typedOption[colName];
+            if (byText && typeof value === 'string' && Object.prototype.hasOwnProperty.call(byText, value)) {
+                value = byText[value];
+            }
+            return commitValue(rowIndex, colName, value);
+        };
+
         /* ---------- 저장 (수정추적 → 서버) ---------- */
         function save() {
             var mods = grid.getModifiedRows();

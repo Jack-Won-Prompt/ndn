@@ -26,6 +26,7 @@ class Farm extends Model
         'city_id',
         'name',
         'address',
+        'business_reg_no',
         'contact_phone',
         'main_crop',
     ];
