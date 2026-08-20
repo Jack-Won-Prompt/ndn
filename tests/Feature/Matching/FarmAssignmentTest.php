@@ -1,0 +1,215 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Domains\Demand\Enums\DemandStatus;
+use App\Domains\Demand\Models\City;
+use App\Domains\Demand\Models\DemandRequest;
+use App\Domains\Demand\Models\Farm;
+use App\Domains\Matching\Enums\PlacementStatus;
+use App\Domains\Matching\Models\Placement;
+use App\Domains\Recruitment\Enums\WorkerStatus;
+use App\Domains\Recruitment\Models\Worker;
+use App\Http\Controllers\Admin\MatchingController;
+use App\Models\User;
+use App\Shared\Enums\UserRole;
+use Database\Seeders\RoleSeeder;
+use Spatie\Activitylog\Models\Activity;
+
+use function Pest\Laravel\actingAs;
+
+/**
+ * 농가에서 출발하는 배정 (매칭 화면 '농가별 배정' 탭).
+ *
+ * 본사는 농가를 받아 적은 뒤 곧바로 사람을 붙인다. 그 한 줄기를 한 화면에서
+ * 끝낼 수 있어야 하고, 그러려면 농가 등록 → 수요 → 배정이 끊기지 않아야 한다.
+ */
+beforeEach(function () {
+    $this->seed(RoleSeeder::class);
+
+    $this->admin = User::factory()->create();
+    $this->admin->assignRole(UserRole::NdnAdmin->value);
+
+    $this->city = City::factory()->create(['name' => '테스트시']);
+    $this->farm = Farm::factory()->create(['name' => '배정테스트농원', 'city_id' => $this->city->id]);
+});
+
+it('농가 목록에 수요·배정 숫자가 함께 온다', function () {
+    $demand = DemandRequest::factory()->create([
+        'farm_id' => $this->farm->id,
+        'headcount' => 5,
+        'status' => DemandStatus::Submitted,
+    ]);
+    Placement::factory()->create([
+        'farm_id' => $this->farm->id,
+        'status' => PlacementStatus::Proposed,
+    ]);
+
+    $rows = MatchingController::farmRows();
+    $row = collect($rows)->firstWhere('id', $this->farm->id);
+
+    expect($row['demands'])->toBe(1)
+        ->and($row['need'])->toBe(5)
+        ->and($row['placed'])->toBe(1)
+        // 기준정보와 같은 칸도 함께 와야 그 표에서 바로 고칠 수 있다.
+        ->and($row)->toHaveKeys(['name', 'city_id', 'address', 'business_reg_no']);
+
+    expect($demand->fresh())->not->toBeNull();
+});
+
+it('취소된 배정은 채워진 인원으로 세지 않는다', function () {
+    // 취소했는데도 자리를 차지하고 있으면 그 농가는 영영 정원이 차 있다.
+    Placement::factory()->create([
+        'farm_id' => $this->farm->id,
+        'status' => PlacementStatus::Cancelled,
+    ]);
+
+    $row = collect(MatchingController::farmRows())
+        ->firstWhere('id', $this->farm->id);
+
+    expect($row['placed'])->toBe(0);
+});
+
+it('농가를 열면 그 농가의 수요와 배정만 나온다', function () {
+    $mine = DemandRequest::factory()->create(['farm_id' => $this->farm->id]);
+    $other = DemandRequest::factory()->create();
+
+    $json = actingAs($this->admin)
+        ->getJson(route('admin.matching.farm', $this->farm))
+        ->assertOk()->json();
+
+    expect($json['farm']['name'])->toBe('배정테스트농원')
+        ->and($json['farm']['city'])->toBe('테스트시')
+        ->and(collect($json['demands'])->pluck('id')->all())->toBe([$mine->id])
+        ->and(collect($json['demands'])->pluck('id')->all())->not->toContain($other->id);
+});
+
+it('농가에 수요가 없으면 빈 목록으로 알려 준다', function () {
+    // 화면은 이걸 보고 '수요를 먼저 등록하라' 고 안내한다.
+    $json = actingAs($this->admin)
+        ->getJson(route('admin.matching.farm', $this->farm))
+        ->assertOk()->json();
+
+    expect($json['demands'])->toBe([])
+        ->and($json['placements'])->toBe([]);
+});
+
+it('농가 화면에서 수요를 등록하면 바로 제출됨이 된다', function () {
+    // 본사가 콘솔에서 직접 적어 넣는 수요는 농가가 작성 중인 초안이 아니다.
+    // 제출됨이라야 [수요별 매칭] 목록에도 함께 나온다.
+    $json = actingAs($this->admin)->postJson(route('admin.matching.demand.store', $this->farm), [
+        'nationality' => 'VN',
+        'headcount' => 3,
+        'gender' => 'any',
+        'crop' => '딸기',
+        'period_start' => '2027-03-01',
+        'period_end' => '2027-06-30',
+        'allow_siblings' => true,
+    ])->assertOk()->json();
+
+    $demand = DemandRequest::findOrFail($json['demand_id']);
+
+    expect($demand->status)->toBe(DemandStatus::Submitted)
+        ->and($demand->farm_id)->toBe($this->farm->id)
+        // 지자체를 따로 적지 않아도 농가의 지자체를 물려받는다.
+        ->and($demand->city_id)->toBe($this->city->id)
+        ->and($demand->allow_siblings)->toBeTrue();
+
+    expect(collect(MatchingController::rows())->pluck('id'))
+        ->toContain($demand->id);
+});
+
+it('기간이 거꾸로면 수요를 만들지 않는다', function () {
+    actingAs($this->admin)->postJson(route('admin.matching.demand.store', $this->farm), [
+        'nationality' => 'VN',
+        'headcount' => 1,
+        'gender' => 'any',
+        'crop' => '딸기',
+        'period_start' => '2027-06-30',
+        'period_end' => '2027-03-01',
+    ])->assertStatus(422)->assertJsonValidationErrors('period_end');
+
+    expect(DemandRequest::count())->toBe(0);
+});
+
+it('농가 등록부터 배정까지 한 화면에서 이어진다', function () {
+    // 이 화면이 있는 이유 그대로를 한 번에 확인한다.
+    $worker = Worker::factory()->create([
+        'nationality' => 'VN',
+        'status' => WorkerStatus::Active->value,
+    ]);
+
+    // 1) 농가 등록 — 기준정보와 같은 엔드포인트
+    actingAs($this->admin)->postJson(route('admin.grid.farms.save'), [
+        'added' => [['name' => '새로등록한농원', 'city_id' => $this->city->id]],
+        'rows' => 'matching',
+    ])->assertOk();
+
+    $farm = Farm::where('name', '새로등록한농원')->firstOrFail();
+
+    // 2) 수요 등록
+    $demandId = actingAs($this->admin)->postJson(route('admin.matching.demand.store', $farm), [
+        'nationality' => 'VN',
+        'headcount' => 2,
+        'gender' => 'any',
+        'crop' => '딸기',
+        'period_start' => '2027-03-01',
+        'period_end' => '2027-06-30',
+    ])->assertOk()->json('demand_id');
+
+    // 3) 배정
+    actingAs($this->admin)->postJson(route('admin.matching.store'), [
+        'demand_id' => $demandId,
+        'worker_ids' => [$worker->id],
+    ])->assertOk();
+
+    $placement = Placement::where('worker_id', $worker->id)->firstOrFail();
+
+    expect($placement->farm_id)->toBe($farm->id)
+        ->and($placement->status)->toBe(PlacementStatus::Proposed)
+        // 기간은 수요에서 온다 — 이것 때문에 수요 없이는 배정을 만들 수 없다.
+        ->and($placement->start_date->toDateString())->toBe('2027-03-01');
+});
+
+it('매칭 화면에서 저장하면 수요·배정 칸까지 돌려준다', function () {
+    // 이걸 빠뜨리면 저장한 순간 [인력 배정] 칸이 빈칸이 되어,
+    // 방금 등록한 농가에 사람을 붙일 수 없다.
+    $rows = actingAs($this->admin)->postJson(route('admin.grid.farms.save'), [
+        'added' => [['name' => '방금등록한농원']],
+        'rows' => 'matching',
+    ])->assertOk()->json('rows');
+
+    expect($rows[0])->toHaveKeys(['demands', 'placed', 'assign']);
+});
+
+it('기준정보에서 저장하면 기준정보 칸만 돌려준다', function () {
+    // 매칭 전용 칸을 늘 얹으면 기준정보 표에 뜻 모를 열이 생긴다.
+    $rows = actingAs($this->admin)->postJson(route('admin.grid.farms.save'), [
+        'added' => [['name' => '기준정보농원']],
+    ])->assertOk()->json('rows');
+
+    expect($rows[0])->not->toHaveKey('assign');
+});
+
+it('관리자가 아니면 농가 배정 화면을 열 수 없다', function () {
+    $officer = User::factory()->create();
+    $officer->assignRole(UserRole::CityOfficer->value);
+
+    actingAs($officer)->getJson(route('admin.matching.farm', $this->farm))->assertForbidden();
+    actingAs($officer)->postJson(route('admin.matching.demand.store', $this->farm), [
+        'nationality' => 'VN', 'headcount' => 1, 'gender' => 'any', 'crop' => '딸기',
+        'period_start' => '2027-03-01', 'period_end' => '2027-06-30',
+    ])->assertForbidden();
+
+    expect(DemandRequest::count())->toBe(0);
+});
+
+it('농가 근로자 이름을 띄우면 열람 기록이 남는다', function () {
+    // §7-6 — 누가 언제 어느 근로자를 봤는지.
+    Placement::factory()->create(['farm_id' => $this->farm->id]);
+
+    actingAs($this->admin)->getJson(route('admin.matching.farm', $this->farm))->assertOk();
+
+    expect(Activity::where('log_name', 'personal-data-access')
+        ->where('properties->reason', 'matching-farm')->exists())->toBeTrue();
+});

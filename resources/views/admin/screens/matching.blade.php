@@ -5,17 +5,32 @@
     <div class="screen__head">
         <div>
             <h1 class="screen__title">농가 매칭·배정</h1>
-            <p class="screen__sub">수요를 고르면 조건에 맞는 인력이 추천됩니다 · 배정(제안) → 확정 순서로 진행하며, 확정하면 입국 준비 기록이 함께 만들어집니다.</p>
+            <p class="screen__sub">
+                농가를 등록한 자리에서 바로 인력을 붙입니다 · 농가 → 수요 → 인력 배정(제안) → 확정 순서로 진행하며,
+                확정하면 입국 준비 기록이 함께 만들어집니다.
+            </p>
         </div>
     </div>
 
     <div class="screen-tabs">
-        <button type="button" class="screen-tab is-active" data-tab="demands">수요별 매칭<span class="screen-tab__badge">{{ count($rows) }}</span></button>
+        <button type="button" class="screen-tab is-active" data-tab="farms">농가별 배정<span class="screen-tab__badge">{{ count($farmRows) }}</span></button>
+        <button type="button" class="screen-tab" data-tab="demands">수요별 매칭<span class="screen-tab__badge">{{ count($rows) }}</span></button>
         <button type="button" class="screen-tab" data-tab="placements">배정 현황<span class="screen-tab__badge">{{ count($placements) }}</span></button>
     </div>
 
+    {{-- 농가별 배정 — 농가를 여기서 등록하고 그 자리에서 사람을 붙인다 --}}
+    <div data-tabpane="farms">
+        <div id="grid-farms-mt"></div>
+        <div id="mt-fpanel" class="mt-panel" hidden></div>
+        <p class="mt-hint">
+            농가는 이 표에서 바로 등록·수정합니다 (<strong>[신규 행] → 입력 → [변경 저장]</strong>, 엑셀 업로드도 같은 방식).
+            저장한 뒤 <strong>[인력 배정 ▸]</strong> 칸을 누르면 아래에 그 농가의 수요와 배정 화면이 열립니다.
+            <br>표의 내용은 <strong>[농가·지자체 기준정보]</strong> 화면과 같은 자료입니다.
+        </p>
+    </div>
+
     {{-- 수요별 매칭 --}}
-    <div data-tabpane="demands">
+    <div data-tabpane="demands" hidden>
         <div class="mt-listwrap">
             <table class="mt-table" id="mt-demands">
                 <thead>
@@ -156,17 +171,75 @@
         .mt-ask__input{width:100%;font-family:inherit;font-size:var(--mv2-fz-sm);padding:8px 10px;border:1px solid var(--mv2-border-default);border-radius:var(--mv2-r-sm);resize:vertical;}
         .mt-ask__btns{display:flex;justify-content:flex-end;gap:8px;margin-top:12px;}
         .mt-ask__btns .mt-mini{padding:7px 16px;font-size:var(--mv2-fz-xs);}
+        .mt-demandpick{display:flex;flex-wrap:wrap;gap:8px;}
+        .mt-dchip{font-family:inherit;text-align:left;background:#fff;border:1px solid var(--mv2-border-default);border-radius:8px;padding:8px 12px;cursor:pointer;font-size:var(--mv2-fz-xs);color:var(--mv2-text-strong);}
+        .mt-dchip:hover{border-color:var(--mv2-primary-500);}
+        .mt-dchip.is-on{border-color:var(--mv2-primary-500);background:var(--mv2-primary-50,#E9F6F4);}
+        .mt-dchip b{display:block;font-size:var(--mv2-fz-sm);}
+        .mt-dchip span{color:var(--mv2-text-muted);}
+        .mt-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:8px;}
+        /* display 를 지정한 요소는 hidden 속성만으로 사라지지 않는다. */
+        .mt-form[hidden]{display:none;}
+        .mt-form label{display:block;font-size:var(--mv2-fz-xs);font-weight:700;color:var(--mv2-text-muted);margin-bottom:4px;}
+        .mt-form input,.mt-form select{width:100%;font-family:inherit;font-size:var(--mv2-fz-sm);padding:7px 9px;border:1px solid var(--mv2-border-default);border-radius:var(--mv2-r-sm);}
+        .mt-form--full{grid-column:1/-1;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
         @media (max-width:820px){.mt-cands{grid-template-columns:1fr;}}
     </style>
 @endsection
+
+@section('wwgrid')
+<script>
+    // 농가 표 — 기준정보와 **같은 엔드포인트**로 저장·업로드한다.
+    // 규칙이 두 벌로 갈라지면 어느 화면으로 넣었느냐에 따라 다른 데이터가 남는다.
+    wwConsole({
+        el: 'grid-farms-mt',
+        editable: true,
+        title: '농가',
+        saveUrl: '{{ route('admin.grid.farms.save') }}',
+        importUrl: '{{ route('admin.grid.farms.import') }}',
+        // 저장 뒤 돌려받는 목록에 수요·배정 칸까지 담아 달라는 표시.
+        // 이게 없으면 저장한 순간 [인력 배정] 칸이 빈칸이 된다.
+        savePayload: { rows: 'matching' },
+        newRow: { name: '' },
+        height: 340,
+        data: @json($farmRows),
+        columns: [
+            { header: '농가명', name: 'name', width: 150, editor: 'text', sortable: true },
+            { header: '지자체', name: 'city_id', width: 130, editor: 'combo', options: @json($cityOptions) },
+            { header: '주작물', name: 'main_crop', width: 110, editor: 'text' },
+            { header: '연락처', name: 'contact_phone', width: 140, editor: 'text' },
+            { header: '주소', name: 'address', width: 220, editor: 'text' },
+            { header: '경영체등록번호', name: 'business_reg_no', width: 140, editor: 'text' },
+            // 아래 세 칸은 편집기가 없다 — 눌러도 셀이 열리지 않으므로 그대로 버튼처럼 쓴다.
+            { header: '수요', name: 'demands', width: 70, align: 'center' },
+            { header: '배정', name: 'placed', width: 70, align: 'center' },
+            { header: '인력 배정', name: 'assign', width: 110, align: 'center' },
+        ],
+    });
+</script>
+@endsection
+
+@php
+    // 수요를 그 자리에서 등록할 때 쓰는 국적 선택지.
+    // 화살표 함수를 뷰 출력 안에 그대로 쓰면 Blade 가 인자 구분 쉼표로 오해할 수 있어 미리 만든다.
+    $natOptions = collect(App\Domains\Recruitment\Enums\Nationality::adminOptions())
+        ->map(fn (string $label, string $code) => ['value' => $code, 'label' => $label])
+        ->values();
+@endphp
 
 @section('script')
 <script>
     (function () {
         var token = document.querySelector('meta[name="csrf-token"]').content;
         var BASE = '{{ url('admin/matching') }}';
-        var current = null;   // 열려 있는 수요
-        var panel = document.getElementById('mt-panel');
+        var NATIONS = @json($natOptions);
+
+        var panel = document.getElementById('mt-panel');    // 수요별 매칭 탭
+        var fpanel = document.getElementById('mt-fpanel');  // 농가별 배정 탭
+
+        // 지금 열려 있는 수요와, 그것을 그린 자리. 배정 뒤 같은 자리를 다시 그린다.
+        var current = { demand: null, host: null };
+        var currentFarm = null;
 
         function esc(s) {
             return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
@@ -207,7 +280,8 @@
                 + '<td style="text-align:right">' + (btns || '—') + '</td></tr>';
         }
 
-        function render(d) {
+        /* ── 수요 1건: 추천 인력 + 이 농가의 배정 현황 ────────────────── */
+        function demandHtml(d) {
             var dm = d.demand;
             var cands = (d.candidates || []).concat(d.others || []);
             var html = '<div class="mt-panel__head">'
@@ -224,17 +298,17 @@
             // 미배정 인력이 수십 명이라 목록이 길다. 이름으로 좁힐 칸을 둔다.
             html += '<div class="mt-sec"><div class="mt-sec__title">추천 인력 <span class="mt-chip">' + (d.candidates || []).length + '명</span>'
                 + '<span class="mt-chip">기타 미배정 ' + (d.others || []).length + '명</span>'
-                + '<input type="search" class="mt-find" id="mt-find" placeholder="이름으로 찾기"></div>';
+                + '<input type="search" class="mt-find" placeholder="이름으로 찾기"></div>';
             html += cands.length
                 ? '<div class="mt-cands">' + cands.map(candCard).join('') + '</div>'
                 : '<div class="mt-empty">배정할 수 있는 미배정·재직 인력이 없습니다. [근로자] 화면에서 등록하거나 [가입 승인]에서 승인하세요.</div>';
 
             html += '<div class="mt-bar">'
-                + '<button type="button" class="mt-btn" id="mt-assign" disabled>선택 인원 배정</button>'
+                + '<button type="button" class="mt-btn" data-assign disabled>선택 인원 배정</button>'
                 + (dm.allow_siblings
-                    ? '<label class="mt-chk"><input type="checkbox" id="mt-group"> 형제·가족으로 함께 배치 (한 그룹으로 묶음)</label>'
+                    ? '<label class="mt-chk"><input type="checkbox" data-group> 형제·가족으로 함께 배치 (한 그룹으로 묶음)</label>'
                     : '<span class="mt-chip">이 수요는 형제·가족 동반 불가</span>')
-                + '<span class="mt-chip" id="mt-picked">0명 선택</span>'
+                + '<span class="mt-chip" data-picked>0명 선택</span>'
                 + '</div></div>';
 
             html += '<div class="mt-sec"><div class="mt-sec__title">이 농가의 배정 현황 <span class="mt-chip">' + (d.placements || []).length + '건</span></div>';
@@ -243,50 +317,157 @@
                 : '<div class="mt-empty">아직 배정된 인력이 없습니다.</div>';
             html += '</div>';
 
-            panel.innerHTML = html;
-            panel.hidden = false;
-            panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            return html;
         }
 
-        function open(id) {
-            current = id;
-            [].forEach.call(document.querySelectorAll('#mt-demands tr[data-id]'), function (tr) {
-                tr.classList.toggle('is-picked', tr.getAttribute('data-id') === String(id));
-            });
-            panel.hidden = false;
-            panel.innerHTML = '<div class="mt-empty">불러오는 중…</div>';
+        function openDemand(id, host) {
+            if (!host) return;
+            current = { demand: id, host: host };
+            host.hidden = false;
+            host.innerHTML = '<div class="mt-empty">불러오는 중…</div>';
             fetch(BASE + '/' + id, { headers: { 'Accept': 'application/json' } })
                 .then(function (r) { return r.json(); })
-                .then(render)
-                .catch(function () { panel.innerHTML = '<div class="mt-empty">불러오지 못했습니다.</div>'; });
+                .then(function (d) {
+                    host.innerHTML = demandHtml(d);
+                    host.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                })
+                .catch(function () { host.innerHTML = '<div class="mt-empty">불러오지 못했습니다.</div>'; });
         }
 
+        /* ── 수요별 매칭 탭 ──────────────────────────────────────────── */
         document.getElementById('mt-demands').addEventListener('click', function (e) {
             var tr = e.target.closest('tr[data-id]');
-            if (tr) open(tr.getAttribute('data-id'));
-        });
-
-        // 이름으로 좁히기 — 체크한 사람은 숨기지 않는다(안 보이는 채로 배정되면 안 된다).
-        panel.addEventListener('input', function (e) {
-            if (e.target.id !== 'mt-find') return;
-            var q = e.target.value.trim().toLowerCase();
-            [].forEach.call(panel.querySelectorAll('.mt-cand'), function (c) {
-                var hit = !q || c.textContent.toLowerCase().indexOf(q) !== -1;
-                c.classList.toggle('is-off', !hit && !c.querySelector('input').checked);
+            if (!tr) return;
+            [].forEach.call(document.querySelectorAll('#mt-demands tr[data-id]'), function (row) {
+                row.classList.toggle('is-picked', row === tr);
             });
+            openDemand(tr.getAttribute('data-id'), panel);
         });
 
-        // 후보 선택 → 버튼 활성화
-        panel.addEventListener('change', function (e) {
-            if (!e.target.matches('.mt-cand input')) return;
-            e.target.closest('.mt-cand').classList.toggle('is-on', e.target.checked);
-            var n = panel.querySelectorAll('.mt-cand input:checked').length;
-            var btn = document.getElementById('mt-assign');
-            if (btn) btn.disabled = n === 0;
-            var badge = document.getElementById('mt-picked');
-            if (badge) badge.textContent = n + '명 선택';
+        /* ── 농가별 배정 탭 ──────────────────────────────────────────── */
+        function demandChip(d) {
+            return '<button type="button" class="mt-dchip" data-demand="' + d.id + '">'
+                + '<b>#' + d.id + ' ' + esc(d.crop || '품목 미정') + ' · ' + d.headcount + '명</b>'
+                + '<span>' + esc(d.period) + ' · ' + esc(d.status_label)
+                + ' · 배정 ' + d.filled + '/' + d.headcount + '</span></button>';
+        }
+
+        // 수요가 없으면 배정 버튼이 닿을 곳이 없다 — 인원과 기간을 모르면 배정을
+        // 만들 수 없기 때문이다. 그래서 그 자리에서 수요를 받는다.
+        //
+        // 이미 수요가 있으면 접어 둔다. 대부분은 있는 수요를 고르러 온 것이고,
+        // 입력칸 여덟 개가 후보 명단을 아래로 밀어내면 정작 할 일이 멀어진다.
+        function demandForm(collapsed) {
+            var opts = NATIONS.map(function (n) {
+                return '<option value="' + n.value + '">' + esc(n.label) + '</option>';
+            }).join('');
+            return (collapsed ? '<button type="button" class="mt-mini" data-newform>+ 이 농가에 수요 추가</button>' : '')
+                + '<div class="mt-form"' + (collapsed ? ' hidden' : '') + '>'
+                + '<div><label>국적</label><select data-f="nationality">' + opts + '</select></div>'
+                + '<div><label>인원</label><input type="number" data-f="headcount" min="1" max="999" value="1"></div>'
+                + '<div><label>성별</label><select data-f="gender">'
+                + '<option value="any">무관</option><option value="male">남성</option><option value="female">여성</option>'
+                + '</select></div>'
+                + '<div><label>품목</label><input type="text" data-f="crop" maxlength="100" placeholder="예: 딸기"></div>'
+                + '<div><label>시작일</label><input type="date" data-f="period_start"></div>'
+                + '<div><label>종료일</label><input type="date" data-f="period_end"></div>'
+                + '<div><label>최소 나이</label><input type="number" data-f="age_min" min="18" max="99" placeholder="무관"></div>'
+                + '<div><label>최대 나이</label><input type="number" data-f="age_max" min="18" max="99" placeholder="무관"></div>'
+                + '<div class="mt-form--full">'
+                + '<label class="mt-chk"><input type="checkbox" data-f="allow_siblings"> 형제·가족 동반 허용</label>'
+                + '<button type="button" class="mt-btn" data-newdemand>수요 등록</button>'
+                + '</div></div>';
+        }
+
+        function farmHtml(d) {
+            var f = d.farm;
+            var ds = d.demands || [];
+            var html = '<div class="mt-panel__head">'
+                + '<span class="mt-panel__title">' + esc(f.name) + '</span>'
+                + '<span class="mt-chips">'
+                + '<span class="mt-chip">' + esc(f.city) + '</span>'
+                + '<span class="mt-chip">' + esc(f.crop || '주작물 미정') + '</span>'
+                + '<span class="mt-chip">배정 ' + (d.placements || []).length + '명</span>'
+                + '</span></div>';
+
+            html += '<div class="mt-sec"><div class="mt-sec__title">어느 수요에 채울까요 <span class="mt-chip">' + ds.length + '건</span></div>';
+            html += ds.length
+                ? '<div class="mt-demandpick">' + ds.map(demandChip).join('') + '</div>'
+                : '<div class="mt-empty">이 농가에는 등록된 수요가 없습니다. 배정은 인원·기간이 정해진 수요에 대해서만 만들 수 있으므로, 아래에서 먼저 등록하세요.</div>';
+            html += demandForm(ds.length > 0);
+            html += '</div>';
+
+            html += '<div id="mt-fbody"></div>';
+            return html;
+        }
+
+        /**
+         * 농가 패널을 그린다.
+         *
+         * pick 이 있으면 그 수요를 이어서 편다. 타이머로 나중에 부르지 않는 이유는,
+         * 자료가 도착하기 전에 타이머가 먼저 울면 펼 자리(#mt-fbody)가 아직 없기 때문이다.
+         */
+        function openFarm(id, pick, keepScroll) {
+            currentFarm = id;
+            fpanel.hidden = false;
+            if (!keepScroll) fpanel.innerHTML = '<div class="mt-empty">불러오는 중…</div>';
+            return fetch(BASE + '/farms/' + id, { headers: { 'Accept': 'application/json' } })
+                .then(function (r) { return r.json(); })
+                .then(function (d) {
+                    fpanel.innerHTML = farmHtml(d);
+                    if (!keepScroll) fpanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    syncFarmRow(id, (d.placements || []).length, (d.demands || []).length);
+
+                    var ds = d.demands || [];
+                    // 수요가 하나뿐이면 한 번 더 고르게 할 이유가 없다.
+                    var open = pick || (ds.length === 1 ? ds[0].id : null);
+                    if (open) pickDemand(open);
+                })
+                .catch(function () { fpanel.innerHTML = '<div class="mt-empty">불러오지 못했습니다.</div>'; });
+        }
+
+        function pickDemand(id) {
+            [].forEach.call(fpanel.querySelectorAll('.mt-dchip'), function (b) {
+                b.classList.toggle('is-on', b.getAttribute('data-demand') === String(id));
+            });
+            openDemand(id, document.getElementById('mt-fbody'));
+        }
+
+        /**
+         * 표의 '배정'·'수요' 숫자를 방금 본 값으로 맞춘다.
+         *
+         * 배정하고 나면 표는 옛 숫자를 들고 있다. 새로고침을 시키는 대신 그 줄만
+         * 고쳐 쓴다 — 편집 중인 다른 줄을 날리지 않기 위해 setData 는 쓰지 않는다.
+         */
+        function syncFarmRow(farmId, placed, demands) {
+            var host = document.getElementById('grid-farms-mt');
+            var grid = host && host.wwgrid;
+            if (!grid || !Array.isArray(grid.data) || typeof grid._refreshRow !== 'function') return;
+            for (var i = 0; i < grid.data.length; i++) {
+                if (String(grid.data[i].id) !== String(farmId)) continue;
+                grid.data[i].placed = placed;
+                grid.data[i].demands = demands;
+                grid._refreshRow(i);
+                return;
+            }
+        }
+
+        // '인력 배정' 칸은 편집기가 없어 클릭이 셀 편집으로 먹히지 않는다.
+        document.getElementById('grid-farms-mt').addEventListener('click', function (e) {
+            var cell = e.target.closest('[data-col-name="assign"][data-row-index]');
+            if (!cell) return;
+            var host = document.getElementById('grid-farms-mt');
+            var row = host.wwgrid && host.wwgrid.getData()[parseInt(cell.getAttribute('data-row-index'), 10)];
+            if (!row) return;
+            if (!row.id) {
+                // 아직 저장하지 않은 신규 행에는 붙일 농가가 없다.
+                ndnToast('먼저 [변경 저장]으로 농가를 등록하세요.', { type: 'info' });
+                return;
+            }
+            openFarm(row.id);
         });
 
+        /* ── 공통 동작 (두 패널이 같은 마크업을 쓴다) ────────────────── */
         function post(url, body, done) {
             fetch(url, {
                 method: 'POST',
@@ -305,24 +486,97 @@
                 .catch(function () { ndnToast('처리하지 못했습니다.', { type: 'error' }); });
         }
 
-        panel.addEventListener('click', function (e) {
+        // 배정 뒤 화면을 다시 그린다. 농가 탭에서 시작했으면 농가째로 다시 열어
+        // 수요별 진행률과 표의 숫자까지 함께 맞춘다.
+        function refresh() {
+            if (current.host === document.getElementById('mt-fbody') && currentFarm) {
+                openFarm(currentFarm, current.demand, true);
+                return;
+            }
+            if (current.demand) openDemand(current.demand, current.host);
+        }
+
+        function onInput(e) {
+            // 이름으로 좁히기 — 체크한 사람은 숨기지 않는다(안 보이는 채로 배정되면 안 된다).
+            if (!e.target.matches('.mt-find')) return;
+            var q = e.target.value.trim().toLowerCase();
+            var scope = e.target.closest('.mt-sec');
+            [].forEach.call(scope.querySelectorAll('.mt-cand'), function (c) {
+                var hit = !q || c.textContent.toLowerCase().indexOf(q) !== -1;
+                c.classList.toggle('is-off', !hit && !c.querySelector('input').checked);
+            });
+        }
+
+        function onChange(e) {
+            if (!e.target.matches('.mt-cand input')) return;
+            e.target.closest('.mt-cand').classList.toggle('is-on', e.target.checked);
+            var scope = e.target.closest('.mt-sec');
+            var n = scope.querySelectorAll('.mt-cand input:checked').length;
+            var btn = scope.querySelector('[data-assign]');
+            if (btn) btn.disabled = n === 0;
+            var badge = scope.querySelector('[data-picked]');
+            if (badge) badge.textContent = n + '명 선택';
+        }
+
+        function onClick(e) {
+            // 수요 고르기 (농가 탭)
+            var chip = e.target.closest('[data-demand]');
+            if (chip) { pickDemand(chip.getAttribute('data-demand')); return; }
+
+            // 수요 입력칸 펴기 (농가 탭)
+            if (e.target.hasAttribute('data-newform')) {
+                var form = fpanel.querySelector('.mt-form');
+                if (form) { form.hidden = false; e.target.hidden = true; }
+                return;
+            }
+
+            // 수요 등록 (농가 탭)
+            if (e.target.hasAttribute('data-newdemand')) { createDemand(e.target); return; }
+
             // 배정(제안) 생성
-            if (e.target.id === 'mt-assign') {
-                var ids = [].map.call(panel.querySelectorAll('.mt-cand input:checked'), function (i) { return Number(i.value); });
+            if (e.target.hasAttribute('data-assign')) {
+                var scope = e.target.closest('.mt-sec');
+                var ids = [].map.call(scope.querySelectorAll('.mt-cand input:checked'), function (i) { return Number(i.value); });
                 if (!ids.length) return;
-                var grp = document.getElementById('mt-group');
+                var grp = scope.querySelector('[data-group]');
                 e.target.disabled = true;
-                post(BASE + '/placements', { demand_id: current, worker_ids: ids, as_group: !!(grp && grp.checked) }, function (j) {
+                post(BASE + '/placements', { demand_id: current.demand, worker_ids: ids, as_group: !!(grp && grp.checked) }, function (j) {
                     ndnToast(j.count + '명 배정(제안)했습니다. 확정하면 입국 준비가 시작됩니다.', { type: 'success' });
-                    open(current);
+                    refresh();
                 });
                 return;
             }
             var c = e.target.closest('[data-confirm]');
-            if (c) { doConfirm(c.getAttribute('data-confirm'), function () { open(current); }); return; }
+            if (c) { doConfirm(c.getAttribute('data-confirm'), refresh); return; }
             var x = e.target.closest('[data-cancel]');
-            if (x) { doCancel(x.getAttribute('data-cancel'), function () { open(current); }); }
+            if (x) { doCancel(x.getAttribute('data-cancel'), refresh); }
+        }
+
+        [panel, fpanel].forEach(function (host) {
+            host.addEventListener('input', onInput);
+            host.addEventListener('change', onChange);
+            host.addEventListener('click', onClick);
         });
+
+        function createDemand(btn) {
+            var wrap = btn.closest('.mt-form');
+            var body = {};
+            [].forEach.call(wrap.querySelectorAll('[data-f]'), function (el) {
+                var k = el.getAttribute('data-f');
+                body[k] = el.type === 'checkbox' ? el.checked : el.value;
+            });
+            // 비운 칸은 아예 보내지 않는다 — 빈 문자열을 보내면 '무관' 이 아니라 오류가 된다.
+            ['age_min', 'age_max'].forEach(function (k) { if (body[k] === '') delete body[k]; });
+
+            btn.disabled = true;
+            post(BASE + '/farms/' + currentFarm + '/demand', body, function (j) {
+                ndnToast('수요를 등록했습니다. 이어서 인력을 배정하세요.', { type: 'success' });
+                // 방금 만든 수요를 바로 펴 준다 — 다시 찾아 누르게 하지 않는다.
+                openFarm(currentFarm, j.demand_id, true);
+            });
+            // 실패했을 때만 다시 누를 수 있어야 한다. 성공하면 패널이 통째로 다시 그려진다.
+            setTimeout(function () { if (btn.isConnected) btn.disabled = false; }, 1200);
+        }
 
         function doConfirm(id, after) {
             ndnConfirm('배정을 확정합니다. 근로자에게 알림이 가고 입국 준비 기록이 만들어집니다.',
@@ -374,7 +628,7 @@
             });
         }
 
-        // 배정 현황 탭
+        // 배정 현황 탭 — 여기서는 목록 전체가 서버에서 그려져 있어 새로 고친다.
         document.getElementById('mt-placements').addEventListener('click', function (e) {
             var c = e.target.closest('[data-confirm]');
             if (c) { doConfirm(c.getAttribute('data-confirm'), function () { location.reload(); }); return; }

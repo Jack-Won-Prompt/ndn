@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
+use App\Domains\Demand\Actions\CreateDemandRequestAction;
+use App\Domains\Demand\Actions\SubmitDemandRequestAction;
 use App\Domains\Demand\Enums\DemandStatus;
 use App\Domains\Demand\Models\DemandRequest;
+use App\Domains\Demand\Models\Farm;
 use App\Domains\Matching\Actions\CancelPlacementAction;
 use App\Domains\Matching\Actions\ConfirmPlacementAction;
 use App\Domains\Matching\Actions\CreatePlacementAction;
@@ -33,6 +36,132 @@ class MatchingController extends Controller
 {
     /** 후보를 한 번에 너무 많이 복호화하지 않는다(나이 계산에 birth_date 가 필요하다). */
     private const MAX_POOL = 200;
+
+    /** 아직 사람을 채워야 하는 수요로 보는 상태들. */
+    private const OPEN_STATUSES = [
+        DemandStatus::Draft->value,
+        DemandStatus::Submitted->value,
+        DemandStatus::Aggregated->value,
+        DemandStatus::LetterIssued->value,
+    ];
+
+    /**
+     * 농가 목록 — 기준정보와 **같은 칸**에 이 화면에서 필요한 진행 상황을 덧붙인다.
+     *
+     * 농가를 여기서 바로 등록할 수 있게 한 이유는, 본사가 농가를 받아 적은 뒤
+     * 곧바로 사람을 붙이기 때문이다. 화면을 오가는 사이에 방금 적은 농가를
+     * 다시 찾는 일이 없도록 한 자리에서 끝낸다.
+     *
+     * 저장·엑셀은 기준정보와 같은 엔드포인트를 쓴다 — 검증 규칙이 두 벌로
+     * 갈라지면 어느 화면으로 넣었느냐에 따라 다른 데이터가 남는다.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public static function farmRows(): array
+    {
+        $demands = DemandRequest::query()
+            ->whereIn('status', self::OPEN_STATUSES)
+            ->selectRaw('farm_id, count(*) as c, sum(headcount) as need')
+            ->groupBy('farm_id')
+            ->get()
+            ->keyBy('farm_id');
+
+        $placed = Placement::query()
+            ->whereIn('status', [PlacementStatus::Proposed->value, PlacementStatus::Confirmed->value])
+            ->selectRaw('farm_id, count(*) as c')
+            ->groupBy('farm_id')
+            ->pluck('c', 'farm_id');
+
+        return collect(BaseInfoGridController::farmRows())
+            ->map(function (array $row) use ($demands, $placed) {
+                $d = $demands->get($row['id']);
+
+                $row['demands'] = (int) ($d->c ?? 0);
+                $row['need'] = (int) ($d->need ?? 0);
+                $row['placed'] = (int) ($placed[$row['id']] ?? 0);
+                // 편집기가 없는 칸이라 눌러도 셀이 열리지 않는다 → 여는 버튼으로 쓴다.
+                $row['assign'] = '인력 배정 ▸';
+
+                return $row;
+            })
+            ->all();
+    }
+
+    /**
+     * 농가 1곳 — 이 농가의 수요와 배정 현황.
+     *
+     * 배정은 수요(인원·기간)에 매달려 있다. 그래서 농가를 고른 다음 어느 수요에
+     * 채울지를 한 번 더 고르게 한다. 수요가 하나뿐이면 화면이 알아서 그것을 편다.
+     */
+    public function farm(Farm $farm): JsonResponse
+    {
+        $farm->load('city:id,name');
+
+        $demands = DemandRequest::query()
+            ->with(['farm:id,name,city_id', 'city:id,name'])
+            ->where('farm_id', $farm->id)
+            ->orderByDesc('id')
+            ->get()
+            ->map(fn (DemandRequest $d) => self::presentDemand($d))
+            ->all();
+
+        $placements = Placement::query()
+            ->with(['worker:id,name,nationality', 'farm:id,name'])
+            ->where('farm_id', $farm->id)
+            ->orderByDesc('id')
+            ->get();
+
+        self::logAccess($placements->pluck('worker_id')->all(), 'matching-farm');
+
+        return response()->json([
+            'farm' => [
+                'id' => $farm->id,
+                'name' => $farm->name,
+                'city' => $farm->city?->name ?? '지자체 미지정',
+                'crop' => $farm->main_crop,
+                'address' => $farm->address,
+            ],
+            'demands' => $demands,
+            'placements' => $placements->map(fn (Placement $p) => self::presentPlacement($p))->all(),
+        ]);
+    }
+
+    /**
+     * 이 농가의 수요를 그 자리에서 만든다.
+     *
+     * 농가만 새로 넣고 끝내면 배정 버튼이 아무 데도 닿지 않는다 — 인원과 기간을
+     * 모르는 채로는 배정을 만들 수 없기 때문이다. 그래서 수요를 여기서 받는다.
+     *
+     * 만들자마자 '제출됨'으로 올린다. 본사가 콘솔에서 직접 적어 넣는 수요는 농가가
+     * 작성 중인 초안이 아니라 이미 접수된 건이고, 그래야 [수요별 매칭] 목록에도
+     * 곧바로 나타난다.
+     */
+    public function storeDemand(
+        Request $request,
+        Farm $farm,
+        CreateDemandRequestAction $create,
+        SubmitDemandRequestAction $submit,
+    ): JsonResponse {
+        $data = $request->validate([
+            'nationality' => ['required', 'string', 'size:2'],
+            'headcount' => ['required', 'integer', 'min:1', 'max:999'],
+            'gender' => ['required', 'in:male,female,any'],
+            'crop' => ['required', 'string', 'max:100'],
+            'period_start' => ['required', 'date'],
+            'period_end' => ['required', 'date', 'after:period_start'],
+            'age_min' => ['nullable', 'integer', 'min:18', 'max:99'],
+            'age_max' => ['nullable', 'integer', 'min:18', 'max:99', 'gte:age_min'],
+            'allow_siblings' => ['nullable', 'boolean'],
+        ], [
+            'period_end.after' => '종료일은 시작일보다 뒤여야 합니다.',
+            'age_max.gte' => '최대 나이는 최소 나이보다 커야 합니다.',
+        ]);
+
+        $demand = $create->execute($farm, $data);
+        $submit->execute($demand);
+
+        return response()->json(['ok' => true, 'demand_id' => $demand->id]);
+    }
 
     /**
      * 매칭을 진행할 수 있는 수요 목록 — 농가별 배정 진행률 포함.

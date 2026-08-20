@@ -31,6 +31,21 @@ class BaseInfoGridController extends Controller
             ])->all();
     }
 
+    /**
+     * 농가 표의 '지자체' 콤보에 넣을 선택지.
+     *
+     * 기준정보와 매칭 화면이 같은 농가 표를 쓰므로 선택지도 한 군데서 만든다 —
+     * 두 벌로 갈라지면 한쪽에서만 보이는 지자체가 생긴다.
+     *
+     * @return array<int, array{value: int, label: string}>
+     */
+    public static function cityOptions(): array
+    {
+        return City::orderBy('name')->get(['id', 'name'])
+            ->map(fn (City $c) => ['value' => $c->id, 'label' => $c->name])
+            ->all();
+    }
+
     /** 지자체 행 검증 규칙 (신규·수정 공통) */
     private function cityRules(): array
     {
@@ -103,7 +118,13 @@ class BaseInfoGridController extends Controller
 
     public function farmSave(Request $request): JsonResponse
     {
-        $payload = $request->validate(['updated' => ['array'], 'added' => ['array'], 'deleted' => ['array']]);
+        $payload = $request->validate([
+            'updated' => ['array'],
+            'added' => ['array'],
+            'deleted' => ['array'],
+            // 어느 화면이 부르는지 — 저장 뒤 돌려줄 목록의 모양이 달라진다.
+            'rows' => ['nullable', 'in:matching'],
+        ]);
         $rules = [
             'name' => ['required', 'string', 'max:100'],
             'city_id' => ['nullable', 'integer', 'exists:cities,id'],
@@ -140,7 +161,27 @@ class BaseInfoGridController extends Controller
             return response()->json(['ok' => false, 'message' => $e->getMessage()], 422);
         }
 
-        return response()->json(['ok' => true, 'message' => '저장했습니다.', 'rows' => self::farmRows()]);
+        return response()->json([
+            'ok' => true,
+            'message' => '저장했습니다.',
+            'rows' => self::rowsFor($payload['rows'] ?? null),
+        ]);
+    }
+
+    /**
+     * 저장 뒤 화면을 다시 그릴 때 쓰는 목록.
+     *
+     * 농가 표는 기준정보와 매칭 화면이 함께 쓰는데, 매칭 화면에는 수요·배정 숫자와
+     * [인력 배정] 칸이 더 있다. 늘 기준정보 모양으로만 돌려주면 매칭 화면에서
+     * 저장한 순간 그 칸들이 빈칸이 되고, 방금 등록한 농가에 사람을 붙일 수 없게 된다.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private static function rowsFor(?string $view): array
+    {
+        return $view === 'matching'
+            ? MatchingController::farmRows()
+            : self::farmRows();
     }
 
     private function farmFields(array $r): array

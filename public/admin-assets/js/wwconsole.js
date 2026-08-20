@@ -124,7 +124,9 @@
             fetch(cfg.saveUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf(), 'Accept': 'application/json' },
-                body: JSON.stringify(mods),
+                // savePayload 는 같은 저장 엔드포인트를 여러 화면이 쓸 때, 저장 뒤 돌려받을
+                // 목록의 모양을 서버에 알려 주는 자리다 (예: 매칭 화면은 수요·배정 칸이 더 필요하다).
+                body: JSON.stringify(Object.assign({}, cfg.savePayload || {}, mods)),
             })
                 .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
                 .then(function (res) {

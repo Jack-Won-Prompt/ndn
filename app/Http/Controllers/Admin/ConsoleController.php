@@ -158,6 +158,9 @@ class ConsoleController extends Controller
             'matching' => view('admin.screens.matching', [
                 'rows' => MatchingController::rows(),
                 'placements' => MatchingController::placementRows(),
+                // 농가를 이 화면에서 바로 등록·수정할 수 있게 한다(기준정보와 같은 표).
+                'farmRows' => MatchingController::farmRows(),
+                'cityOptions' => BaseInfoGridController::cityOptions(),
             ]),
             'workers' => $this->workers($request),
             'signups' => view('admin.screens.signups', [
@@ -243,8 +246,7 @@ class ConsoleController extends Controller
         return view('admin.screens.baseinfo', [
             'cityRows' => BaseInfoGridController::cityRows(),
             'farmRows' => BaseInfoGridController::farmRows(),
-            'cityOptions' => City::orderBy('name')->get(['id', 'name'])
-                ->map(fn ($c) => ['value' => $c->id, 'label' => $c->name])->all(),
+            'cityOptions' => BaseInfoGridController::cityOptions(),
         ]);
     }
 

@@ -262,6 +262,11 @@ Route::prefix('admin')->group(function () {
             ->whereNumber('requiredDocument')->name('admin.required-documents.file.remove');
 
         // 농가↔근로자 매칭 — 배정 생성·확정·취소. 지금까지 관리자 앱에만 있던 기능이다.
+        // 농가에서 출발하는 길 — 농가를 등록한 자리에서 바로 사람을 붙인다.
+        Route::get('/matching/farms/{farm}', [MatchingController::class, 'farm'])
+            ->whereNumber('farm')->name('admin.matching.farm');
+        Route::post('/matching/farms/{farm}/demand', [MatchingController::class, 'storeDemand'])
+            ->whereNumber('farm')->name('admin.matching.demand.store');
         Route::get('/matching/{demand}', [MatchingController::class, 'show'])
             ->whereNumber('demand')->name('admin.matching.show');
         Route::post('/matching/placements', [MatchingController::class, 'store'])
