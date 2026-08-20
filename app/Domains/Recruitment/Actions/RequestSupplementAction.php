@@ -50,6 +50,16 @@ class RequestSupplementAction
             throw new RuntimeException('이 신청에는 이메일이 없어 보완 요청을 보낼 수 없습니다.');
         }
 
+        // **메일을 먼저 보낸다.** 큐를 거치지 않고 그 자리에서 나가므로, 상태를
+        // 먼저 바꾸면 발송이 실패했을 때 '보완 요청함' 으로 남고 메일은 안 간
+        // 상태가 된다. 담당자는 보낸 줄 알고, 근로자는 아무것도 못 받는다.
+        $worker->notify(new SupplementRequestedNotification(
+            supplementUrl: self::url($worker),
+            count: count($items),
+            expiresInDays: self::EXPIRES_DAYS,
+            workerLocale: $worker->locale ?: 'ko',
+        ));
+
         $worker->forceFill([
             'screening_status' => ScreeningStatus::SupplementRequested,
             'screening_note' => $note,
@@ -66,13 +76,6 @@ class RequestSupplementAction
             // 나중에 "왜 다시 내라고 했나" 를 되짚을 수 있다.
             ->withProperties(['items' => $items, 'note' => $note])
             ->log('가입 서류 보완 요청');
-
-        $worker->notify(new SupplementRequestedNotification(
-            supplementUrl: self::url($worker),
-            count: count($items),
-            expiresInDays: self::EXPIRES_DAYS,
-            workerLocale: $worker->locale ?: 'ko',
-        ));
 
         return $worker;
     }

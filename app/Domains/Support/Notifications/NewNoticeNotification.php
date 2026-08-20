@@ -6,7 +6,6 @@ namespace App\Domains\Support\Notifications;
 
 use App\Shared\Notifications\Contracts\PersonalDataFreeChannel;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 
 /**
@@ -14,8 +13,11 @@ use Illuminate\Notifications\Notification;
  *
  * 외부 채널(알림톡/SMS)로 나가므로 PersonalDataFreeChannel 을 구현한다.
  * 본문에는 이름·여권번호·전화번호·주소를 넣지 않으며, 건수 + 로그인 안내만 담는다.
+ *
+ * 큐에 넣지 않고 그 자리에서 보낸다. 인앱 알림함에 넣는 것뿐이라 비용이 없고,
+ * 큐가 멈춰 있으면 그것만 조용히 사라진다.
  */
-class NewNoticeNotification extends Notification implements PersonalDataFreeChannel, ShouldQueue
+class NewNoticeNotification extends Notification implements PersonalDataFreeChannel
 {
     use Queueable;
 

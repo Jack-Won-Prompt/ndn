@@ -6,7 +6,6 @@ namespace App\Shared\Notifications;
 
 use App\Shared\Notifications\Contracts\PersonalDataFreeChannel;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 
 /**
@@ -19,16 +18,23 @@ use Illuminate\Notifications\Notification;
  *
  * PersonalDataFreeChannel 구현이 강제 사항이다. FcmChannel 이 이 인터페이스가
  * 없는 알림을 아예 거부한다.
+ *
+ * 큐에 넣지 않고 그 자리에서 보낸다. 합격·SOS 처럼 **받는 순간이 중요한** 알림이라
+ * 큐가 멈춰 있으면 늦게 가는 것이 아니라 안 간 것과 같다. FcmSender 는 네트워크
+ * 실패를 삼키고 로그만 남기므로(§8), 발송이 안 돼도 본 작업이 죽지는 않는다.
+ *
+ * ※ 여러 명에게 한 번에 보내는 화면(공지사항)은 사람 수만큼 HTTP 호출이 이어져
+ *   요청이 길어진다. 대상이 커지면 그 화면만 다시 큐로 돌릴 것.
  */
-abstract class WorkerPushNotification extends Notification implements PersonalDataFreeChannel, ShouldQueue
+abstract class WorkerPushNotification extends Notification implements PersonalDataFreeChannel
 {
     use Queueable;
 
     /**
-     * readonly 를 쓰지 않는다. 이 알림은 ShouldQueue 라 큐에서 역직렬화되는데,
-     * SerializesModels 는 자식 클래스 스코프에서 리플렉션으로 값을 되돌린다.
-     * PHP 8.2 는 부모에 선언된 readonly 속성을 자식 스코프에서 초기화하지 못해
-     * "Cannot initialize readonly property" 로 잡을 자체가 실패한다(운영 런타임 8.2).
+     * readonly 를 쓰지 않는다. 큐로 되돌아온 적이 있어(예전에 ShouldQueue 였다)
+     * 부모에 선언된 readonly 속성이 자식 스코프에서 초기화되지 못하는 문제를
+     * 겪었다. 지금은 즉시 발송이라 해당되지 않지만, 다시 큐로 돌릴 때 같은 자리에
+     * 걸리므로 그대로 둔다(운영 런타임 PHP 8.2).
      *
      * @param  string  $workerLocale  근로자 언어(§6). 부모 Notification 의 $locale 과
      *                                이름이 겹쳐 별도 이름을 쓴다.

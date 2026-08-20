@@ -18,13 +18,16 @@
   - composer 는 `config.platform.php = 8.2.12` 로 고정해 어느 PHP 로 실행하든 8.2 기준으로 해석.
 - MariaDB 10.4 (xampp, 운영), SQLite (테스트)
   - ※ 당초 MySQL 8 로 잡았으나 xampp 는 MariaDB 를 번들. DB_CONNECTION=mysql 로 호환 동작.
-- 큐·캐시: 현재 `database` 드라이버 (로컬 환경에 Redis 미설치). Redis 도입 시 커넥션만 교체.
+- **큐: 쓰지 않는다** (`QUEUE_CONNECTION=sync`). 알림(메일·FCM)은 요청 자리에서 바로 나간다.
+  ※ 당초 `database` 큐를 썼으나, 워커가 멈추면 화면에는 '보냈습니다' 가 뜨고 실제로는
+    안 나가는 상태가 된다. 보완 요청·비밀번호 재설정·합격 알림처럼 **받는 쪽이 그것으로만
+    다음 행동을 할 수 있는** 통로라 즉시 발송이 맞다고 판단(2026-08-20).
+- 캐시: `database` 드라이버 (로컬 환경에 Redis 미설치). Redis 도입 시 커넥션만 교체.
 - Laravel Sanctum: 근로자 앱 API 토큰 인증
 - Laravel Fortify: 웹 포털 인증 (2FA는 `ndn_admin`, `partner_agency` 필수)
 - Filament v3: NDN 운영 콘솔(`/admin`) 및 역할별 포털 패널
 - spatie/laravel-permission: 역할·권한
 - spatie/laravel-activitylog: 감사 로그 (모든 개인정보 접근·변경 기록)
-- Laravel Horizon: 큐 모니터링
 - Pest: 테스트 프레임워크
 - Pint: 코드 스타일 (커밋 전 필수)
 
@@ -41,7 +44,6 @@ npm run dev                       # Vite
 ./vendor/bin/pest                 # 전체 테스트
 ./vendor/bin/pest --filter=WorkerOnboarding   # 단일 테스트
 ./vendor/bin/pint                 # 코드 스타일 정리 (커밋 전 필수)
-php artisan horizon               # 큐 워커 (알림·문서생성 잡)
 
 php artisan ide-helper:generate   # 모델 변경 후 실행
 ```
@@ -110,7 +112,10 @@ app/
 ## 8. 알림 아키텍처
 
 - 채널 우선순위: 앱 푸시(FCM) → 카카오 알림톡 → SMS 폴백. 이메일은 문서 보관용만
-- 모든 알림은 큐 처리 (`ShouldQueue`), 발송 이력 `notification_logs` 테이블 기록
+- **알림은 큐를 타지 않는다.** `ShouldQueue` 를 붙이지 말 것 — 워커가 없다.
+  발송 이력은 `notification_logs` 테이블 기록
+- 여러 명에게 한 번에 보내는 화면(공지사항)은 사람 수만큼 FCM 호출이 이어진다.
+  대상이 수백 명이 되면 **그 알림만** 큐로 되돌리고 워커를 함께 띄울 것
 - 알림톡/SMS 발송기는 `app/Shared/Notifications/Channels/`에 드라이버로 추상화 (벤더 교체 대비)
 - §7-3 원칙 적용: 본문 템플릿에 개인정보 변수 바인딩 금지
 

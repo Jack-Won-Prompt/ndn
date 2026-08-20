@@ -6,7 +6,6 @@ namespace App\Domains\Support\Notifications;
 
 use App\Shared\Notifications\Contracts\PersonalDataFreeChannel;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 
 /**
@@ -20,8 +19,10 @@ use Illuminate\Notifications\Notification;
  * §7-6 감사 로그에 남는다).
  *
  * 관리자용이라 문구는 한국어 고정이다 — 관리자 화면 전체가 운영자용 한국어다.
+ *
+ * 큐에 넣지 않고 그 자리에서 보낸다. 긴급 요청이라 늦게 가는 것은 안 간 것과 같다.
  */
-class SosAlertedNotification extends Notification implements PersonalDataFreeChannel, ShouldQueue
+class SosAlertedNotification extends Notification implements PersonalDataFreeChannel
 {
     use Queueable;
 

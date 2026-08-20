@@ -6,7 +6,6 @@ namespace App\Domains\Support\Notifications;
 
 use App\Shared\Notifications\Contracts\PersonalDataFreeChannel;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -16,8 +15,12 @@ use Illuminate\Notifications\Notification;
  * 외부(이메일)로 나가므로 PersonalDataFreeChannel 을 구현한다.
  * SR 제목·본문은 담당자가 자유 입력한 텍스트라 근로자 개인정보가 섞일 수 있으므로
  * 메일에 싣지 않는다. 식별에 필요한 SR 번호와 콘솔 링크만 담는다(§7-3: 건수 + 링크).
+ *
+ * 큐에 넣지 않고 그 자리에서 보낸다. 메일은 받는 사람이 그것으로만 다음 행동을
+ * 할 수 있는 통로라(보완 제출·비밀번호 재설정·초대 수락), 큐가 멈춰 있으면
+ * 보낸 줄 알고 기다리게 된다. 발송 실패가 요청 자리에서 드러나는 편이 낫다.
  */
-class ServiceRequestCompletedNotification extends Notification implements PersonalDataFreeChannel, ShouldQueue
+class ServiceRequestCompletedNotification extends Notification implements PersonalDataFreeChannel
 {
     use Queueable;
 

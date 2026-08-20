@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\SignupApprovalController;
 use App\Models\User;
 use App\Shared\Enums\UserRole;
 use Database\Seeders\RoleSeeder;
+use Illuminate\Contracts\Notifications\Dispatcher;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
@@ -447,4 +448,26 @@ it('보완 화면은 민감 항목을 비워 두고 나머지만 채워 준다',
 
     expect($html)->toContain('Nguyen Prefill')   // 이름은 채워 준다
         ->not->toContain('W1234567');            // 여권번호는 비워 둔다
+});
+
+it('보완 요청 메일이 실패하면 상태를 바꾸지 않는다', function () {
+    // 큐를 안 쓰므로 발송이 그 자리에서 터진다. 상태를 먼저 바꿔 두면
+    // '보완 요청함' 으로 남고 메일은 안 간 상태가 된다 — 담당자는 보낸 줄 안다.
+    post(route('site.apply.store'), applyBody())->assertRedirect();
+    $worker = Worker::firstOrFail();
+
+    $this->mock(Dispatcher::class, function ($m) {
+        $m->shouldReceive('send')->andThrow(new RuntimeException('SMTP 연결 실패'));
+        $m->shouldReceive('sendNow')->andThrow(new RuntimeException('SMTP 연결 실패'));
+    });
+
+    actingAs($this->admin)->postJson(route('admin.signups.supplement', $worker), [
+        'items' => ['여권 사본'],
+    ])->assertStatus(422)->assertJsonPath('message', 'SMTP 연결 실패');
+
+    $worker->refresh();
+
+    expect($worker->screening())->toBe(ScreeningStatus::Received)
+        ->and($worker->supplement_items)->toBeNull()
+        ->and($worker->supplement_requested_at)->toBeNull();
 });

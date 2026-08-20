@@ -6,7 +6,6 @@ namespace App\Notifications;
 
 use App\Shared\Notifications\Contracts\PersonalDataFreeChannel;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -16,8 +15,12 @@ use Illuminate\Notifications\Notification;
  * 외부(이메일)로 나가므로 PersonalDataFreeChannel 을 구현한다. 본문에는 이름·연락처 등
  * 개인정보를 넣지 않고, 역할 라벨(조직 유형) + 계정 설정 링크만 담는다. 링크의 토큰은
  * 소문자 hex 라 개인정보 패턴과 겹치지 않는다.
+ *
+ * 큐에 넣지 않고 그 자리에서 보낸다. 메일은 받는 사람이 그것으로만 다음 행동을
+ * 할 수 있는 통로라(보완 제출·비밀번호 재설정·초대 수락), 큐가 멈춰 있으면
+ * 보낸 줄 알고 기다리게 된다. 발송 실패가 요청 자리에서 드러나는 편이 낫다.
  */
-class InvitationNotification extends Notification implements PersonalDataFreeChannel, ShouldQueue
+class InvitationNotification extends Notification implements PersonalDataFreeChannel
 {
     use Queueable;
 

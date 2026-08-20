@@ -6,7 +6,6 @@ namespace App\Domains\Settlement\Notifications;
 
 use App\Shared\Notifications\Contracts\PersonalDataFreeChannel;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 
 /**
@@ -16,8 +15,11 @@ use Illuminate\Notifications\Notification;
  * 본문에는 근로자 이름·전화·주소 등 개인정보를 절대 넣지 않으며,
  * "새 배정 건 N건 + 포털 로그인 링크" 와 서비스 유형(통장/보험/통신/유심)만 담는다.
  * (서비스 유형은 개인 식별정보가 아니다.)
+ *
+ * 큐에 넣지 않고 그 자리에서 보낸다. 인앱 알림함에 넣는 것뿐이라 비용이 없고,
+ * 큐가 멈춰 있으면 그것만 조용히 사라진다.
  */
-class SettlementAssignedNotification extends Notification implements PersonalDataFreeChannel, ShouldQueue
+class SettlementAssignedNotification extends Notification implements PersonalDataFreeChannel
 {
     use Queueable;
 
