@@ -61,6 +61,9 @@
         </nav>
 
         <div class="nd-header__end">
+            {{-- 근로자 지원 입구. 메뉴에 섞으면 다른 안내 페이지와 구분되지 않아 따로 둔다. --}}
+            <a class="nd-applybtn" href="{{ route('site.apply') }}">지원하기</a>
+
             {{-- 언어 선택 — 언어 이름을 그 언어 문자로. 번역기가 건드리면 안 되므로 제외 표시. --}}
             <div class="nd-lang" data-no-translate>
                 @foreach (\App\Shared\Translation\SiteTranslator::NATIVE as $lc => $native)
@@ -122,6 +125,8 @@
                 <h4>근로자</h4>
                 <ul>
                     <li><a href="{{ route('app.download') }}">모바일 앱 설치</a></li>
+                    <li><a href="{{ route('site.apply') }}">근로자 지원하기</a></li>
+                    <li><a href="{{ route('worker.login') }}">근로자 로그인</a></li>
                     <li><a href="{{ route('site.worker') }}">입국 전 준비</a></li>
                     <li><a href="{{ route('site.worker') }}#living">한국 생활 안내</a></li>
                     <li><a href="{{ route('site.worker') }}#faq">자주 묻는 질문</a></li>

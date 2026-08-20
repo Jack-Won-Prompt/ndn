@@ -1153,3 +1153,52 @@ button { font: inherit; color: inherit; }
     display: flex; align-items: center; gap: 9px;
     font-size: 15px; font-weight: 500; color: var(--nd-text); letter-spacing: 0;
 }
+/* ==========================================================================
+   근로자 웹 (지원하기 · 로그인 · 본인 화면)
+   기존 폼 스타일(.nd-field/.nd-input/.nd-note)을 그대로 쓰고,
+   여기서는 그 위에 없던 조각만 더한다.
+   ========================================================================== */
+
+/* 패널 안의 구역 제목 — .nd-panel__h 는 머리말 블록이라 용도가 다르다. */
+.nd-panel__title {
+    margin: 0 0 18px;
+    font-size: 17px; font-weight: 800; color: var(--nd-text); letter-spacing: -0.01em;
+}
+
+/* 입력칸 아래 보조 설명. 오류(.nd-err)와 톤을 구분한다. */
+.nd-help {
+    margin: 7px 0 0;
+    font-size: 13px; line-height: 1.65; color: var(--nd-text-2);
+}
+.nd-help a { color: var(--nd-accent); text-decoration: underline; }
+
+/* 주의 띠 — 보완 요청처럼 '읽고 넘어가면 안 되는' 안내에 쓴다. */
+.nd-note--warn { background: #FEF3C7; border-color: transparent; color: #8A6D00; }
+
+/* 준비할 서류 목록 */
+/* 사이트 전역에서 list-style 을 지워 두어 여기서 다시 켠다. */
+.nd-doclist { margin: 0; padding-left: 20px; list-style: disc; }
+.nd-doclist li { margin: 4px 0; font-size: 14px; color: var(--nd-text); }
+
+/* 본인이 낸 서류 목록 */
+.nd-filelist { margin: 0; padding: 0; list-style: none; }
+.nd-filelist li {
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px;
+    padding: 11px 2px; border-bottom: 1px solid var(--nd-line);
+}
+.nd-filelist li:last-child { border-bottom: 0; }
+.nd-filelist a { font-weight: 700; color: var(--nd-accent); text-decoration: underline; }
+.nd-filelist .nd-help { margin: 0; }
+
+/* 파일 선택칸은 기본 높이가 낮아 글자가 잘린다. */
+.nd-input[type="file"] { padding: 9px 12px; line-height: 1.5; }
+
+/* 헤더의 지원하기 버튼 — 메뉴 링크가 아니라 행동 버튼으로 읽혀야 한다. */
+.nd-applybtn {
+    display: inline-flex; align-items: center;
+    padding: 8px 16px; border-radius: 999px;
+    background: var(--nd-accent); color: #fff;
+    font-size: 14px; font-weight: 700; white-space: nowrap;
+}
+.nd-applybtn:hover { filter: brightness(1.06); color: #fff; }
+@media (max-width: 560px) { .nd-applybtn { display: none; } }

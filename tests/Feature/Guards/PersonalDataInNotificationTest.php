@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Domains\Recruitment\Notifications\SupplementRequestedNotification;
+use App\Domains\Recruitment\Notifications\WorkerResetPasswordNotification;
 use App\Domains\Settlement\Notifications\SettlementAssignedNotification;
 use App\Domains\Support\Notifications\NewNoticeNotification;
 use App\Domains\Support\Notifications\NoticeNotification;
@@ -47,6 +49,20 @@ it('근로자 알림 본문에 개인정보 패턴이 없다', function () {
         new NoticeNotification(noticeId: 1, noticeTitle: '안전 교육 안내', noticeBody: '이번 주 안전 교육이 있습니다.'),
         // SR 적용 완료 메일 — SR 번호 + 콘솔 링크만. 자유 입력인 제목·본문은 싣지 않는다.
         new ServiceRequestCompletedNotification(serviceRequestId: 12, consoleUrl: 'http://localhost/ndn/admin'),
+        // 가입 서류 보완 요청 — 부족한 항목 '개수' 와 기한부 링크만. 무엇이 부족한지는 링크를 열어야 보인다.
+        new SupplementRequestedNotification(
+            supplementUrl: 'http://localhost/ndn/apply/supplement/12?signature='.str_repeat('c3', 20),
+            count: 2, expiresInDays: 14, workerLocale: 'ko',
+        ),
+        new SupplementRequestedNotification(
+            supplementUrl: 'http://localhost/ndn/apply/supplement/12?signature='.str_repeat('c3', 20),
+            count: 1, expiresInDays: 14, workerLocale: 'vi',
+        ),
+        // 근로자 비밀번호 재설정 — 링크와 유효시간뿐. 이름도 부르지 않는다.
+        new WorkerResetPasswordNotification(
+            resetUrl: 'http://localhost/ndn/worker/reset-password/'.str_repeat('d4', 20),
+            expiresInMinutes: 60, workerLocale: 'bn',
+        ),
         // 관계기관 제출 메일 — 인적사항은 첨부 PDF 안에만 있고, 본문·첨부 파일명에는 없다.
         new WorkReviewShareMail(
             count: 3,

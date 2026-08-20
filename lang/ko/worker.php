@@ -30,4 +30,20 @@ return [
     'push_message_title' => '새 메시지가 도착했습니다',
     'push_message_body' => '앱에서 확인하세요.',
     'push_ticket_title' => '민원 처리 상태가 바뀌었습니다',
+
+    // 선발 합격 — 합격과 동시에 계정이 열린다.
+    'push_passed_title' => '합격하셨습니다',
+    'push_passed_body' => '이제 로그인해서 배치 내용을 확인할 수 있습니다.',
+
+    // 서류 보완 요청 메일 — 개인정보를 넣지 않는다(§7-3). 건수와 링크뿐.
+    'supplement_subject' => '가입 신청 서류 보완 안내',
+    'supplement_intro' => '제출하신 가입 신청에 확인이 더 필요한 항목이 :count건 있습니다.',
+    'supplement_action' => '보완해서 다시 제출하기',
+    'supplement_outro' => '아래 버튼의 링크는 :days일 뒤 만료됩니다. 이미 적으신 내용은 그대로 있으니 부족한 부분만 채워 주세요.',
+
+    // 비밀번호 재설정 메일 — 링크와 유효시간만. 이름도 부르지 않는다(§7-3).
+    'reset_subject' => '비밀번호 재설정 안내',
+    'reset_intro' => '비밀번호 재설정 요청을 받았습니다. 아래 버튼을 눌러 새 비밀번호를 정해 주세요.',
+    'reset_action' => '비밀번호 재설정',
+    'reset_outro' => '이 링크는 :minutes분 뒤 만료됩니다. 본인이 요청하지 않았다면 이 메일을 무시하세요.',
 ];

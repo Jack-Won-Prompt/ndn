@@ -27,4 +27,20 @@ return [
     'push_message_title' => 'Bạn có tin nhắn mới',
     'push_message_body' => 'Vui lòng kiểm tra trong ứng dụng.',
     'push_ticket_title' => 'Trạng thái khiếu nại đã thay đổi',
+
+    // 선발 합격
+    'push_passed_title' => 'Bạn đã trúng tuyển',
+    'push_passed_body' => 'Bây giờ bạn có thể đăng nhập để xem nơi làm việc.',
+
+    // 서류 보완 요청 메일
+    'supplement_subject' => 'Yêu cầu bổ sung hồ sơ đăng ký',
+    'supplement_intro' => 'Hồ sơ đăng ký của bạn còn :count mục cần bổ sung.',
+    'supplement_action' => 'Bổ sung và gửi lại',
+    'supplement_outro' => 'Liên kết sẽ hết hạn sau :days ngày. Nội dung bạn đã nhập vẫn được giữ, chỉ cần điền phần còn thiếu.',
+
+    // 비밀번호 재설정 메일
+    'reset_subject' => 'Hướng dẫn đặt lại mật khẩu',
+    'reset_intro' => 'Chúng tôi đã nhận yêu cầu đặt lại mật khẩu. Nhấn nút bên dưới để đặt mật khẩu mới.',
+    'reset_action' => 'Đặt lại mật khẩu',
+    'reset_outro' => 'Liên kết hết hạn sau :minutes phút. Nếu bạn không yêu cầu, hãy bỏ qua email này.',
 ];

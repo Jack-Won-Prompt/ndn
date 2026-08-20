@@ -30,6 +30,7 @@
                 </p>
                 <div class="nd-btnrow">
                     <a class="nd-btn nd-btn--accent" href="{{ route('site.services') }}">서비스 살펴보기</a>
+                    <a class="nd-btn nd-btn--onink" href="{{ route('site.apply') }}">근로자 지원하기</a>
                     <a class="nd-btn nd-btn--onink" href="{{ route('site.contact') }}">문의하기</a>
                 </div>
             </div>

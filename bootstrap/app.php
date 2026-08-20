@@ -8,6 +8,7 @@ use App\Http\Middleware\RecordAccessLog;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -28,8 +29,12 @@ return Application::configure(basePath: dirname(__DIR__))
             'docs.agreed' => EnsureRequiredDocumentsAgreed::class,
         ]);
 
-        // 미로그인 웹 요청은 Fortify 기본 /login 이 아니라 운영 콘솔 로그인으로
-        $middleware->redirectGuestsTo(fn () => route('admin.login'));
+        // 미로그인 웹 요청은 Fortify 기본 /login 이 아니라 운영 콘솔 로그인으로.
+        // 단 근로자 화면(/worker/*)은 근로자 로그인으로 보낸다 — 근로자를 관리자
+        // 로그인 화면에 떨어뜨리면 자기 계정이 없는 줄 안다.
+        $middleware->redirectGuestsTo(fn (Request $request) => $request->is('worker', 'worker/*')
+            ? route('worker.login')
+            : route('admin.login'));
 
         // 접속·페이지 접근 로그 기록 (메인 비로그인 + 로그인 이후 모두)
         $middleware->web(append: [RecordAccessLog::class]);

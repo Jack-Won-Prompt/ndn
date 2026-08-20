@@ -5,7 +5,7 @@
     <div class="screen__head">
         <div>
             <h1 class="screen__title">근로자</h1>
-            <p class="screen__sub">비민감 정보만 편집 · <strong>편집 후 [변경 저장]</strong> · <strong>번호 열 더블클릭</strong>으로 상세(입국·생활점검 이력) · 여권·생년월일·전화는 §7에 따라 미표시</p>
+            <p class="screen__sub">비민감 정보만 편집 · <strong>편집 후 [변경 저장]</strong> · <strong>번호 열 더블클릭</strong>으로 상세(입국·생활점검 이력) · <strong>여권번호·생년월일·전화 표시</strong> — 열람 기록이 남습니다(§7-6)</p>
         </div>
     </div>
 
@@ -176,6 +176,13 @@
                 html += '<dl class="dtl-dl">'
                     + '<dt>이름</dt><dd>' + wkEsc(d.name) + '</dd>'
                     + '<dt>국적</dt><dd>' + wkEsc(d.nationality) + '</dd>'
+                    // 여권번호·생년월일·전화를 그대로 보여 준다. 가려 두면 담당자가
+                    // 엑셀·메신저로 옮겨 적게 되고, 그쪽이 훨씬 위험하다. 열람 기록은 남는다(§7-6).
+                    + '<dt>여권번호</dt><dd>' + wkEsc(d.passport_no || '—') + '</dd>'
+                    + '<dt>생년월일</dt><dd>' + wkEsc(d.birth_date || '—')
+                    + (d.age != null ? ' (만 ' + d.age + '세)' : '') + '</dd>'
+                    + '<dt>성별</dt><dd>' + wkEsc(d.gender || '—') + '</dd>'
+                    + '<dt>본국 전화</dt><dd>' + wkEsc(d.phone_home_country || '—') + '</dd>'
                     + '<dt>언어</dt><dd>' + wkEsc(d.locale) + '</dd>'
                     + '<dt>상태</dt><dd>' + wkEsc(d.status) + '</dd>'
                     + '<dt>지원 지역</dt><dd>' + wkEsc(d.applied_city || '—') + '</dd>'

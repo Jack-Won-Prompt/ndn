@@ -1,5 +1,6 @@
 <?php
 
+use App\Domains\Recruitment\Models\Worker;
 use App\Models\User;
 
 return [
@@ -42,6 +43,14 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
+        // 근로자 웹 화면(가입·본인 확인)용 세션 가드. 앱은 여전히 Sanctum 토큰을 쓴다(§9).
+        // users 가드와 나누는 이유: 근로자와 담당자가 같은 이메일을 쓰는 일이 있어
+        // 한 가드에 섞으면 서로의 세션을 밀어낸다.
+        'worker' => [
+            'driver' => 'session',
+            'provider' => 'workers',
+        ],
     ],
 
     /*
@@ -67,10 +76,10 @@ return [
             'model' => env('AUTH_MODEL', User::class),
         ],
 
-        // 'users' => [
-        //     'driver' => 'database',
-        //     'table' => 'users',
-        // ],
+        'workers' => [
+            'driver' => 'eloquent',
+            'model' => Worker::class,
+        ],
     ],
 
     /*
@@ -96,6 +105,14 @@ return [
         'users' => [
             'provider' => 'users',
             'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
+            'expire' => 60,
+            'throttle' => 60,
+        ],
+
+        // 근로자 전용 브로커. 표를 나눈 이유는 마이그레이션 주석에 적어 뒀다.
+        'workers' => [
+            'provider' => 'workers',
+            'table' => 'worker_password_reset_tokens',
             'expire' => 60,
             'throttle' => 60,
         ],

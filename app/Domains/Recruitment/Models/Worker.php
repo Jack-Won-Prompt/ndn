@@ -8,7 +8,9 @@ use App\Domains\Demand\Models\City;
 use App\Domains\Matching\Enums\PlacementStatus;
 use App\Domains\Matching\Models\Placement;
 use App\Domains\Onboarding\Models\ConsentRecord;
+use App\Domains\Recruitment\Enums\ScreeningStatus;
 use App\Domains\Recruitment\Enums\WorkerStatus;
+use App\Domains\Recruitment\Notifications\WorkerResetPasswordNotification;
 use App\Domains\Support\Models\WorkerExit;
 use App\Shared\Concerns\LogsPersonalDataAccess;
 use App\Shared\Concerns\MasksSensitiveData;
@@ -17,7 +19,9 @@ use App\Shared\Enums\Gender;
 use App\Shared\Support\BlindIndex;
 use Carbon\Carbon;
 use Illuminate\Auth\Authenticatable;
+use Illuminate\Auth\Passwords\CanResetPassword;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
+use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -36,11 +40,12 @@ use Laravel\Sanctum\HasApiTokens;
  *
  * @property string|null $passport_no 평문(복호화됨). DB 에는 암호문으로 저장.
  */
-class Worker extends Model implements AuthenticatableContract
+class Worker extends Model implements AuthenticatableContract, CanResetPasswordContract
 {
     // 근로자 앱은 Sanctum 토큰으로 인증하므로 Authenticatable 을 구현한다(비밀번호 미사용).
     // Notifiable — 푸시·앱 알림함 수신자가 된다(승인 결과·검수 결과·배정 확정 등).
-    use Authenticatable, HasApiTokens, HasFactory, LogsPersonalDataAccess, MasksSensitiveData, Notifiable, SoftDeletes;
+    // CanResetPassword — 웹 근로자 화면의 비밀번호 찾기(전용 브로커)를 쓰기 위해서다.
+    use Authenticatable, CanResetPassword, HasApiTokens, HasFactory, LogsPersonalDataAccess, MasksSensitiveData, Notifiable, SoftDeletes;
 
     /**
      * 로그·toArray 에서 가릴 민감 속성 (MasksSensitiveData).
@@ -63,6 +68,8 @@ class Worker extends Model implements AuthenticatableContract
         'passport_no',
         'birth_date',
         'phone_home_country',
+        'screening_status',
+        'screening_note',
     ];
 
     /**
@@ -93,6 +100,11 @@ class Worker extends Model implements AuthenticatableContract
             // 매칭 조건 대조용 (demand_requests.gender 와 대응)
             'gender' => Gender::class,
             'approved_at' => 'datetime',
+            // 선발 진행 상태 — 계정 상태(status)와 다르다. ScreeningStatus 주석 참고.
+            'screening_status' => ScreeningStatus::class,
+            'screened_at' => 'datetime',
+            'supplement_items' => 'array',
+            'supplement_requested_at' => 'datetime',
         ];
     }
 
@@ -153,6 +165,40 @@ class Worker extends Model implements AuthenticatableContract
     public function exits(): HasMany
     {
         return $this->hasMany(WorkerExit::class);
+    }
+
+    /**
+     * 비밀번호 재설정 메일.
+     *
+     * Laravel 기본 알림은 관리자용 `password.reset` 주소로 링크를 만들어 근로자가
+     * 열 수 없는 화면으로 보낸다. 그래서 근로자 화면 주소로 다시 만든다.
+     */
+    public function sendPasswordResetNotification(#[\SensitiveParameter] $token): void
+    {
+        $this->notify(new WorkerResetPasswordNotification(
+            resetUrl: route('worker.password.reset', ['token' => $token]).'?email='.urlencode((string) $this->email),
+            expiresInMinutes: (int) config('auth.passwords.workers.expire', 60),
+            workerLocale: $this->locale ?: 'ko',
+        ));
+    }
+
+    /**
+     * 본인 서류 (여권 사본·범죄경력 증명 등). 가입 때 올린 파일도 여기로 들어온다.
+     *
+     * @return HasMany<WorkerFile, $this>
+     */
+    public function files(): HasMany
+    {
+        return $this->hasMany(WorkerFile::class);
+    }
+
+    /**
+     * 선발 진행 상태. 값이 없으면 '접수' 다 — 아직 아무도 손대지 않았다는 뜻이라
+     * null 을 그대로 흘리지 않고 여기서 기본값을 준다.
+     */
+    public function screening(): ScreeningStatus
+    {
+        return $this->screening_status ?? ScreeningStatus::Received;
     }
 
     /** 현재 유효한 배정 (확정 건 중 최신). */

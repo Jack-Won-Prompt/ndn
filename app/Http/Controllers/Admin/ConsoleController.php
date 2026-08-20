@@ -13,7 +13,6 @@ use App\Domains\Monitoring\Models\WorkReview;
 use App\Domains\Onboarding\Enums\OnboardingStatus;
 use App\Domains\Onboarding\Models\OnboardingSubmission;
 use App\Domains\Recruitment\Enums\WorkerFileType;
-use App\Domains\Recruitment\Enums\WorkerStatus;
 use App\Domains\Recruitment\Models\EvaluationItem;
 use App\Domains\Recruitment\Models\Worker;
 use App\Domains\Reporting\Actions\GenerateMonthlyReportAction;
@@ -140,7 +139,7 @@ class ConsoleController extends Controller
             // 아직 아무도 확인하지 않은 긴급 요청 — 가장 먼저 눈에 띄어야 한다.
             'sos' => SosController::openCount(),
             'inquiries' => app(ChatService::class)->unreadInquiryCount(),
-            'signups' => Worker::where('status', WorkerStatus::Pending->value)->count(),
+            'signups' => SignupApprovalController::openCount(),
             // 결정이 안 난 조기귀국·소재 불명 — 오래 방치되면 신고 시기를 놓친다.
             'exits' => WorkerExitController::openCount(),
             'account-deletions' => AccountDeletionRequest::where('status', AccountDeletionRequest::STATUS_PENDING)->count(),
@@ -161,7 +160,10 @@ class ConsoleController extends Controller
                 'placements' => MatchingController::placementRows(),
             ]),
             'workers' => $this->workers($request),
-            'signups' => view('admin.screens.signups', ['rows' => SignupApprovalController::rows()]),
+            'signups' => view('admin.screens.signups', [
+                'rows' => SignupApprovalController::rows(),
+                'supplementItems' => SignupApprovalController::supplementItems(),
+            ]),
             'invitations' => view('admin.screens.invitations', [
                 'rows' => InvitationController::rows(),
                 'roleOptions' => InvitationController::roleOptions(),
@@ -394,7 +396,15 @@ class ConsoleController extends Controller
         // 지원 지자체는 상세에 표시된다 — 명시적으로 읽는다(§11: preventLazyLoading).
         $worker->loadMissing('city');
 
-        // 상세 팝업/탭용 JSON (민감 필드 여권번호·생년월일·전화번호는 §7 에 따라 제외)
+        // 상세 팝업/탭용 JSON.
+        //
+        // 여권번호·생년월일·본국 전화를 **그대로 보여 준다.** 본사 담당자는 이 값으로
+        // 관공서 서류를 만들고 항공권을 끊는다 — 가려 두면 결국 다른 곳(엑셀·메신저)에
+        // 옮겨 적게 되고, 그쪽이 훨씬 위험하다.
+        //
+        // §7-1 이 요구하는 마스킹은 **로그·예외 메시지**다(MasksSensitiveData 가 계속
+        // 담당한다). 화면 노출은 §7-6 의 열람 기록으로 통제한다 — 아래 recordAccessBy 가
+        // 누가·언제·어떤 근로자를 봤는지 남긴다.
         if ($request->query('format') === 'json' || $request->wantsJson()) {
             // 소속·입국·생활점검
             $placement = $worker->placements()
@@ -421,6 +431,12 @@ class ConsoleController extends Controller
                 'nationality' => $worker->nationality,
                 'locale' => $worker->locale,
                 'status' => $worker->status->value,
+                // 민감 필드 — 열람 기록을 남기고 그대로 내보낸다(§7-6).
+                'passport_no' => $worker->passport_no,
+                'birth_date' => $worker->birth_date,
+                'phone_home_country' => $worker->phone_home_country,
+                'gender' => $worker->gender?->label(),
+                'age' => $worker->age(),
                 'created' => LocalTime::format($worker->created_at),
                 // 지원 지역(가입 시 선택) 과 실제 배치 지역은 다를 수 있어 따로 보여준다
                 'applied_city' => $worker->city?->name,

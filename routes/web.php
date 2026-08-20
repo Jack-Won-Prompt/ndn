@@ -3,6 +3,9 @@
 declare(strict_types=1);
 
 use App\Domains\Demand\Http\Controllers\DemandRequestController;
+use App\Domains\Recruitment\Http\Controllers\Web\WorkerApplyController;
+use App\Domains\Recruitment\Http\Controllers\Web\WorkerAuthController;
+use App\Domains\Recruitment\Http\Controllers\Web\WorkerHomeController;
 use App\Http\Controllers\AccountDeletionController;
 use App\Http\Controllers\Admin\AccountDeletionAdminController;
 use App\Http\Controllers\Admin\AuthController as AdminAuthController;
@@ -60,6 +63,52 @@ Route::get('/get-app', function () {
 
     return redirect()->away(filled($url) ? $url : route('site.home'));
 })->name('app.download');
+
+/*
+|--------------------------------------------------------------------------
+| 근로자 웹 (가입 · 로그인 · 본인 화면)
+|--------------------------------------------------------------------------
+| 앱을 깔 수 없는 환경에서도 지원할 수 있게 웹에도 같은 입구를 낸다.
+| 저장은 앱과 같은 Action 을 타므로 두 경로의 규칙이 어긋나지 않는다.
+| 화면은 회사소개 사이트 레이아웃이라 방문자 언어로 자동 번역된다(§6).
+*/
+Route::prefix('apply')->group(function () {
+    Route::get('/', [WorkerApplyController::class, 'create'])->name('site.apply');
+    Route::post('/', [WorkerApplyController::class, 'store'])
+        ->middleware('throttle:10,1')->name('site.apply.store');
+    Route::get('/done', [WorkerApplyController::class, 'done'])->name('site.apply.done');
+
+    // 보완 제출 — 메일의 기한부 서명 링크로만 열린다(로그인 없음).
+    Route::get('/supplement/{worker}', [WorkerApplyController::class, 'supplement'])
+        ->middleware('signed')->whereNumber('worker')->name('site.apply.supplement');
+    Route::post('/supplement/{worker}', [WorkerApplyController::class, 'storeSupplement'])
+        ->middleware(['signed', 'throttle:10,1'])->whereNumber('worker')->name('site.apply.supplement.store');
+});
+
+Route::prefix('worker')->group(function () {
+    // 게스트
+    Route::get('/login', [WorkerAuthController::class, 'showLogin'])->name('worker.login');
+    Route::post('/login', [WorkerAuthController::class, 'login'])
+        ->middleware('throttle:10,1')->name('worker.login.attempt');
+
+    Route::get('/forgot-password', [WorkerAuthController::class, 'showForgot'])->name('worker.password.request');
+    Route::post('/forgot-password', [WorkerAuthController::class, 'sendResetLink'])
+        ->middleware('throttle:6,1')->name('worker.password.email');
+    Route::get('/reset-password/{token}', [WorkerAuthController::class, 'showReset'])->name('worker.password.reset');
+    Route::post('/reset-password', [WorkerAuthController::class, 'reset'])
+        ->middleware('throttle:6,1')->name('worker.password.update');
+
+    // 로그인 후 — 자기 근무지와 본인 정보만
+    Route::middleware('auth:worker')->group(function () {
+        Route::get('/', [WorkerHomeController::class, 'show'])->name('worker.home');
+        Route::get('/profile', [WorkerHomeController::class, 'edit'])->name('worker.profile');
+        Route::post('/profile', [WorkerHomeController::class, 'update'])
+            ->middleware('throttle:20,1')->name('worker.profile.update');
+        Route::get('/files/{file}', [WorkerHomeController::class, 'file'])
+            ->whereNumber('file')->name('worker.files.show');
+        Route::post('/logout', [WorkerAuthController::class, 'logout'])->name('worker.logout');
+    });
+});
 
 // 법적 고지 (플레이스토어 제출용 — 공개·비로그인). 개인정보처리방침·이용약관·계정 삭제 요청
 Route::get('/privacy', [SiteController::class, 'page'])->defaults('key', 'privacy')->name('site.privacy');
@@ -191,10 +240,12 @@ Route::prefix('admin')->group(function () {
         // 근로자 가입 승인 (셀프 가입 승인 큐)
         Route::get('/signups/{worker}', [SignupApprovalController::class, 'show'])
             ->whereNumber('worker')->name('admin.signups.show');
-        Route::post('/signups/{worker}/approve', [SignupApprovalController::class, 'approve'])
-            ->whereNumber('worker')->name('admin.signups.approve');
-        Route::post('/signups/{worker}/reject', [SignupApprovalController::class, 'reject'])
-            ->whereNumber('worker')->name('admin.signups.reject');
+        // 합격 / 보류 / 불합격 — 합격은 계정 활성화와 FCM 알림까지 함께 간다.
+        Route::post('/signups/{worker}/screen', [SignupApprovalController::class, 'screen'])
+            ->whereNumber('worker')->name('admin.signups.screen');
+        // 보완 요청 — 기한부 서명 링크를 근로자 이메일로 보낸다.
+        Route::post('/signups/{worker}/supplement', [SignupApprovalController::class, 'requestSupplement'])
+            ->whereNumber('worker')->name('admin.signups.supplement');
 
         // 필수 확인·동의 문서 — 언어별 본문 편집 + 버전 관리
         Route::get('/required-documents/{requiredDocument}', [RequiredDocumentAdminController::class, 'show'])
