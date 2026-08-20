@@ -94,10 +94,11 @@ class WorkerApplyController extends Controller
                 now()->addHours(4),
                 ['worker' => $worker->id],
             ),
-            // 담당자가 고른 항목은 키로 저장돼 있다. **이 사람 언어로** 풀어 준다 —
-            // 무엇을 내야 하는지 못 읽으면 링크를 보낸 의미가 없다.
+            // 담당자가 고른 항목은 키로 저장돼 있다. **화면 언어로** 풀어 준다 —
+            // 기본은 이 사람의 언어이고, 헤더에서 다른 언어를 고르면 그쪽을 따른다.
+            // 여기만 근로자 언어에 묶어 두면 나머지는 영어인데 항목만 베트남어가 된다.
             'items' => ApplicationDocuments::labels(
-                $worker->supplement_items ?? [], $worker->locale
+                $worker->supplement_items ?? [], $this->displayLocale($worker)
             ),
             'note' => $worker->screening_note,
             // 이미 낸 내용을 보여 준다. 무엇이 들어가 있는지 모르면 무엇을 고쳐야
@@ -112,7 +113,7 @@ class WorkerApplyController extends Controller
                 'birth_date' => $worker->birth_date,
                 'phone_home_country' => $worker->phone_home_country,
             ],
-            'expected' => ApplicationDocuments::expected($worker->locale),
+            'expected' => ApplicationDocuments::expected($this->displayLocale($worker)),
             'maxFiles' => self::MAX_FILES,
             'maxKb' => WorkerFile::MAX_KB,
             'mimes' => WorkerFile::MIMES,

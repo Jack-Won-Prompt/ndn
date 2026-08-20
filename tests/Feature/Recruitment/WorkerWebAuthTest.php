@@ -328,15 +328,23 @@ it('본인 화면은 그 근로자가 고른 언어로 나온다', function () {
         ->and($htmlVi)->not->toContain('내 근무지');
 });
 
-it('세션 언어보다 근로자 언어가 이긴다', function () {
-    // 잘못 눌러 못 읽는 언어로 갇히는 쪽이 더 나쁘다.
+it('언어를 고르지 않았으면 근로자 언어를 쓴다', function () {
+    $this->worker->forceFill(['locale' => 'vi'])->save();
+
+    $html = actingAs($this->worker, 'worker')->get(route('worker.home'))->assertOk()->getContent();
+
+    expect($html)->not->toContain('내 근무지');
+});
+
+it('언어 선택기를 누르면 그쪽이 이긴다', function () {
+    // 눌렀는데 화면이 그대로면 선택기가 고장 난 것으로 보인다.
     $this->worker->forceFill(['locale' => 'vi'])->save();
 
     $html = actingAs($this->worker, 'worker')
         ->withSession(['site_locale' => 'ko'])
         ->get(route('worker.home'))->assertOk()->getContent();
 
-    expect($html)->not->toContain('내 근무지');
+    expect($html)->toContain('내 근무지');
 });
 
 it('수정 화면에는 지역 칸이 없다', function () {

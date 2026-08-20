@@ -359,6 +359,7 @@ it('보완 요청 항목이 근로자 언어로 나온다', function () {
     // 저장은 키다 — 한국어 라벨을 저장하면 기계 번역에 맡기게 된다.
     expect($worker->refresh()->supplement_items)->toBe(['doc_passport', 'doc_criminal']);
 
+    // 언어를 고른 적이 없으므로 근로자 언어(vi)가 쓰인다.
     $html = get(URL::temporarySignedRoute('site.apply.supplement', now()->addDay(), ['worker' => $worker->id]))
         ->assertOk()->getContent();
 
@@ -515,8 +516,8 @@ it('지원하기 화면은 방문자가 고른 언어로 나온다', function ()
     expect($vi)->not->toBe($ko);
 });
 
-it('보완 화면은 그 근로자가 고른 언어로 나온다', function () {
-    // 누구인지 아는 화면이다. 헤더를 건드리지 않아도 자기 말로 보여야 한다.
+it('보완 화면은 기본으로 그 근로자의 언어로 나온다', function () {
+    // 메일 링크로 들어온 사람은 헤더를 건드리지 않아도 자기 말로 봐야 한다.
     post(route('site.apply.store'), applyBody(['locale' => 'vi']))->assertRedirect();
     $worker = Worker::firstOrFail();
 
@@ -526,10 +527,49 @@ it('보완 화면은 그 근로자가 고른 언어로 나온다', function () {
 
     $url = URL::temporarySignedRoute('site.apply.supplement', now()->addDay(), ['worker' => $worker->id]);
 
-    // 세션 언어는 한국어인데도 근로자 언어(vi)가 이겨야 한다.
-    $html = withSession(['site_locale' => 'ko'])->get($url)->assertOk()->getContent();
+    // 언어를 고른 적이 없는 상태 — 근로자 언어(vi)가 쓰인다.
+    $html = get($url)->assertOk()->getContent();
 
     expect($html)->not->toContain('서류 보완');
+});
+
+it('언어 선택기를 누르면 그쪽이 이긴다', function () {
+    // 눌렀는데 화면이 그대로면 선택기가 고장 난 것으로 보인다. 옆에서 돕는
+    // 담당자가 한국어로 바꿔 함께 보는 일도 있다.
+    post(route('site.apply.store'), applyBody(['locale' => 'vi']))->assertRedirect();
+    $worker = Worker::firstOrFail();
+
+    actingAs($this->admin)->postJson(route('admin.signups.supplement', $worker), [
+        'items' => ['doc_passport'],
+    ])->assertOk();
+
+    $url = URL::temporarySignedRoute('site.apply.supplement', now()->addDay(), ['worker' => $worker->id]);
+
+    $html = withSession(['site_locale' => 'ko'])->get($url)->assertOk()->getContent();
+
+    expect($html)->toContain('서류 보완')
+        // 요청 항목도 함께 따라온다 — 여기만 근로자 언어에 묶이면
+        // 나머지는 한국어인데 항목만 베트남어가 된다.
+        ->toContain('여권 사본');
+});
+
+it('영어로 보면 서식 이름도 영어로 나온다', function () {
+    // 이 글자들은 data-no-translate 라 번역기가 안 건드린다. 영어 문구가
+    // 없으면 한국어로 굳는다.
+    post(route('site.apply.store'), applyBody(['locale' => 'vi']))->assertRedirect();
+    $worker = Worker::firstOrFail();
+
+    actingAs($this->admin)->postJson(route('admin.signups.supplement', $worker), [
+        'items' => ['doc_passport', 'doc_criminal'],
+    ])->assertOk();
+
+    $url = URL::temporarySignedRoute('site.apply.supplement', now()->addDay(), ['worker' => $worker->id]);
+
+    $html = pageText(withSession(['site_locale' => 'en'])->get($url)->assertOk()->getContent());
+
+    expect($html)->toContain('Passport copy')
+        ->toContain('Criminal record certificate')
+        ->not->toContain('여권 사본');
 });
 
 it('국적 선택지는 자국어와 한국어를 함께 보여 준다', function () {

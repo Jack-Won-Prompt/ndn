@@ -37,18 +37,28 @@ trait RendersInWorkerLocale
     /**
      * 화면을 보여 줄 언어.
      *
-     * 근로자를 아는 경우 그 사람의 locale 이 우선이다 — 헤더의 언어 선택기를
-     * 건드리지 않아도 자기 말로 보여야 한다. 선택기로 바꾸면 세션 값이 이기게
-     * 두지 않는다: 잘못 눌러 못 읽는 언어로 갇히는 쪽이 더 나쁘다.
+     * 근로자의 locale 은 **기본값**이다 — 메일 링크로 들어온 사람은 헤더를
+     * 건드리지 않아도 자기 말로 봐야 한다.
+     *
+     * 다만 헤더의 언어 선택기를 **직접 누른 경우에는 그쪽이 이긴다.** 눌렀는데
+     * 화면이 그대로면 선택기가 고장 난 것으로 보이고, 옆에서 돕는 담당자가
+     * 한국어로 바꿔 함께 보는 일도 실제로 있다.
+     *
+     * 기본값 대신 has() 로 본다 — session('site_locale', 'ko') 는 고른 적이
+     * 없어도 'ko' 를 돌려주므로, 그걸로는 '누른 것' 과 '안 누른 것' 을 구분할 수 없다.
      */
     protected function displayLocale(?Worker $worker = null): string
     {
+        $picked = session('site_locale');
+
+        if (filled($picked) && SiteTranslator::isSupported((string) $picked)) {
+            return (string) $picked;
+        }
+
         if ($worker !== null && filled($worker->locale) && SiteTranslator::isSupported($worker->locale)) {
             return $worker->locale;
         }
 
-        $session = (string) session('site_locale', 'ko');
-
-        return SiteTranslator::isSupported($session) ? $session : 'ko';
+        return 'ko';
     }
 }
