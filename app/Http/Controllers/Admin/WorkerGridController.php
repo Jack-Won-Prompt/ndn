@@ -447,6 +447,21 @@ class WorkerGridController extends Controller
             return response()->json(['ok' => false, 'message' => '엑셀을 읽지 못했습니다: '.$e->getMessage()], 422);
         }
 
+        // 한 번에 수십 명이 들어오는 통로다. 누가 언제 몇 명을 넣었는지 남기지 않으면
+        // 나중에 "이 명단 누가 올렸지" 에 답할 수 없다 (§7-6, §11).
+        // 이름·여권번호는 적지 않는다 — 기록 자체가 명단 사본이 되면 안 된다.
+        if ($created + $updated > 0 && Auth::user() !== null) {
+            activity('worker')
+                ->causedBy(Auth::user())
+                ->withProperties([
+                    'created' => $created,
+                    'updated' => $updated,
+                    'file' => $request->file('file')->getClientOriginalName(),
+                    'sheet' => $wantSheet,
+                ])
+                ->log('근로자 명단 엑셀 업로드');
+        }
+
         return response()->json([
             'ok' => true,
             'message' => "새로 등록 {$created}명 · 수정 {$updated}명",
