@@ -10,6 +10,7 @@ use App\Domains\Recruitment\Http\Requests\RegisterWorkerRequest;
 use App\Domains\Recruitment\Http\Requests\WorkerLoginRequest;
 use App\Domains\Recruitment\Http\Resources\WorkerResource;
 use App\Domains\Recruitment\Models\Worker;
+use App\Domains\Recruitment\Support\ApplicationDocuments;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -30,10 +31,15 @@ class AuthController extends Controller
     {
         $worker = $action->execute($request->validated());
 
+        // 가입과 함께 올라온 서류. 웹(/apply)과 같은 자리에 같은 모양으로 넣는다.
+        // 계정을 만든 뒤에 저장한다 — worker_id 가 있어야 경로가 정해진다.
+        $files = ApplicationDocuments::store($request->file('documents') ?? [], $worker);
+
         return response()->json([
             'data' => [
                 'id' => $worker->id,
                 'status' => $worker->status->value,
+                'documents' => $files,
             ],
             'meta' => [
                 // 근로자 자국어 안내 (§6)

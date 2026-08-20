@@ -9,9 +9,9 @@ use App\Domains\Recruitment\Actions\RequestSupplementAction;
 use App\Domains\Recruitment\Actions\ScreenWorkerAction;
 use App\Domains\Recruitment\Enums\ScreeningStatus;
 use App\Domains\Recruitment\Enums\WorkerStatus;
-use App\Domains\Recruitment\Http\Controllers\Web\WorkerApplyController;
 use App\Domains\Recruitment\Models\Worker;
 use App\Domains\Recruitment\Models\WorkerFile;
+use App\Domains\Recruitment\Support\ApplicationDocuments;
 use App\Http\Controllers\Controller;
 use App\Shared\Support\LocalTime;
 use Illuminate\Http\JsonResponse;
@@ -81,7 +81,7 @@ class SignupApprovalController extends Controller
     public static function supplementItems(): array
     {
         return array_merge(
-            WorkerApplyController::EXPECTED_DOCUMENTS,
+            ApplicationDocuments::expected(),
             ['생년월일', '본국 전화번호', '여권 사본 재촬영(글자 흐림)', '기타 서류'],
         );
     }

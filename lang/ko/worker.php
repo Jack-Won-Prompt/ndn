@@ -46,4 +46,11 @@ return [
     'reset_intro' => '비밀번호 재설정 요청을 받았습니다. 아래 버튼을 눌러 새 비밀번호를 정해 주세요.',
     'reset_action' => '비밀번호 재설정',
     'reset_outro' => '이 링크는 :minutes분 뒤 만료됩니다. 본인이 요청하지 않았다면 이 메일을 무시하세요.',
+
+    // 가입 때 함께 받는 서류 — 안내일 뿐 강제하지 않는다(ApplicationDocuments).
+    'doc_passport' => '여권 사본',
+    'doc_photo' => '증명사진',
+    'doc_health' => '건강검진 결과',
+    'doc_criminal' => '범죄경력 증명서',
+    'documents_hint' => '아래 서류를 사진으로 찍어 올려 주세요. 지금 없어도 신청은 됩니다 — 부족하면 담당자가 따로 요청합니다.',
 ];

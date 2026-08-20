@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Recruitment\Http\Requests;
 
 use App\Domains\Demand\Models\City;
+use App\Domains\Recruitment\Support\ApplicationDocuments;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
@@ -36,7 +37,16 @@ class RegisterWorkerRequest extends FormRequest
             'passport_no' => ['required', 'string', 'max:64'],
             'birth_date' => ['nullable', 'date'],
             'phone_home_country' => ['nullable', 'string', 'max:40'],
+            // 가입과 함께 받는 서류. **없어도 접수된다** — 현지에서 스캔본을
+            // 바로 구하지 못하는 일이 많다. 부족하면 담당자가 보완을 요청한다.
+            ...ApplicationDocuments::rules(),
         ];
+    }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return ApplicationDocuments::messages();
     }
 
     /**

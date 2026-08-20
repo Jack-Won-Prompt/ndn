@@ -8,19 +8,16 @@ use App\Domains\Demand\Models\City;
 use App\Domains\Recruitment\Actions\RegisterWorkerAction;
 use App\Domains\Recruitment\Actions\UpdateWorkerProfileAction;
 use App\Domains\Recruitment\Enums\ScreeningStatus;
-use App\Domains\Recruitment\Enums\WorkerFileType;
 use App\Domains\Recruitment\Http\Requests\RegisterWorkerRequest;
 use App\Domains\Recruitment\Models\Worker;
 use App\Domains\Recruitment\Models\WorkerFile;
+use App\Domains\Recruitment\Support\ApplicationDocuments;
 use App\Http\Controllers\Controller;
 use App\Shared\Translation\Concerns\RendersInWorkerLocale;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -43,10 +40,7 @@ class WorkerApplyController extends Controller
      * 없어도 접수는 되고 담당자가 보완을 요청한다. 유형도 고르게 하지 않는다 —
      * 어떤 서류인지 근로자가 판단하기 어렵고, 잘못 고른 분류가 오히려 방해가 된다.
      */
-    public const EXPECTED_DOCUMENTS = ['여권 사본', '범죄경력 증명서', '근로 동의서'];
-
-    /** 한 번에 올릴 수 있는 파일 수. */
-    public const MAX_FILES = 10;
+    public const MAX_FILES = ApplicationDocuments::MAX_FILES;
 
     /** 가입 폼 */
     public function create(): Response
@@ -108,7 +102,7 @@ class WorkerApplyController extends Controller
                 'locale' => $worker->locale,
                 'city_id' => $worker->city_id,
             ],
-            'expected' => self::EXPECTED_DOCUMENTS,
+            'expected' => ApplicationDocuments::expected(),
             'maxFiles' => self::MAX_FILES,
             'maxKb' => WorkerFile::MAX_KB,
             'mimes' => WorkerFile::MIMES,
@@ -151,7 +145,7 @@ class WorkerApplyController extends Controller
     {
         return [
             'cities' => $this->openCities(),
-            'expected' => self::EXPECTED_DOCUMENTS,
+            'expected' => ApplicationDocuments::expected(),
             'maxFiles' => self::MAX_FILES,
             'maxKb' => WorkerFile::MAX_KB,
             'mimes' => WorkerFile::MIMES,
@@ -174,52 +168,20 @@ class WorkerApplyController extends Controller
     /** 파일 검증 — 개수·형식·크기. 없어도 통과한다. */
     private function validateFiles(Request $request): void
     {
-        $request->validate([
-            'documents' => ['nullable', 'array', 'max:'.self::MAX_FILES],
-            'documents.*' => ['file', 'mimes:'.WorkerFile::MIMES, 'max:'.WorkerFile::MAX_KB],
-        ], [
-            'documents.max' => '파일은 한 번에 '.self::MAX_FILES.'개까지 올릴 수 있습니다.',
-        ]);
+        $request->validate(ApplicationDocuments::rules(), ApplicationDocuments::messages());
 
-        if (count($request->file('documents') ?? []) > self::MAX_FILES) {
+        // 규칙만으로는 놓치는 경우가 있다 — 같은 이름으로 여러 개 올리면
+        // 배열이 아니라 단일 파일로 들어와 max 가 세어지지 않는다.
+        if (count($request->file('documents') ?? []) > ApplicationDocuments::MAX_FILES) {
             throw ValidationException::withMessages([
-                'documents' => ['파일은 한 번에 '.self::MAX_FILES.'개까지 올릴 수 있습니다.'],
+                'documents' => [ApplicationDocuments::messages()['documents.max']],
             ]);
         }
     }
 
-    /**
-     * 올린 파일을 근로자 서류로 저장한다.
-     *
-     * 유형은 '기타' 로 둔다 — 근로자에게 분류를 시키지 않기로 했고, 잘못 붙은
-     * 분류는 없느니만 못하다. 담당자가 콘솔에서 보고 정리한다. 원본 파일명은
-     * 그대로 남기므로 무엇인지 알아볼 수 있다.
-     */
+    /** 올린 파일을 근로자 서류로 저장한다 (웹·앱 공용). */
     private function storeFiles(Request $request, Worker $worker, ?string $note = null): void
     {
-        foreach ($request->file('documents') ?? [] as $file) {
-            /** @var UploadedFile $file */
-            $ext = strtolower($file->getClientOriginalExtension() ?: 'bin');
-            // 저장 이름은 ASCII 로 만든다. 한글 파일명은 서버·백업에서 깨진다.
-            $name = 'apply_'.Str::random(16).'.'.$ext;
-
-            $path = $file->storeAs(
-                WorkerFile::DIR.'/'.$worker->id,
-                $name,
-                ['disk' => WorkerFile::DISK],
-            );
-
-            WorkerFile::create([
-                'worker_id' => $worker->id,
-                'type' => WorkerFileType::Other,
-                'path' => $path,
-                'original_name' => $file->getClientOriginalName(),
-                'size' => Storage::disk(WorkerFile::DISK)->size($path),
-                'mime' => $file->getClientMimeType(),
-                'note' => $note,
-                // 본인이 올렸다. 관리자가 올린 것과 구분되도록 비워 둔다.
-                'uploaded_by' => null,
-            ]);
-        }
+        ApplicationDocuments::store($request->file('documents') ?? [], $worker, $note);
     }
 }

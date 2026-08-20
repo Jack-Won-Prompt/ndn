@@ -43,4 +43,11 @@ return [
     'reset_intro' => 'Chúng tôi đã nhận yêu cầu đặt lại mật khẩu. Nhấn nút bên dưới để đặt mật khẩu mới.',
     'reset_action' => 'Đặt lại mật khẩu',
     'reset_outro' => 'Liên kết hết hạn sau :minutes phút. Nếu bạn không yêu cầu, hãy bỏ qua email này.',
+
+    // 가입 때 함께 받는 서류 — 안내일 뿐 강제하지 않는다(ApplicationDocuments).
+    'doc_passport' => 'Bản sao hộ chiếu',
+    'doc_photo' => 'Ảnh thẻ',
+    'doc_health' => 'Kết quả khám sức khỏe',
+    'doc_criminal' => 'Giấy chứng nhận lý lịch tư pháp',
+    'documents_hint' => 'Vui lòng chụp ảnh các giấy tờ dưới đây và tải lên. Nếu chưa có, bạn vẫn nộp được — cán bộ phụ trách sẽ yêu cầu bổ sung sau.',
 ];

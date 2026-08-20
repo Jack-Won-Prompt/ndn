@@ -10,6 +10,7 @@ use App\Domains\Onboarding\Http\Controllers\Api\OnboardingController;
 use App\Domains\Onboarding\Http\Controllers\Api\RequiredDocumentController;
 use App\Domains\Recruitment\Http\Controllers\Api\AuthController;
 use App\Domains\Recruitment\Http\Controllers\Api\DashboardController;
+use App\Domains\Recruitment\Http\Controllers\Api\SignupDocumentController;
 use App\Domains\Recruitment\Http\Controllers\Api\WorkerProfileController;
 use App\Domains\Settlement\Http\Controllers\Api\SettlementController;
 use App\Domains\Site\Http\Controllers\Api\SiteContentController;
@@ -66,6 +67,9 @@ Route::post('v1/site/inquiry', SiteInquiryController::class)->middleware('thrott
 
 // 가입 화면의 지역 선택지 — 로그인 전에 그리므로 인증 밖이다.
 Route::get('v1/cities', CityController::class)->middleware('throttle:60,1');
+
+// 가입 화면이 물어볼 서류 안내(무엇을 준비할지 + 파일 제한). 같은 이유로 인증 밖이다.
+Route::get('v1/signup/documents', SignupDocumentController::class)->middleware('throttle:60,1');
 
 // 로그인은 토큰 발급 전이므로 인증 미들웨어 밖에 둔다. 무차별 대입 방지로 throttle 적용.
 Route::prefix('v1')->group(function () {
