@@ -29,7 +29,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Log;
 use Laravel\Sanctum\HasApiTokens;
+use Throwable;
 
 /**
  * 근로자 (CLAUDE.md §5, §7).
@@ -70,6 +72,8 @@ class Worker extends Model implements AuthenticatableContract, CanResetPasswordC
         'phone_home_country',
         'screening_status',
         'screening_note',
+        // 담당자 업무 메모. 가입 심사 사유(screening_note)와는 다른 칸이다.
+        'note',
     ];
 
     /**
@@ -228,6 +232,36 @@ class Worker extends Model implements AuthenticatableContract, CanResetPasswordC
     }
 
     /**
+     * 암호화된 칸을 **읽다가 실패해도 죽지 않게** 꺼낸다.
+     *
+     * 암호문은 APP_KEY 로 푼다. 그래서 다른 키로 암호화된 자료를 읽으면
+     * DecryptException 이 난다 — 서버에서 만든 자료를 다른 키를 가진 곳에서
+     * 열 때 실제로 그렇게 된다.
+     *
+     * 목록 화면은 수십 명을 한꺼번에 그리므로, 한 사람이 안 풀린다고 화면
+     * 전체가 500 으로 죽으면 나머지 정보까지 못 본다. 그 한 칸만 비워 두고
+     * 나머지를 보여 주는 편이 낫다.
+     *
+     * 대신 조용히 넘기지는 않는다 — 키가 어긋났다는 사실 자체가 큰 문제라
+     * 로그에 남긴다. 값은 절대 로그에 쓰지 않는다(§7-1).
+     */
+    public function plain(string $field): ?string
+    {
+        try {
+            $value = $this->getAttribute($field);
+        } catch (Throwable $e) {
+            Log::warning('근로자 암호화 칸을 풀지 못했습니다 (APP_KEY 불일치 가능).', [
+                'worker_id' => $this->getKey(),
+                'field' => $field,
+            ]);
+
+            return null;
+        }
+
+        return $value === null ? null : (string) $value;
+    }
+
+    /**
      * 만 나이. birth_date 는 encrypted 라 SQL 로 계산할 수 없어 PHP 에서 구한다
      * (§7-1). 매칭 후보를 국적·미배정으로 좁힌 뒤 이 값으로 거른다.
      */
@@ -241,7 +275,7 @@ class Worker extends Model implements AuthenticatableContract, CanResetPasswordC
 
         try {
             return (int) Carbon::parse((string) $birth)->age;
-        } catch (\Throwable) {
+        } catch (Throwable) {
             // 형식이 깨진 값이 있어도 매칭 전체가 죽지 않게 한다.
             return null;
         }

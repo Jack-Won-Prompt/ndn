@@ -5,7 +5,11 @@
     <div class="screen__head">
         <div>
             <h1 class="screen__title">근로자</h1>
-            <p class="screen__sub">비민감 정보만 편집 · <strong>편집 후 [변경 저장]</strong> · <strong>번호 열 더블클릭</strong>으로 상세(입국·생활점검 이력) · <strong>여권번호·생년월일·전화 표시</strong> — 열람 기록이 남습니다(§7-6)</p>
+            <p class="screen__sub">
+                <strong>편집 후 [변경 저장]</strong> · <strong>번호 열 더블클릭</strong>으로 상세(입국·생활점검 이력) ·
+                엑셀 업로드는 <strong>번호 또는 여권번호가 같으면 수정</strong>, 없으면 새로 등록합니다 ·
+                여권번호·생년월일·연락처·이메일이 함께 보이며 <strong>열람 기록이 남습니다(§7-6)</strong>
+            </p>
         </div>
     </div>
 
@@ -271,6 +275,14 @@
               options: [{value:'ko',label:'한국어'},{value:'bn',label:'벵골어'},{value:'lo',label:'라오어'},{value:'si',label:'싱할라어'},{value:'vi',label:'베트남어'},{value:'ne',label:'네팔어'},{value:'ky',label:'키르기스어'}] },
             { header: '상태', name: 'status', width: 110, editor: 'combo', align: 'center',
               options: [{value:'pending',label:'승인 대기'},{value:'active',label:'재직'},{value:'inactive',label:'비활성'},{value:'returned',label:'귀국'},{value:'rejected',label:'가입 거절'}] },
+            // 아래 네 칸은 암호화해 보관하는 값이다(§7-1). 화면에 보인다고 DB 가 평문이 되지 않는다.
+            // 이 목록을 여는 것 자체가 개인정보 열람이라 서버가 열람 기록을 남긴다(§7-6).
+            { header: '연락처', name: 'phone_home_country', width: 140, editor: 'text' },
+            { header: '이메일', name: 'email', width: 200, editor: 'text' },
+            // 여권번호는 숫자가 섞여도 앞자리 0 이 살아야 해 text 로 둔다.
+            { header: '여권번호', name: 'passport_no', width: 130, editor: 'text' },
+            { header: '생년월일', name: 'birth_date', width: 120, editor: 'date', align: 'center' },
+            { header: '비고', name: 'note', width: 220, editor: 'text' },
         ],
         onRowDblClick: function (row) { if (row.id) openWorker(row.id); },
     });
