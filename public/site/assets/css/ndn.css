@@ -1202,3 +1202,15 @@ button { font: inherit; color: inherit; }
 }
 .nd-applybtn:hover { filter: brightness(1.06); color: #fff; }
 @media (max-width: 560px) { .nd-applybtn { display: none; } }
+
+/* 헤더가 겹치지 않게 —— 번역된 메뉴는 한국어보다 훨씬 길다.
+   베트남어에서 '지원하기' 버튼과 메뉴가 포개져 서로 못 읽는 상태가 됐다.
+   ① 메뉴는 남는 폭만큼만 차지하고 넘치면 가로로 밀린다(잘라내지 않는다)
+   ② 언어 선택기는 여유가 없으면 8개 나열 대신 기기 기본 선택기로 접는다 */
+.nd-nav { flex: 1 1 auto; overflow-x: auto; scrollbar-width: none; }
+.nd-nav::-webkit-scrollbar { display: none; }
+
+@media (max-width: 1400px) {
+    .nd-lang { display: none; }
+    .nd-langsel { display: block; max-width: 150px; }
+}

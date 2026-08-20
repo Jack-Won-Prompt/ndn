@@ -24,6 +24,7 @@ use Spatie\Activitylog\Models\Activity;
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\get;
 use function Pest\Laravel\post;
+use function Pest\Laravel\withSession;
 
 /**
  * 웹 근로자 가입 — 신청 → 심사(보완/합격/보류/불합격) → 합격자 본인 화면.
@@ -317,7 +318,8 @@ it('서명 없는 보완 주소는 열리지 않는다', function () {
 
 it('보완 화면은 이미 낸 민감정보를 보여 주지 않는다', function () {
     // 로그인 없이 열리는 화면이다. 링크가 새어도 읽히는 것이 없어야 한다(§7-1).
-    post(route('site.apply.store'), applyBody(['birth_date' => '1990-05-05']))->assertRedirect();
+    // 한국어 근로자로 본다 — 다른 언어면 화면이 번역돼 문구 비교가 흔들린다.
+    post(route('site.apply.store'), applyBody(['birth_date' => '1990-05-05', 'locale' => 'ko']))->assertRedirect();
     $worker = Worker::firstOrFail();
 
     actingAs($this->admin)->postJson(route('admin.signups.supplement', $worker), [
@@ -402,10 +404,6 @@ it('로그·배열 변환에서는 여전히 가려진다', function () {
 });
 
 it('보완 링크에서도 모든 정보를 고칠 수 있다', function () {
-    $city = City::factory()->create([
-        'name' => '옮긴군', 'region' => '테스트도', 'recruiting' => true, 'quota' => null,
-    ]);
-
     post(route('site.apply.store'), applyBody())->assertRedirect();
     $worker = Worker::firstOrFail();
 
@@ -415,7 +413,6 @@ it('보완 링크에서도 모든 정보를 고칠 수 있다', function () {
         'name' => 'Nguyen Van Fixed',
         'nationality' => 'bd',
         'locale' => 'bn',
-        'city_id' => $city->id,
         'passport_no' => 'FIXED0001',
         'birth_date' => '1991-02-03',
         'phone_home_country' => '+880 1 2345',
@@ -427,7 +424,8 @@ it('보완 링크에서도 모든 정보를 고칠 수 있다', function () {
     expect($w->name)->toBe('Nguyen Van Fixed')
         ->and($w->nationality)->toBe('BD')
         ->and($w->locale)->toBe('bn')
-        ->and($w->city_id)->toBe($city->id)
+        // 지역은 여기서 못 바꾼다 — 어느 농가에서 일할지는 관리자가 정한다.
+        ->and($w->city_id)->toBe($this->city->id)
         ->and($w->passport_no)->toBe('FIXED0001')
         ->and($w->birth_date)->toBe('1991-02-03')
         ->and(WorkerFile::where('worker_id', $w->id)->count())->toBe(1);
@@ -470,4 +468,69 @@ it('보완 요청 메일이 실패하면 상태를 바꾸지 않는다', functio
     expect($worker->screening())->toBe(ScreeningStatus::Received)
         ->and($worker->supplement_items)->toBeNull()
         ->and($worker->supplement_requested_at)->toBeNull();
+});
+
+/* ---------------- 다국어 표시 ---------------- */
+
+it('지원하기 화면은 방문자가 고른 언어로 나온다', function () {
+    // 한국어를 못 읽는 사람이 쓰는 화면이다. 이 컨트롤러는 SiteController 를
+    // 타지 않아 한동안 한국어 그대로 나갔다.
+    $ko = get(route('site.apply'))->assertOk()->getContent();
+
+    $vi = withSession(['site_locale' => 'vi'])->get(route('site.apply'))->assertOk()->getContent();
+
+    expect($vi)->not->toBe($ko);
+});
+
+it('보완 화면은 그 근로자가 고른 언어로 나온다', function () {
+    // 누구인지 아는 화면이다. 헤더를 건드리지 않아도 자기 말로 보여야 한다.
+    post(route('site.apply.store'), applyBody(['locale' => 'vi']))->assertRedirect();
+    $worker = Worker::firstOrFail();
+
+    actingAs($this->admin)->postJson(route('admin.signups.supplement', $worker), [
+        'items' => ['여권 사본'],
+    ])->assertOk();
+
+    $url = URL::temporarySignedRoute('site.apply.supplement', now()->addDay(), ['worker' => $worker->id]);
+
+    // 세션 언어는 한국어인데도 근로자 언어(vi)가 이겨야 한다.
+    $html = withSession(['site_locale' => 'ko'])->get($url)->assertOk()->getContent();
+
+    expect($html)->not->toContain('서류 보완');
+});
+
+it('국적 선택지는 자국어와 한국어를 함께 보여 준다', function () {
+    // 한국어만 있으면 근로자가 못 읽고, 자국어만 있으면 옆에서 돕는 담당자가 못 읽는다.
+    $html = get(route('site.apply'))->assertOk()->getContent();
+
+    expect($html)->toContain('Việt Nam · 베트남')
+        ->toContain('বাংলাদেশ · 방글라데시')
+        // 송출국 6개국이 전부 나온다 — 예전 화면은 4개국뿐이었다.
+        ->toContain('नेपाल · 네팔')
+        ->toContain('Кыргызстан · 키르기스스탄');
+});
+
+it('국적 이름은 번역기가 건드리지 않는다', function () {
+    // 나라 이름은 기계 번역이 자주 틀린다. 자기 나라를 못 알아보면 가입이 막힌다.
+    $html = get(route('site.apply'))->assertOk()->getContent();
+
+    expect($html)->toMatch('/id="f-nationality"[^>]*data-no-translate/');
+});
+
+it('지원할 때는 지역을 고르지만 수정할 때는 못 고른다', function () {
+    // 어느 농가에서 일할지는 관리자가 정한다. 수정 화면에 지역 칸을 두면
+    // 근로자가 스스로 배치를 바꾸는 것처럼 보인다.
+    expect(get(route('site.apply'))->getContent())->toContain('id="f-city"');
+
+    post(route('site.apply.store'), applyBody())->assertRedirect();
+    $worker = Worker::firstOrFail();
+
+    actingAs($this->admin)->postJson(route('admin.signups.supplement', $worker), [
+        'items' => ['여권 사본'],
+    ])->assertOk();
+
+    $html = get(URL::temporarySignedRoute('site.apply.supplement', now()->addDay(), ['worker' => $worker->id]))
+        ->assertOk()->getContent();
+
+    expect($html)->not->toContain('id="f-city"');
 });

@@ -27,6 +27,11 @@
 
                 @include('site._apply-fields', ['mode' => 'profile'])
 
+                <div class="nd-note" style="margin-top:18px">
+                    <b>근무할 농가는 담당자가 정합니다.</b> 여기서는 바꿀 수 없습니다 —
+                    배치가 확정되면 <a href="{{ route('worker.home') }}">내 정보</a> 화면에 표시됩니다.
+                </div>
+
                 <h2 class="nd-panel__title" style="margin-top:34px">서류 추가</h2>
                 <p class="nd-help" style="margin-bottom:12px">
                     새로 낼 서류가 있으면 올려 주세요. <b>이미 낸 서류는 그대로 남습니다</b> —

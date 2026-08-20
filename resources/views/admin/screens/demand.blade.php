@@ -13,6 +13,12 @@
 @endsection
 
 @section('wwgrid')
+@php
+    // 국적 선택지는 Nationality enum 한 곳에서 온다. 화면마다 따로 적어 두면
+    // 송출국이 늘 때 어딘가 하나가 빠진다(실제로 네팔·키르기스스탄이 빠져 있었다).
+    $natOptions = collect(App\Domains\Recruitment\Enums\Nationality::adminOptions())
+        ->map(fn ($label, $code) => ['value' => $code, 'label' => $label])->values();
+@endphp
 <script>
     var FARMS  = @json($farms);
     var CITIES = @json($cities);
@@ -29,7 +35,7 @@
             { header: '농가', name: 'farm_id', width: 150, editor: 'combo', options: FARMS, sortable: true },
             { header: '지자체', name: 'city_id', width: 130, editor: 'combo', options: CITIES },
             { header: '국적', name: 'nationality', width: 80, editor: 'combo', align: 'center',
-              options: [{value:'BD',label:'방글라'},{value:'LA',label:'라오스'},{value:'LK',label:'스리랑카'},{value:'VN',label:'베트남'}] },
+              options: @json($natOptions) },
             { header: '인원', name: 'headcount', width: 80, editor: 'number', min: 1, max: 999 },
             { header: '성별', name: 'gender', width: 90, editor: 'combo', align: 'center',
               options: [{value:'male',label:'남성'},{value:'female',label:'여성'},{value:'any',label:'무관'}] },

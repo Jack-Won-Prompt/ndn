@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Domains\Recruitment\Http\Controllers\Web;
 
-use App\Domains\Demand\Models\City;
 use App\Domains\Matching\Enums\PlacementStatus;
 use App\Domains\Matching\Models\Placement;
 use App\Domains\Recruitment\Actions\UpdateWorkerProfileAction;
@@ -13,9 +12,10 @@ use App\Domains\Recruitment\Models\Worker;
 use App\Domains\Recruitment\Models\WorkerFile;
 use App\Http\Controllers\Controller;
 use App\Shared\Support\LocalTime;
-use Illuminate\Contracts\View\View;
+use App\Shared\Translation\Concerns\RendersInWorkerLocale;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -32,7 +32,9 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class WorkerHomeController extends Controller
 {
-    public function show(): View
+    use RendersInWorkerLocale;
+
+    public function show(): Response
     {
         /** @var Worker $worker */
         $worker = Auth::guard('worker')->user();
@@ -46,7 +48,8 @@ class WorkerHomeController extends Controller
             ->latest('id')
             ->first();
 
-        return view('site.worker-home', [
+        // 이 사람이 고른 언어로 보여 준다(§6).
+        return $this->renderLocalized('site.worker-home', [
             'worker' => $worker,
             'placement' => $placement,
             'workplace' => $this->workplace($placement),
@@ -58,7 +61,7 @@ class WorkerHomeController extends Controller
                 'uploaded_at' => LocalTime::format($f->created_at),
                 'missing' => ! $f->exists(),
             ])->all(),
-        ]);
+        ], $worker);
     }
 
     /**
@@ -102,23 +105,17 @@ class WorkerHomeController extends Controller
      * 로그인한 본인이므로 여권번호·생년월일·전화를 **되돌려 보여 준다.** 보완
      * 링크(로그인 없음)와 다른 점이다 — 그쪽은 비워 두고 새로 적게 한다(§7-1).
      */
-    public function edit(): View
+    public function edit(): Response
     {
         /** @var Worker $worker */
         $worker = Auth::guard('worker')->user();
 
-        return view('site.worker-edit', [
+        return $this->renderLocalized('site.worker-edit', [
             'worker' => $worker,
-            'cities' => City::query()->orderBy('region')->orderBy('name')->get()
-                // 지금 지역은 마감됐어도 목록에 남긴다. 없으면 '그대로 두기' 가 불가능해진다.
-                ->filter(fn (City $c) => $c->isOpenForSignup() || $c->id === $worker->city_id)
-                ->map(fn (City $c) => ['value' => $c->id, 'label' => $c->label()])
-                ->values()->all(),
             'prefill' => [
                 'name' => $worker->name,
                 'nationality' => $worker->nationality,
                 'locale' => $worker->locale,
-                'city_id' => $worker->city_id,
                 'passport_no' => $worker->passport_no,
                 'birth_date' => $worker->birth_date,
                 'phone_home_country' => $worker->phone_home_country,
@@ -126,7 +123,7 @@ class WorkerHomeController extends Controller
             'maxFiles' => WorkerApplyController::MAX_FILES,
             'maxKb' => WorkerFile::MAX_KB,
             'mimes' => WorkerFile::MIMES,
-        ]);
+        ], $worker);
     }
 
     /** 내 정보 저장 + 서류 추가. */

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Domains\Recruitment\Actions;
 
-use App\Domains\Demand\Models\City;
 use App\Domains\Recruitment\Models\Worker;
 use Illuminate\Validation\ValidationException;
 
@@ -46,19 +45,11 @@ class UpdateWorkerProfileAction
             }
         }
 
-        // 모집이 닫힌 지역으로는 옮길 수 없다. 가입 때와 같은 규칙이다.
-        if (filled($data['city_id'] ?? null) && (int) $data['city_id'] !== $worker->city_id) {
-            $city = City::find($data['city_id']);
-
-            if ($city === null || ! $city->isOpenForSignup()) {
-                throw ValidationException::withMessages([
-                    'city_id' => [trans('worker.city_closed', [], $locale)],
-                ]);
-            }
-        }
-
+        // city_id 는 없다. **어느 지역·농가에서 일할지는 관리자가 정한다** —
+        // 근로자가 스스로 옮기면 이미 잡힌 배정과 어긋난다. 화면에서 칸을 없애도
+        // 요청은 만들 수 있으므로 저장 쪽에서 막는다.
         $fields = [
-            'name', 'nationality', 'locale', 'city_id',
+            'name', 'nationality', 'locale',
             'passport_no', 'birth_date', 'phone_home_country',
         ];
 
@@ -110,7 +101,6 @@ class UpdateWorkerProfileAction
             'name' => ['nullable', 'string', 'max:100'],
             'nationality' => ['nullable', 'string', 'size:2'],
             'locale' => ['nullable', 'in:ko,bn,lo,si,vi,ne,ky'],
-            'city_id' => ['nullable', 'integer', 'exists:cities,id'],
             'passport_no' => ['nullable', 'string', 'max:64'],
             'birth_date' => ['nullable', 'date'],
             'phone_home_country' => ['nullable', 'string', 'max:40'],

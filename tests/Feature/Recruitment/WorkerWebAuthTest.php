@@ -38,6 +38,8 @@ beforeEach(function () {
         'status' => WorkerStatus::Active->value,
         'passport_no' => 'P7654321',
         'birth_date' => '1992-03-04',
+        // 한국어로 고정한다. 다른 언어면 화면이 번역돼 한글 문구 비교가 흔들린다.
+        'locale' => 'ko',
     ]);
 });
 
@@ -222,7 +224,6 @@ it('본인 화면에서 모든 정보를 고칠 수 있다', function () {
         'name' => 'Nguyen Van Changed',
         'nationality' => 'la',
         'locale' => 'lo',
-        'city_id' => $city->id,
         'passport_no' => 'CHANGED999',
         'birth_date' => '1990-01-02',
         'phone_home_country' => '+856 20 111 2222',
@@ -234,7 +235,6 @@ it('본인 화면에서 모든 정보를 고칠 수 있다', function () {
         // 국적은 대문자로 맞춘다 — 매칭이 대문자 코드로 대조한다.
         ->and($w->nationality)->toBe('LA')
         ->and($w->locale)->toBe('lo')
-        ->and($w->city_id)->toBe($city->id)
         ->and($w->passport_no)->toBe('CHANGED999')
         ->and($w->birth_date)->toBe('1990-01-02')
         ->and($w->phone_home_country)->toBe('+856 20 111 2222');
@@ -268,16 +268,6 @@ it('남이 쓰는 여권번호로는 바꿀 수 없다', function () {
     ])->assertSessionHasErrors('passport_no');
 
     expect($this->worker->refresh()->passport_no)->toBe('P7654321');
-});
-
-it('모집이 닫힌 지역으로는 옮길 수 없다', function () {
-    $closed = City::factory()->create([
-        'name' => '마감군', 'region' => '테스트도', 'recruiting' => false,
-    ]);
-
-    actingAs($this->worker, 'worker')->post(route('worker.profile.update'), [
-        'city_id' => $closed->id,
-    ])->assertSessionHasErrors('city_id');
 });
 
 it('본인 화면에서 서류를 더 올릴 수 있고 기존 서류는 남는다', function () {
@@ -316,4 +306,59 @@ it('로그인 안 된 근로자는 관리자 로그인이 아니라 근로자 �
     // 근로자를 관리자 로그인 화면에 떨어뜨리면 자기 계정이 없는 줄 안다.
     get(route('worker.home'))->assertRedirect(route('worker.login'));
     get(route('worker.profile'))->assertRedirect(route('worker.login'));
+});
+
+/* ---------------- 다국어 표시 ---------------- */
+
+it('본인 화면은 그 근로자가 고른 언어로 나온다', function () {
+    $vi = Worker::factory()->create([
+        'email' => 'vi@example.com', 'password' => 'password123',
+        'status' => WorkerStatus::Active->value, 'locale' => 'vi',
+    ]);
+    $ko = Worker::factory()->create([
+        'email' => 'ko@example.com', 'password' => 'password123',
+        'status' => WorkerStatus::Active->value, 'locale' => 'ko',
+    ]);
+
+    $htmlKo = actingAs($ko, 'worker')->get(route('worker.home'))->assertOk()->getContent();
+    $htmlVi = actingAs($vi, 'worker')->get(route('worker.home'))->assertOk()->getContent();
+
+    expect($htmlKo)->toContain('내 근무지')
+        // 헤더 언어 선택기를 건드리지 않아도 자기 말로 보여야 한다.
+        ->and($htmlVi)->not->toContain('내 근무지');
+});
+
+it('세션 언어보다 근로자 언어가 이긴다', function () {
+    // 잘못 눌러 못 읽는 언어로 갇히는 쪽이 더 나쁘다.
+    $this->worker->forceFill(['locale' => 'vi'])->save();
+
+    $html = actingAs($this->worker, 'worker')
+        ->withSession(['site_locale' => 'ko'])
+        ->get(route('worker.home'))->assertOk()->getContent();
+
+    expect($html)->not->toContain('내 근무지');
+});
+
+it('수정 화면에는 지역 칸이 없다', function () {
+    // 어느 농가에서 일할지는 관리자가 정한다.
+    $this->worker->forceFill(['locale' => 'ko'])->save();
+
+    $html = actingAs($this->worker, 'worker')->get(route('worker.profile'))->assertOk()->getContent();
+
+    expect($html)->not->toContain('id="f-city"')
+        ->and($html)->toContain('근무할 농가는 담당자가 정합니다');
+});
+
+it('근로자가 스스로 지역을 바꿀 수 없다', function () {
+    // 화면에서 칸을 없애도 요청은 만들 수 있다. 저장 쪽에서도 막혀야 한다.
+    $before = $this->worker->city_id;
+    $city = City::factory()->create([
+        'name' => '몰래군', 'region' => '테스트도', 'recruiting' => true, 'quota' => null,
+    ]);
+
+    actingAs($this->worker, 'worker')->post(route('worker.profile.update'), [
+        'city_id' => $city->id,
+    ])->assertRedirect(route('worker.home'));
+
+    expect($this->worker->refresh()->city_id)->toBe($before);
 });

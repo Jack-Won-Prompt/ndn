@@ -7,9 +7,10 @@ namespace App\Domains\Recruitment\Http\Controllers\Web;
 use App\Domains\Recruitment\Enums\WorkerStatus;
 use App\Domains\Recruitment\Models\Worker;
 use App\Http\Controllers\Controller;
-use Illuminate\Contracts\View\View;
+use App\Shared\Translation\Concerns\RendersInWorkerLocale;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
@@ -26,11 +27,14 @@ use Illuminate\Validation\ValidationException;
  */
 class WorkerAuthController extends Controller
 {
-    public function showLogin(): View|RedirectResponse
+    use RendersInWorkerLocale;
+
+    public function showLogin(): Response|RedirectResponse
     {
+        // 아직 누구인지 모르므로 방문자가 헤더에서 고른 언어로 보여 준다(§6).
         return Auth::guard('worker')->check()
             ? redirect()->route('worker.home')
-            : view('site.worker-login');
+            : $this->renderLocalized('site.worker-login');
     }
 
     public function login(Request $request): RedirectResponse
@@ -75,9 +79,9 @@ class WorkerAuthController extends Controller
 
     /* ---------- 비밀번호 찾기 ---------- */
 
-    public function showForgot(): View
+    public function showForgot(): Response
     {
-        return view('site.worker-forgot');
+        return $this->renderLocalized('site.worker-forgot');
     }
 
     /**
@@ -95,9 +99,9 @@ class WorkerAuthController extends Controller
         return back()->with('status', '입력하신 주소로 가입된 계정이 있으면 재설정 링크를 보냈습니다. 메일함을 확인해 주세요.');
     }
 
-    public function showReset(Request $request, string $token): View
+    public function showReset(Request $request, string $token): Response
     {
-        return view('site.worker-reset', [
+        return $this->renderLocalized('site.worker-reset', [
             'token' => $token,
             'email' => $request->query('email', ''),
         ]);

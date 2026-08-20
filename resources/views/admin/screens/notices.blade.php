@@ -103,7 +103,7 @@
 @section('script')
 <script>
     (function () {
-        var NAT = [['BD','방글라데시'],['LA','라오스'],['LK','스리랑카'],['VN','베트남']];
+        var NAT = @json(collect(App\Domains\Recruitment\Enums\Nationality::adminOptions())->map(fn ($l, $c) => [$c, $l])->values());
         var STA = [['active','재직'],['inactive','비활성'],['returned','귀국']];
         var target = document.getElementById('nt-target');
         var wrap = document.getElementById('nt-value-wrap');

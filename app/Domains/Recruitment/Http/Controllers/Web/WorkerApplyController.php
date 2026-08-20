@@ -13,9 +13,10 @@ use App\Domains\Recruitment\Http\Requests\RegisterWorkerRequest;
 use App\Domains\Recruitment\Models\Worker;
 use App\Domains\Recruitment\Models\WorkerFile;
 use App\Http\Controllers\Controller;
-use Illuminate\Contracts\View\View;
+use App\Shared\Translation\Concerns\RendersInWorkerLocale;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
@@ -33,6 +34,8 @@ use Illuminate\Validation\ValidationException;
  */
 class WorkerApplyController extends Controller
 {
+    use RendersInWorkerLocale;
+
     /**
      * 가입 때 함께 받는 서류 안내.
      *
@@ -46,9 +49,10 @@ class WorkerApplyController extends Controller
     public const MAX_FILES = 10;
 
     /** 가입 폼 */
-    public function create(): View
+    public function create(): Response
     {
-        return view('site.apply', $this->formData());
+        // 방문자가 헤더에서 고른 언어로 보여 준다(§6). 아직 누구인지 모른다.
+        return $this->renderLocalized('site.apply', $this->formData());
     }
 
     /** 가입 접수 */
@@ -66,9 +70,9 @@ class WorkerApplyController extends Controller
     }
 
     /** 접수 완료 안내 */
-    public function done(): View
+    public function done(): Response
     {
-        return view('site.apply-done');
+        return $this->renderLocalized('site.apply-done');
     }
 
     /**
@@ -78,11 +82,12 @@ class WorkerApplyController extends Controller
      * 여권번호·생년월일 같은 기존 값은 **보여 주지 않는다**(§7-1). 링크가 새어도
      * 읽히는 것이 없어야 한다.
      */
-    public function supplement(Worker $worker): View
+    public function supplement(Worker $worker): Response
     {
         abort_unless($worker->status->isPending(), 410, '이미 처리된 신청입니다.');
 
-        return view('site.apply-supplement', [
+        // 누구인지 아는 화면이다. **그 근로자가 고른 언어**로 보여 준다.
+        return $this->renderLocalized('site.apply-supplement', [
             'worker' => $worker,
             // 제출 주소도 서명해서 넘긴다. 라우트 이름만으로 만들면 서명이 없어
             // signed 미들웨어가 막는다 — 화면은 열리는데 제출만 안 되는 상태가 된다.
@@ -107,7 +112,7 @@ class WorkerApplyController extends Controller
             'maxFiles' => self::MAX_FILES,
             'maxKb' => WorkerFile::MAX_KB,
             'mimes' => WorkerFile::MIMES,
-        ]);
+        ], $worker);
     }
 
     /** 보완 제출 접수 */
