@@ -17,10 +17,7 @@
 
     {{-- 왼쪽 잉크 판 — 좁은 화면에서는 감춘다(로그인 폼이 먼저 보여야 한다). --}}
     <aside class="nd-auth__side">
-        <a class="nd-logo" href="{{ url('/') }}">
-            <span class="nd-logo__mark" style="color:#fff">N<i>.</i>D<i>.</i>N</span>
-            <span class="nd-logo__sub">Korea</span>
-        </a>
+        @include('partials.logo', ['on' => 'ink', 'href' => url('/'), 'sub' => 'Korea'])
         <h2 class="nd-h1">운영 콘솔</h2>
         <p>
             수요 신청부터 모집·배치·정착·사후관리까지, 계절근로자 업무 전 과정을

@@ -48,11 +48,11 @@
 
 <header class="nd-header" data-nd-header>
     <div class="nd-wrap nd-header__in">
-        <a class="nd-logo" href="{{ route('site.home') }}" aria-label="N.D.N Korea 홈">
-            <img class="nd-logo__img" src="{{ asset('site/assets/logo.png') }}?v={{ @filemtime(public_path('site/assets/logo.png')) }}"
-                 alt="N.D.N" width="45" height="30">
-            <span class="nd-logo__sub">Korea</span>
-        </a>
+        @include('partials.logo', [
+            'href' => route('site.home'),
+            'sub' => 'Korea',
+            'label' => 'N.D.N Korea 홈',
+        ])
 
         <nav class="nd-nav" id="nd-nav" aria-label="주 메뉴">
             @foreach ($nav as $key => $item)

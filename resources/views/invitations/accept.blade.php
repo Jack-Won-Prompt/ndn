@@ -15,10 +15,7 @@
 <div class="nd-auth">
 
     <aside class="nd-auth__side">
-        <a class="nd-logo" href="{{ url('/') }}">
-            <span class="nd-logo__mark" style="color:#fff">N<i>.</i>D<i>.</i>N</span>
-            <span class="nd-logo__sub">Korea</span>
-        </a>
+        @include('partials.logo', ['on' => 'ink', 'href' => url('/'), 'sub' => 'Korea'])
         <h2 class="nd-h1">협력 포털에<br>초대되었습니다</h2>
         <p>
             비밀번호를 설정하면 바로 이용할 수 있습니다.

@@ -51,7 +51,12 @@
 <div class="app">
     <aside class="sidebar">
         <div class="sidebar__brand">
-            <b>N.D.N</b><span>Console</span>
+            {{-- 사이드바는 잉크색이라 어두운 면용 로고를 쓴다. 파일이 바뀌면 주소도
+                 바뀌게 해 두어야 브라우저에 남은 옛 로고가 계속 뜨지 않는다. --}}
+            <img class="sidebar__logo"
+                 src="{{ asset('site/assets/logo-light.png') }}?v={{ @filemtime(public_path('site/assets/logo-light.png')) }}"
+                 alt="N.D.N" width="66" height="30">
+            <span>Console</span>
         </div>
         <nav class="sidebar__nav">
             @foreach ($menu as $group)

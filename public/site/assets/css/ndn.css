@@ -229,19 +229,18 @@ button { font: inherit; color: inherit; }
 
 .nd-logo { display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto; }
 
-/* 로고 이미지. 원본 배경이 흰색이라 밝은 지면에서만 쓴다 —
-   잉크 밴드(푸터·로그인 옆판·에러)에서는 흰 사각형으로 뜨므로 텍스트 워드마크를 쓴다.
-   투명 배경 파일을 받으면 그때 어두운 면에도 쓸 수 있다. */
+/* 로고 이미지. 배경이 투명하고 어두운 면용(logo-light.png)이 따로 있어
+   잉크 밴드에도 그대로 얹는다 — 어느 판을 쓸지는 partials/logo.blade.php 가 고른다.
+   height 를 CSS 로 고정하고 width:auto 로 두어, 로고 비율이 바뀌어도 찌그러지지 않는다. */
 .nd-logo__img { height: 30px; width: auto; display: block; }
 @media (max-width: 480px) { .nd-logo__img { height: 26px; } }
-.nd-logo__mark {
-    font-size: 20px; font-weight: 900; letter-spacing: -.05em; color: var(--nd-ink);
-}
-.nd-logo__mark i { font-style: normal; color: var(--nd-accent); }
 .nd-logo__sub {
     font-size: 11px; font-weight: 700; letter-spacing: .18em;
     text-transform: uppercase; color: var(--nd-text-3);
 }
+/* 어두운 면에 얹은 로고. 곁들인 작은 글씨도 함께 밝아져야 한다 —
+   기본색(--nd-text-3)은 짙은 회색이라 잉크 판 위에서 사라진다. */
+.nd-logo--ink .nd-logo__sub { color: var(--nd-on-ink-2); }
 
 .nd-nav { display: flex; align-items: center; gap: 2px; min-width: 0; }
 .nd-nav a {
@@ -895,8 +894,9 @@ button { font: inherit; color: inherit; }
     background: var(--nd-ink); color: var(--nd-on-ink);
 }
 .nd-app__bar .nd-wrap { display: flex; align-items: center; gap: 16px; height: 60px; }
-.nd-app__bar .nd-logo__mark { color: var(--nd-on-ink); }
 .nd-app__bar .nd-logo__sub { color: var(--nd-on-ink-3); }
+/* 60px 바에 30px 로고는 너무 꽉 찬다. */
+.nd-app__bar .nd-logo__img { height: 26px; }
 .nd-app__nav { display: flex; gap: 2px; margin-left: 10px; overflow-x: auto; scrollbar-width: none; }
 .nd-app__nav::-webkit-scrollbar { display: none; }
 .nd-app__nav a {

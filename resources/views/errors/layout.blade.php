@@ -25,9 +25,9 @@
                 <a class="nd-btn nd-btn--paper" href="{{ url('/') }}">홈으로 돌아가기</a>
                 @yield('actions')
             </div>
-            <p style="margin-top:44px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--nd-on-ink-3)">
-                N.D.N Korea
-            </p>
+            <div style="margin-top:44px">
+                @include('partials.logo', ['on' => 'ink', 'sub' => 'Korea'])
+            </div>
         </div>
     </main>
 </body>

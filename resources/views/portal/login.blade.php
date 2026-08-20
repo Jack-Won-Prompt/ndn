@@ -16,10 +16,7 @@
 <div class="nd-auth">
 
     <aside class="nd-auth__side">
-        <a class="nd-logo" href="{{ url('/') }}">
-            <span class="nd-logo__mark" style="color:#fff">N<i>.</i>D<i>.</i>N</span>
-            <span class="nd-logo__sub">Korea</span>
-        </a>
+        @include('partials.logo', ['on' => 'ink', 'href' => url('/'), 'sub' => 'Korea'])
         <h2 class="nd-h1">협력 포털</h2>
         <p>
             시청 · 농가 · 해외협력사 · 제휴 대리점이 각자 맡은 일을 같은 데이터 위에서 처리합니다.

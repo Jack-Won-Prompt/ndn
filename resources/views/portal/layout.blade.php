@@ -37,10 +37,11 @@
 
     <header class="nd-app__bar">
         <div class="nd-wrap">
-            <a class="nd-logo" href="{{ route('portal.index') }}">
-                <span class="nd-logo__mark">N<i>.</i>D<i>.</i>N</span>
-                <span class="nd-logo__sub">협력 포털</span>
-            </a>
+            @include('partials.logo', [
+                'on' => 'ink',
+                'href' => route('portal.index'),
+                'sub' => '협력 포털',
+            ])
 
             <nav class="nd-app__nav">
                 @if ($isFarm)
