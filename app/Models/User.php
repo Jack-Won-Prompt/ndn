@@ -7,10 +7,12 @@ namespace App\Models;
 use App\Domains\Demand\Models\City;
 use App\Domains\Demand\Models\Farm;
 use App\Shared\Enums\UserRole;
+use App\Shared\Notifications\Models\DeviceToken;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -105,5 +107,18 @@ class User extends Authenticatable
         }
 
         return false;
+    }
+
+    /**
+     * 이 담당자가 등록한 기기 (관리자 앱).
+     *
+     * 공지를 '전체' 로 보낼 때 **기기를 등록한 사람만** 고르는 데 쓴다.
+     * 앱을 안 쓰는 담당자까지 세면 발송 건수가 실제로 받은 사람보다 커진다.
+     *
+     * @return MorphMany<DeviceToken, $this>
+     */
+    public function deviceTokens(): MorphMany
+    {
+        return $this->morphMany(DeviceToken::class, 'tokenable');
     }
 }

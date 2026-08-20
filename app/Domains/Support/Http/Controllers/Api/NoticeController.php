@@ -24,9 +24,13 @@ class NoticeController extends Controller
 
         $notices = Notice::query()
             ->where(function ($q) use ($worker) {
-                $q->where('target', Notice::TARGET_ALL)
+                // 넓은 대상 둘 — '전체'(담당자까지)와 '근로자 전체'
+                $q->whereIn('target', [Notice::TARGET_EVERYONE, Notice::TARGET_ALL])
                     ->orWhere(fn ($w) => $w->where('target', Notice::TARGET_NATIONALITY)->where('target_value', $worker->nationality))
-                    ->orWhere(fn ($w) => $w->where('target', Notice::TARGET_STATUS)->where('target_value', $worker->status?->value));
+                    ->orWhere(fn ($w) => $w->where('target', Notice::TARGET_STATUS)->where('target_value', $worker->status?->value))
+                    // 골라 보낸 공지는 수신자 표에 있는 사람만 본다.
+                    ->orWhere(fn ($w) => $w->where('target', Notice::TARGET_SELECTED)
+                        ->whereHas('recipients', fn ($r) => $r->whereKey($worker->id)));
             })
             ->latest('id')
             ->limit(50)
