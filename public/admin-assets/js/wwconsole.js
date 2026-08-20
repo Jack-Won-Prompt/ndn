@@ -240,6 +240,30 @@
             });
         }
 
+        /* ---------- 오른쪽에 칸이 더 있다는 표시 ----------
+         * 칸이 많은 표(근로자는 열한 개)는 좁은 화면에서 오른쪽 칸이 화면 밖으로
+         * 밀린다. 스크롤바만으로는 '칸이 아예 없다' 고 여기게 된다 — 실제로
+         * 비고 칸이 안 보인다는 문의가 왔다. 밀면 더 있다는 것을 글자로 알린다.
+         */
+        var moreTag = document.createElement('span');
+        moreTag.className = 'ndn-gridbar__more';
+        moreTag.hidden = true;
+        bar.appendChild(moreTag);
+
+        function checkOverflow() {
+            var wrap = grid._wrapEl;
+            if (!wrap) return;
+            var hidden = wrap.scrollWidth - wrap.clientWidth - Math.round(wrap.scrollLeft);
+            moreTag.hidden = hidden <= 2;
+            moreTag.textContent = '→ 오른쪽에 칸이 더 있습니다 (표를 옆으로 미세요)';
+        }
+
+        checkOverflow();
+        window.addEventListener('resize', checkOverflow);
+        if (grid._wrapEl) grid._wrapEl.addEventListener('scroll', checkOverflow);
+        // 첫 그리기 직후에는 폭이 아직 안 잡혀 있을 수 있다.
+        setTimeout(checkOverflow, 100);
+
         // 인스턴스를 host 요소에 노출 (외부 버튼 연동·디버깅·테스트용)
         host.wwgrid = grid;
 

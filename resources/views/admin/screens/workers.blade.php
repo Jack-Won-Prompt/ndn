@@ -309,26 +309,28 @@
         deleteWarning: '삭제하면 그 사람의 배정이 취소되어 농가 자리가 비고, 후보자·온보딩·정착 신청·민원·서류도 함께 정리됩니다.',
         newRow: { nationality: 'BD', city_id: null, locale: 'bn', status: 'active' },
         data: @json($rows),
+        // 칸이 열한 개다. 폭을 줄여 1500px 안팎이면 한 화면에 들어오게 맞췄고,
+        // 그보다 좁으면 표를 옆으로 밀어 본다(가로 스크롤바를 눈에 띄게 해 두었다).
         columns: [
-            { header: '번호', name: 'id', width: 64, align: 'center', sortable: true },
-            { header: '이름', name: 'name', width: 160, editor: 'text', sortable: true },
-            { header: '국적', name: 'nationality', width: 100, editor: 'combo', align: 'center',
+            { header: '번호', name: 'id', width: 56, align: 'center', sortable: true },
+            { header: '이름', name: 'name', width: 150, editor: 'text', sortable: true },
+            { header: '국적', name: 'nationality', width: 76, editor: 'combo', align: 'center',
               options: [{value:'BD',label:'방글라'},{value:'LA',label:'라오스'},{value:'LK',label:'스리랑카'},{value:'VN',label:'베트남'}] },
             // 지원 지자체 — 가입 시 근로자가 고른 지역. 이전 가입자는 여기서 채운다.
-            { header: '지원 지역', name: 'city_id', width: 150, editor: 'combo', align: 'center',
+            { header: '지원 지역', name: 'city_id', width: 110, editor: 'combo', align: 'center',
               options: @json($cityOptions) },
-            { header: '언어', name: 'locale', width: 100, editor: 'combo', align: 'center',
+            { header: '언어', name: 'locale', width: 84, editor: 'combo', align: 'center',
               options: [{value:'ko',label:'한국어'},{value:'bn',label:'벵골어'},{value:'lo',label:'라오어'},{value:'si',label:'싱할라어'},{value:'vi',label:'베트남어'},{value:'ne',label:'네팔어'},{value:'ky',label:'키르기스어'}] },
-            { header: '상태', name: 'status', width: 110, editor: 'combo', align: 'center',
+            { header: '상태', name: 'status', width: 88, editor: 'combo', align: 'center',
               options: [{value:'pending',label:'승인 대기'},{value:'active',label:'재직'},{value:'inactive',label:'비활성'},{value:'returned',label:'귀국'},{value:'rejected',label:'가입 거절'}] },
             // 아래 네 칸은 암호화해 보관하는 값이다(§7-1). 화면에 보인다고 DB 가 평문이 되지 않는다.
             // 이 목록을 여는 것 자체가 개인정보 열람이라 서버가 열람 기록을 남긴다(§7-6).
-            { header: '연락처', name: 'phone_home_country', width: 140, editor: 'text' },
-            { header: '이메일', name: 'email', width: 200, editor: 'text' },
+            { header: '연락처', name: 'phone_home_country', width: 128, editor: 'text' },
+            { header: '이메일', name: 'email', width: 165, editor: 'text' },
             // 여권번호는 숫자가 섞여도 앞자리 0 이 살아야 해 text 로 둔다.
-            { header: '여권번호', name: 'passport_no', width: 130, editor: 'text' },
-            { header: '생년월일', name: 'birth_date', width: 120, editor: 'date', align: 'center' },
-            { header: '비고', name: 'note', width: 220, editor: 'text' },
+            { header: '여권번호', name: 'passport_no', width: 100, editor: 'text' },
+            { header: '생년월일', name: 'birth_date', width: 100, editor: 'date', align: 'center' },
+            { header: '비고', name: 'note', width: 160, editor: 'text' },
         ],
         onRowDblClick: function (row) { if (row.id) openWorker(row.id); },
     });

@@ -273,3 +273,30 @@ body {
 .dtl-badge { font-size: 11px; font-weight: 700; border-radius: 100px; padding: 2px 9px; background: var(--mv2-slate-25); color: var(--mv2-text-muted); }
 .dtl-empty { color: var(--mv2-text-faint); font-size: var(--mv2-fz-sm); }
 .dtl-hist__row { font-size: 12px; color: var(--mv2-text-muted); padding: 5px 0; border-bottom: 1px solid var(--mv2-border-soft); display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+/* ── 표 가로 스크롤 ────────────────────────────────────────────────
+   근로자 표처럼 칸이 열 개를 넘으면 좁은 화면에서 오른쪽 칸이 화면 밖으로 밀린다.
+   wwGrid 기본 스크롤바는 8px 연회색이라 거의 보이지 않아, 담당자가 '칸이 없다'
+   고 여긴다. 실제로 그렇게 됐다 — 비고 칸이 통째로 안 보인다는 문의가 왔다.
+   밀 수 있다는 사실 자체가 보여야 한다. */
+.cg-wrap::-webkit-scrollbar { width: 12px; height: 12px; }
+.cg-wrap::-webkit-scrollbar-track { background: var(--mv2-slate-25); border-radius: 8px; }
+.cg-wrap::-webkit-scrollbar-thumb {
+    background: var(--mv2-border-subdued, #B7BFCB);
+    border-radius: 8px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+}
+.cg-wrap::-webkit-scrollbar-thumb:hover { background: var(--mv2-text-muted); background-clip: content-box; }
+.cg-wrap::-webkit-scrollbar-corner { background: transparent; }
+.cg-wrap { scrollbar-width: auto; scrollbar-color: #B7BFCB var(--mv2-slate-25); }
+
+/* 표 오른쪽에 칸이 더 있을 때 툴바에 뜨는 안내 */
+.ndn-gridbar__more {
+    margin-left: auto;
+    font-size: var(--mv2-fz-xs); font-weight: 700;
+    color: var(--mv2-primary-600, #14807A);
+    background: var(--mv2-primary-50, #E9F6F4);
+    border-radius: 100px; padding: 4px 12px; white-space: nowrap;
+}
+.ndn-gridbar__more[hidden] { display: none; }
