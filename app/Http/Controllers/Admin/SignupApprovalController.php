@@ -71,19 +71,19 @@ class SignupApprovalController extends Controller
     }
 
     /**
-     * 보완 요청 항목 후보.
+     * 보완 요청 항목 후보 — **키 => 한국어 라벨**.
      *
      * 자유 입력이 아니라 고르게 한다. 담당자마다 다르게 적으면 근로자가 받는
      * 안내가 제각각이 되고, 번역도 붙일 수 없다.
      *
-     * @return list<string>
+     * 저장은 키로 한다. 한국어 라벨을 저장하면 근로자에게 보여 줄 때 기계
+     * 번역에 맡기게 되고, 서식 이름은 그쪽이 자주 틀린다.
+     *
+     * @return array<string, string>
      */
     public static function supplementItems(): array
     {
-        return array_merge(
-            ApplicationDocuments::expected(),
-            ['생년월일', '본국 전화번호', '여권 사본 재촬영(글자 흐림)', '기타 서류'],
-        );
+        return ApplicationDocuments::supplementOptions();
     }
 
     /** 가입 신청 상세 (본인 정보 + 제출 서류) — 상세 탭용. 개인정보 열람 감사(§7-6). */
@@ -116,7 +116,8 @@ class SignupApprovalController extends Controller
             'tone' => $screening->tone(),
             'screening_note' => $worker->screening_note,
             'screened_at' => $worker->screened_at === null ? null : LocalTime::format($worker->screened_at),
-            'supplement_items' => $worker->supplement_items ?? [],
+            // 담당자 화면이라 한국어로 푼다. 근로자에게는 각자 언어로 나간다.
+            'supplement_items' => ApplicationDocuments::labels($worker->supplement_items ?? []),
             'supplement_requested_at' => $worker->supplement_requested_at === null
                 ? null
                 : LocalTime::format($worker->supplement_requested_at),

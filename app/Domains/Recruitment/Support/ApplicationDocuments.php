@@ -48,9 +48,64 @@ class ApplicationDocuments
     public static function expected(?string $locale = null): array
     {
         return array_map(
-            fn (string $key) => trans('worker.'.$key, [], $locale ?: 'ko'),
-            ['doc_passport', 'doc_photo', 'doc_health', 'doc_criminal'],
+            fn (string $key) => self::label($key, $locale),
+            self::EXPECTED_KEYS,
         );
+    }
+
+    /** 안내하는 서류의 번역 키. */
+    public const EXPECTED_KEYS = ['doc_passport', 'doc_photo', 'doc_health', 'doc_criminal'];
+
+    /**
+     * 담당자가 보완을 요청할 때 고르는 항목.
+     *
+     * **키로 다룬다.** 한국어 라벨을 그대로 저장하면 근로자에게 보여 줄 때
+     * 기계 번역에 맡기게 되고, 서식 이름은 그쪽이 자주 틀린다. 키를 저장해
+     * 두면 받는 사람 언어로 정확히 꺼낼 수 있다.
+     *
+     * @return list<string>
+     */
+    public const SUPPLEMENT_KEYS = [
+        'doc_passport', 'doc_photo', 'doc_health', 'doc_criminal',
+        'doc_birth_date', 'doc_phone', 'doc_passport_retake', 'doc_other',
+    ];
+
+    /**
+     * 콘솔의 보완 요청 선택지 — 키 => 한국어 라벨.
+     *
+     * @return array<string, string>
+     */
+    public static function supplementOptions(): array
+    {
+        return collect(self::SUPPLEMENT_KEYS)
+            ->mapWithKeys(fn (string $k) => [$k => self::label($k)])
+            ->all();
+    }
+
+    /**
+     * 저장된 항목을 사람이 읽는 글자로.
+     *
+     * 키가 아니면 그대로 돌려준다 — 이 기능 전에 저장된 건은 한국어 라벨이
+     * 그대로 들어 있어서, 옛 자료를 열었을 때 'doc_passport' 같은 것이 보이면 안 된다.
+     */
+    public static function label(string $key, ?string $locale = null): string
+    {
+        if (! in_array($key, self::SUPPLEMENT_KEYS, true)) {
+            return $key;
+        }
+
+        return trans('worker.'.$key, [], $locale ?: 'ko');
+    }
+
+    /**
+     * 저장된 항목 목록을 그 사람 언어로.
+     *
+     * @param  list<string>  $keys
+     * @return list<string>
+     */
+    public static function labels(array $keys, ?string $locale = null): array
+    {
+        return array_map(fn (string $k) => self::label($k, $locale), $keys);
     }
 
     /**

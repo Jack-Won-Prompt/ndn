@@ -72,9 +72,12 @@ class WorkerApplyController extends Controller
     /**
      * 보완 제출 화면 — 메일의 서명 링크로만 들어온다.
      *
-     * 이미 쓴 내용은 그대로 두고 부족한 것만 채우게 한다. 로그인 없이 열리므로
-     * 여권번호·생년월일 같은 기존 값은 **보여 주지 않는다**(§7-1). 링크가 새어도
-     * 읽히는 것이 없어야 한다.
+     * 이미 쓴 내용을 채워서 보여 준다 — 무엇이 들어가 있는지 모르면 무엇을
+     * 고쳐야 할지도 알 수 없다.
+     *
+     * 로그인 없이 열리는 화면이지만 들어오는 길은 **본인 메일로만 간 기한부
+     * 서명 링크**(14일)뿐이고, 보이는 것은 자기 자료뿐이다. 링크가 새면 그
+     * 사람의 정보가 보인다는 뜻이라, 기한을 짧게 두는 것이 이 화면의 방어다.
      */
     public function supplement(Worker $worker): Response
     {
@@ -91,18 +94,25 @@ class WorkerApplyController extends Controller
                 now()->addHours(4),
                 ['worker' => $worker->id],
             ),
-            'items' => $worker->supplement_items ?? [],
+            // 담당자가 고른 항목은 키로 저장돼 있다. **이 사람 언어로** 풀어 준다 —
+            // 무엇을 내야 하는지 못 읽으면 링크를 보낸 의미가 없다.
+            'items' => ApplicationDocuments::labels(
+                $worker->supplement_items ?? [], $worker->locale
+            ),
             'note' => $worker->screening_note,
-            // 민감하지 않은 값만 미리 채운다. 여권번호·생년월일·전화는 로그인 없이
-            // 열리는 화면이라 **되돌려 보여 주지 않는다**(§7-1) — 대신 새로 적으면 바뀐다.
+            // 이미 낸 내용을 보여 준다. 무엇이 들어가 있는지 모르면 무엇을 고쳐야
+            // 할지도 알 수 없다. 이 링크는 본인 메일로만 가고 기한이 있다(14일).
             'cities' => $this->openCities(),
             'prefill' => [
                 'name' => $worker->name,
                 'nationality' => $worker->nationality,
                 'locale' => $worker->locale,
                 'city_id' => $worker->city_id,
+                'passport_no' => $worker->passport_no,
+                'birth_date' => $worker->birth_date,
+                'phone_home_country' => $worker->phone_home_country,
             ],
-            'expected' => ApplicationDocuments::expected(),
+            'expected' => ApplicationDocuments::expected($worker->locale),
             'maxFiles' => self::MAX_FILES,
             'maxKb' => WorkerFile::MAX_KB,
             'mimes' => WorkerFile::MIMES,
@@ -145,7 +155,8 @@ class WorkerApplyController extends Controller
     {
         return [
             'cities' => $this->openCities(),
-            'expected' => ApplicationDocuments::expected(),
+            // 가입 화면은 아직 누구인지 모른다 — 방문자가 고른 언어로.
+            'expected' => ApplicationDocuments::expected($this->displayLocale()),
             'maxFiles' => self::MAX_FILES,
             'maxKb' => WorkerFile::MAX_KB,
             'mimes' => WorkerFile::MIMES,

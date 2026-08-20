@@ -57,7 +57,8 @@
                     아래 서류를 함께 올리면 확인이 빨라집니다. <b>지금 없어도 신청할 수 있습니다</b> —
                     부족하면 담당자가 이메일로 다시 요청합니다.
                 </p>
-                <ul class="nd-doclist">
+                {{-- 이미 방문자 언어로 꺼낸 글자다. 번역기에 다시 넣지 않는다. --}}
+                <ul class="nd-doclist" data-no-translate>
                     @foreach ($expected as $doc)<li>{{ $doc }}</li>@endforeach
                 </ul>
 

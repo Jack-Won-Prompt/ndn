@@ -50,4 +50,8 @@ return [
     'doc_health' => 'Kết quả khám sức khỏe',
     'doc_criminal' => 'Giấy chứng nhận lý lịch tư pháp',
     'documents_hint' => 'Vui lòng chụp ảnh các giấy tờ dưới đây và tải lên. Nếu chưa có, bạn vẫn nộp được — cán bộ phụ trách sẽ yêu cầu bổ sung sau.',
+    'doc_birth_date' => 'Ngày sinh',
+    'doc_phone' => 'Số điện thoại tại nước bạn',
+    'doc_passport_retake' => 'Chụp lại bản sao hộ chiếu (chữ bị mờ)',
+    'doc_other' => 'Giấy tờ khác',
 ];

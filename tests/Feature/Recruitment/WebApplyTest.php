@@ -60,6 +60,17 @@ function applyBody(array $override = []): array
     ], $override);
 }
 
+/**
+ * 번역된 페이지의 본문.
+ *
+ * SiteTranslator 는 DOMDocument 로 렌더해 비아스키를 HTML 엔티티로 내보낸다
+ * (화면에는 정상이지만 `B&#7843;n...` 이라 문자열 비교가 안 된다). 디코드해서 본다.
+ */
+function pageText(string $html): string
+{
+    return html_entity_decode($html, ENT_QUOTES, 'UTF-8');
+}
+
 it('웹에서 신청하면 승인 대기로 접수된다', function () {
     post(route('site.apply.store'), applyBody())
         ->assertRedirect(route('site.apply.done'));
@@ -220,14 +231,14 @@ it('보완을 요청하면 근로자 언어로 메일이 가고 개인정보가 
     $worker = Worker::firstOrFail();
 
     actingAs($this->admin)->postJson(route('admin.signups.supplement', $worker), [
-        'items' => ['여권 사본', '범죄경력 증명서'],
+        'items' => ['doc_passport', 'doc_criminal'],
         'note' => '여권 사진면이 흐립니다',
     ])->assertOk();
 
     $worker->refresh();
 
     expect($worker->screening_status)->toBe(ScreeningStatus::SupplementRequested)
-        ->and($worker->supplement_items)->toBe(['여권 사본', '범죄경력 증명서'])
+        ->and($worker->supplement_items)->toBe(['doc_passport', 'doc_criminal'])
         ->and($worker->status)->toBe(WorkerStatus::Pending);
 
     Notification::assertSentTo($worker, SupplementRequestedNotification::class,
@@ -239,6 +250,7 @@ it('보완을 요청하면 근로자 언어로 메일이 가고 개인정보가 
                 ->and($text)->not->toContain('W1234567')
                 // 무엇이 부족한지도 본문에 적지 않는다 — 링크를 열어야 보인다.
                 ->and($text)->not->toContain('여권 사본')
+                ->and($text)->not->toContain('doc_passport')
                 // 담당자 메모도 나가지 않는다.
                 ->and($text)->not->toContain('여권 사진면이 흐립니다')
                 ->and($n->count)->toBe(2)
@@ -264,7 +276,7 @@ it('보완 링크로 들어와 파일을 더 내면 다시 접수 상태가 된�
     $worker = Worker::firstOrFail();
 
     actingAs($this->admin)->postJson(route('admin.signups.supplement', $worker), [
-        'items' => ['여권 사본'],
+        'items' => ['doc_passport'],
     ])->assertOk();
 
     $url = URL::temporarySignedRoute('site.apply.supplement.store', now()->addDay(), ['worker' => $worker->id]);
@@ -290,7 +302,7 @@ it('보완 화면의 제출 버튼이 실제로 동작한다', function () {
     $worker = Worker::firstOrFail();
 
     actingAs($this->admin)->postJson(route('admin.signups.supplement', $worker), [
-        'items' => ['여권 사본'],
+        'items' => ['doc_passport'],
     ])->assertOk();
 
     $html = get(URL::temporarySignedRoute('site.apply.supplement', now()->addDay(), ['worker' => $worker->id]))
@@ -316,23 +328,61 @@ it('서명 없는 보완 주소는 열리지 않는다', function () {
     get(route('site.apply.supplement', $worker))->assertForbidden();
 });
 
-it('보완 화면은 이미 낸 민감정보를 보여 주지 않는다', function () {
-    // 로그인 없이 열리는 화면이다. 링크가 새어도 읽히는 것이 없어야 한다(§7-1).
+it('보완 화면은 이미 낸 내용을 채워서 보여 준다', function () {
+    // 무엇이 들어가 있는지 모르면 무엇을 고쳐야 할지도 알 수 없다.
     // 한국어 근로자로 본다 — 다른 언어면 화면이 번역돼 문구 비교가 흔들린다.
     post(route('site.apply.store'), applyBody(['birth_date' => '1990-05-05', 'locale' => 'ko']))->assertRedirect();
     $worker = Worker::firstOrFail();
 
     actingAs($this->admin)->postJson(route('admin.signups.supplement', $worker), [
-        'items' => ['여권 사본'],
+        'items' => ['doc_passport'],
     ])->assertOk();
 
     $html = get(URL::temporarySignedRoute('site.apply.supplement', now()->addDay(), ['worker' => $worker->id]))
         ->assertOk()->getContent();
 
-    expect($html)->not->toContain('W1234567')
-        ->and($html)->not->toContain('1990-05-05')
-        // 요청받은 항목은 보여 준다 — 무엇을 내야 하는지는 알아야 한다.
-        ->and($html)->toContain('여권 사본');
+    expect($html)->toContain('W1234567')
+        ->toContain('1990-05-05')
+        // 요청받은 항목도 보여 준다 — 무엇을 내야 하는지는 알아야 한다.
+        ->toContain('여권 사본');
+});
+
+it('보완 요청 항목이 근로자 언어로 나온다', function () {
+    // 담당자는 한국어로 고르고 저장은 키로 한다. 근로자는 자기 말로 읽어야 한다.
+    post(route('site.apply.store'), applyBody(['locale' => 'vi']))->assertRedirect();
+    $worker = Worker::firstOrFail();
+
+    actingAs($this->admin)->postJson(route('admin.signups.supplement', $worker), [
+        'items' => ['doc_passport', 'doc_criminal'],
+    ])->assertOk();
+
+    // 저장은 키다 — 한국어 라벨을 저장하면 기계 번역에 맡기게 된다.
+    expect($worker->refresh()->supplement_items)->toBe(['doc_passport', 'doc_criminal']);
+
+    $html = get(URL::temporarySignedRoute('site.apply.supplement', now()->addDay(), ['worker' => $worker->id]))
+        ->assertOk()->getContent();
+
+    expect(pageText($html))->toContain('Bản sao hộ chiếu')   // 여권 사본
+        ->not->toContain('여권 사본');
+});
+
+it('옛 자료의 한국어 항목도 그대로 읽힌다', function () {
+    // 키를 쓰기 전에 저장된 건은 한국어 라벨이 들어 있다. 'doc_passport' 같은
+    // 것이 근로자 화면에 그대로 보이면 안 된다.
+    post(route('site.apply.store'), applyBody(['locale' => 'ko']))->assertRedirect();
+    $worker = Worker::firstOrFail();
+
+    $worker->forceFill([
+        'screening_status' => ScreeningStatus::SupplementRequested,
+        'supplement_items' => ['여권 사본', '옛날에 손으로 적은 항목'],
+        'supplement_requested_at' => now(),
+    ])->save();
+
+    $html = get(URL::temporarySignedRoute('site.apply.supplement', now()->addDay(), ['worker' => $worker->id]))
+        ->assertOk()->getContent();
+
+    expect($html)->toContain('여권 사본')
+        ->toContain('옛날에 손으로 적은 항목');
 });
 
 it('이미 처리된 신청의 보완 링크는 만료된다', function () {
@@ -431,23 +481,6 @@ it('보완 링크에서도 모든 정보를 고칠 수 있다', function () {
         ->and(WorkerFile::where('worker_id', $w->id)->count())->toBe(1);
 });
 
-it('보완 화면은 민감 항목을 비워 두고 나머지만 채워 준다', function () {
-    // 로그인 없이 열리는 화면이라 여권번호를 되돌려 보여 주지 않는다(§7-1).
-    // 대신 새로 적으면 바뀐다 — 고칠 수 없는 것은 아니다.
-    post(route('site.apply.store'), applyBody(['name' => 'Nguyen Prefill']))->assertRedirect();
-    $worker = Worker::firstOrFail();
-
-    actingAs($this->admin)->postJson(route('admin.signups.supplement', $worker), [
-        'items' => ['여권 사본'],
-    ])->assertOk();
-
-    $html = get(URL::temporarySignedRoute('site.apply.supplement', now()->addDay(), ['worker' => $worker->id]))
-        ->assertOk()->getContent();
-
-    expect($html)->toContain('Nguyen Prefill')   // 이름은 채워 준다
-        ->not->toContain('W1234567');            // 여권번호는 비워 둔다
-});
-
 it('보완 요청 메일이 실패하면 상태를 바꾸지 않는다', function () {
     // 큐를 안 쓰므로 발송이 그 자리에서 터진다. 상태를 먼저 바꿔 두면
     // '보완 요청함' 으로 남고 메일은 안 간 상태가 된다 — 담당자는 보낸 줄 안다.
@@ -460,7 +493,7 @@ it('보완 요청 메일이 실패하면 상태를 바꾸지 않는다', functio
     });
 
     actingAs($this->admin)->postJson(route('admin.signups.supplement', $worker), [
-        'items' => ['여권 사본'],
+        'items' => ['doc_passport'],
     ])->assertStatus(422)->assertJsonPath('message', 'SMTP 연결 실패');
 
     $worker->refresh();
@@ -488,7 +521,7 @@ it('보완 화면은 그 근로자가 고른 언어로 나온다', function () {
     $worker = Worker::firstOrFail();
 
     actingAs($this->admin)->postJson(route('admin.signups.supplement', $worker), [
-        'items' => ['여권 사본'],
+        'items' => ['doc_passport'],
     ])->assertOk();
 
     $url = URL::temporarySignedRoute('site.apply.supplement', now()->addDay(), ['worker' => $worker->id]);
@@ -526,7 +559,7 @@ it('지원할 때는 지역을 고르지만 수정할 때는 못 고른다', fun
     $worker = Worker::firstOrFail();
 
     actingAs($this->admin)->postJson(route('admin.signups.supplement', $worker), [
-        'items' => ['여권 사본'],
+        'items' => ['doc_passport'],
     ])->assertOk();
 
     $html = get(URL::temporarySignedRoute('site.apply.supplement', now()->addDay(), ['worker' => $worker->id]))

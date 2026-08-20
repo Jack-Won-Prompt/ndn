@@ -53,4 +53,8 @@ return [
     'doc_health' => '건강검진 결과',
     'doc_criminal' => '범죄경력 증명서',
     'documents_hint' => '아래 서류를 사진으로 찍어 올려 주세요. 지금 없어도 신청은 됩니다 — 부족하면 담당자가 따로 요청합니다.',
+    'doc_birth_date' => '생년월일',
+    'doc_phone' => '본국 전화번호',
+    'doc_passport_retake' => '여권 사본 다시 찍기 (글자가 흐림)',
+    'doc_other' => '기타 서류',
 ];

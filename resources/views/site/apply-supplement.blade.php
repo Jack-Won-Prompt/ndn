@@ -22,7 +22,9 @@
 
             <div class="nd-note nd-note--warn" style="margin-bottom:22px">
                 <b>담당자가 요청한 항목 {{ count($items) }}건</b>
-                <ul class="nd-doclist" style="margin-top:8px">
+                {{-- 이 글자들은 이미 이 사람의 언어다(worker.doc_* 번역 키).
+                     번역기에 한 번 더 넣으면 '생년월일' 이 'Sinh ngay' 처럼 깨진다. --}}
+                <ul class="nd-doclist" style="margin-top:8px" data-no-translate>
                     @forelse ($items as $item)<li>{{ $item }}</li>@empty<li>담당자 안내를 확인해 주세요.</li>@endforelse
                 </ul>
                 @if (filled($note))
@@ -36,7 +38,8 @@
 
                 <h2 class="nd-panel__title">서류 올리기</h2>
                 <p class="nd-help" style="margin-bottom:12px">
-                    보통 요청되는 서류: {{ implode(' · ', $expected) }}
+                    보통 요청되는 서류:
+                    <span data-no-translate>{{ implode(' · ', $expected) }}</span>
                 </p>
 
                 <div class="nd-field">

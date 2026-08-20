@@ -3,8 +3,8 @@
 
     $mode:
       'apply'      가입 (전부 필수, 비어 있음)
-      'supplement' 보완 (전부 선택. 민감 항목은 미리 채우지 않는다 — 로그인 없이 열리는 화면이라 §7-1)
-      'profile'    본인 화면 (전부 선택. 로그인했으므로 민감 항목도 채워 준다)
+      'supplement' 보완 (전부 선택. 기한부 서명 링크로만 열리므로 기존 값을 채워 준다)
+      'profile'    본인 화면 (전부 선택. 로그인한 본인이라 기존 값을 채워 준다)
 
     $prefill: 미리 채울 값 배열
     $cities:  고를 수 있는 지역 ('apply' 에서만 쓴다)
@@ -17,7 +17,10 @@
     use App\Shared\Translation\SiteTranslator;
 
     $req = $mode === 'apply';
-    $showSensitive = $mode === 'profile';   // 로그인한 화면에서만 기존 값을 되돌려 준다
+    // 이미 낸 내용을 보여 준다. 무엇이 들어가 있는지 모르면 무엇을 고쳐야 할지도
+    // 알 수 없다. 보완 화면은 로그인 없이 열리지만 **본인 메일로만 간 기한부
+    // 서명 링크**로 들어오고, 보이는 것은 자기 자료뿐이다.
+    $showSensitive = $mode !== 'apply';
     $star = $req ? '<span class="nd-req">*</span>' : '';
 @endphp
 
@@ -85,10 +88,8 @@
     <p class="nd-help">
         @if ($req)
             암호화해서 보관하며 담당자만 볼 수 있습니다. 같은 번호로는 한 번만 신청할 수 있습니다.
-        @elseif ($showSensitive)
-            바꾸려면 새 번호를 적으세요. 같은 번호를 다른 사람이 쓰고 있으면 저장되지 않습니다.
         @else
-            <b>보안을 위해 기존 번호는 표시하지 않습니다.</b> 바꿀 때만 새 번호를 적으세요. 비워 두면 그대로 유지됩니다.
+            바꾸려면 새 번호를 적으세요. 같은 번호를 다른 사람이 쓰고 있으면 저장되지 않습니다.
         @endif
     </p>
     @error('passport_no')<p class="nd-err">{{ $message }}</p>@enderror
@@ -98,8 +99,8 @@
     <label for="f-birth">생년월일</label>
     <input class="nd-input @error('birth_date') is-bad @enderror" id="f-birth" type="date"
            name="birth_date" value="{{ old('birth_date', $showSensitive ? ($prefill['birth_date'] ?? '') : '') }}">
-    @unless ($req || $showSensitive)
-        <p class="nd-help">비워 두면 그대로 유지됩니다.</p>
+    @unless ($req)
+        <p class="nd-help">비워 두면 지금 값이 그대로 유지됩니다.</p>
     @endunless
     @error('birth_date')<p class="nd-err">{{ $message }}</p>@enderror
 </div>
@@ -110,8 +111,8 @@
            name="phone_home_country"
            value="{{ old('phone_home_country', $showSensitive ? ($prefill['phone_home_country'] ?? '') : '') }}"
            maxlength="40">
-    @unless ($req || $showSensitive)
-        <p class="nd-help">비워 두면 그대로 유지됩니다.</p>
+    @unless ($req)
+        <p class="nd-help">비워 두면 지금 값이 그대로 유지됩니다.</p>
     @endunless
     @error('phone_home_country')<p class="nd-err">{{ $message }}</p>@enderror
 </div>

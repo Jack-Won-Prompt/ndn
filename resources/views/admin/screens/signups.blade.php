@@ -73,8 +73,8 @@
 
             <div class="su-box__label">무엇이 부족한가요? <em>*</em></div>
             <div class="su-items">
-                @foreach ($supplementItems as $item)
-                    <label class="su-item"><input type="checkbox" value="{{ $item }}"> {{ $item }}</label>
+                @foreach ($supplementItems as $key => $label)
+                    <label class="su-item"><input type="checkbox" value="{{ $key }}"> {{ $label }}</label>
                 @endforeach
             </div>
 
