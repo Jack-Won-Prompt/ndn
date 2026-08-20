@@ -19,6 +19,30 @@
     </div>
 
     <div data-tabpane="list">
+        {{-- 지자체가 주는 명단에는 한 시군·한 나라 사람만 실려 있어 국적·지역 칸을
+             아예 안 적어 온다. 파일에 그 칸이 없을 때만 여기 고른 값이 쓰인다. --}}
+        <div class="wk-imp">
+            <span class="wk-imp__t">엑셀 업로드 기본값</span>
+            <label>국적
+                <select id="imp-nat">
+                    @foreach (App\Domains\Recruitment\Enums\Nationality::adminOptions() as $code => $label)
+                        <option value="{{ $code }}">{{ $label }}</option>
+                    @endforeach
+                </select>
+            </label>
+            <label>지역
+                <select id="imp-city">
+                    <option value="">지정 안 함</option>
+                    @foreach ($cityOptions as $c)
+                        <option value="{{ $c['value'] }}">{{ $c['label'] }}</option>
+                    @endforeach
+                </select>
+            </label>
+            <label>시트
+                <input id="imp-sheet" type="text" placeholder="비우면 첫 시트" value="근로자 리스트">
+            </label>
+            <span class="wk-imp__h">파일에 해당 칸이 있으면 파일 값이 우선합니다.</span>
+        </div>
         <div id="grid-workers"></div>
     </div>
     <div data-tabpane="detail" hidden>
@@ -26,6 +50,18 @@
     </div>
 
     <style>
+        /* 엑셀 업로드 기본값 줄 — 표 바로 위, 툴바와 한 덩어리로 보이게 */
+        .wk-imp { display: flex; align-items: center; flex-wrap: wrap; gap: 12px;
+            padding: 10px 12px; margin-bottom: 10px;
+            background: var(--mv2-slate-25); border: 1px solid var(--mv2-border-soft);
+            border-radius: var(--mv2-r-sm); font-size: var(--mv2-fz-xs); }
+        .wk-imp__t { font-weight: 800; color: var(--mv2-text-strong); }
+        .wk-imp label { display: flex; align-items: center; gap: 6px; color: var(--mv2-text-muted); font-weight: 700; }
+        .wk-imp select, .wk-imp input { font-family: inherit; font-size: var(--mv2-fz-xs);
+            padding: 4px 8px; border: 1px solid var(--mv2-border-default);
+            border-radius: var(--mv2-r-sm); background: #fff; color: var(--mv2-text-strong); }
+        .wk-imp input { width: 140px; }
+        .wk-imp__h { margin-left: auto; color: var(--mv2-text-faint); }
         .wf-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
             padding: 9px 0; border-bottom: 1px solid var(--mv2-border-soft); font-size: var(--mv2-fz-sm); }
         .wf-row:last-child { border-bottom: 0; }
@@ -261,6 +297,16 @@
         title: '근로자',
         saveUrl: '{{ route('admin.grid.workers.save') }}',
         importUrl: '{{ route('admin.grid.workers.import') }}',
+        // 업로드하는 순간의 선택을 읽는다 — 미리 굳혀 두면 바꿔도 안 먹는다.
+        importPayload: function () {
+            return {
+                default_nationality: document.getElementById('imp-nat').value,
+                default_city_id: document.getElementById('imp-city').value,
+                sheet: document.getElementById('imp-sheet').value.trim(),
+            };
+        },
+        // 사람을 지우면 배정도 함께 정리된다 — 농가 자리가 실제로 비어야 한다.
+        deleteWarning: '삭제하면 그 사람의 배정이 취소되어 농가 자리가 비고, 후보자·온보딩·정착 신청·민원·서류도 함께 정리됩니다.',
         newRow: { nationality: 'BD', city_id: null, locale: 'bn', status: 'active' },
         data: @json($rows),
         columns: [

@@ -47,6 +47,7 @@
      *   importUrl   {string}  엑셀 업로드 POST 엔드포인트 (editable 시)
      *   newRow      {object}  '신규 행' 기본값
      *   savePayload {object}  저장 요청에 함께 보낼 값 (돌려받을 목록의 모양 등)
+     *   importPayload {object|func} 엑셀 업로드에 함께 보낼 값 (기본값·시트 이름 등)
      *   deleteWarning {string} 삭제 확인창에 덧붙일 경고 (딸린 자료가 함께 사라질 때)
      *   onRowDblClick {func}  읽기전용 상세 팝업 등 (row) => void
      *   rowCheckbox {bool}    행 체크박스 강제 표시 (읽기전용 목록에서 골라 처리할 때)
@@ -163,6 +164,12 @@
                 if (!input.files.length) return;
                 var fd = new FormData();
                 fd.append('file', input.files[0]);
+                // 화면이 붙여 보내고 싶은 값 (예: 명단에 칸이 없을 때 쓸 국적·지역 기본값).
+                // 함수로 주면 업로드하는 순간의 선택을 읽는다.
+                var extra = typeof cfg.importPayload === 'function' ? cfg.importPayload() : cfg.importPayload;
+                Object.keys(extra || {}).forEach(function (k) {
+                    if (extra[k] !== null && extra[k] !== undefined && extra[k] !== '') fd.append(k, extra[k]);
+                });
                 fetch(cfg.importUrl, {
                     method: 'POST',
                     headers: { 'X-CSRF-TOKEN': csrf(), 'Accept': 'application/json' },

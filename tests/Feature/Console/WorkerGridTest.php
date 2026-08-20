@@ -3,7 +3,12 @@
 declare(strict_types=1);
 
 use App\Domains\Demand\Models\City;
+use App\Domains\Demand\Models\Farm;
+use App\Domains\Matching\Enums\PlacementStatus;
+use App\Domains\Matching\Models\Placement;
 use App\Domains\Recruitment\Models\Worker;
+use App\Domains\Support\Models\SupportTicket;
+use App\Http\Controllers\Admin\MatchingController;
 use App\Http\Controllers\Admin\WorkerGridController;
 use App\Models\User;
 use App\Shared\Enums\UserRole;
@@ -321,4 +326,105 @@ it('다른 키로 암호화된 행이 섞여도 목록이 죽지 않는다', fun
         // 못 푼 칸만 비고 이름·국적 같은 나머지는 그대로 보인다.
         ->and($rows->firstWhere('id', $bad->id)['passport_no'])->toBeNull()
         ->and($rows->firstWhere('id', $bad->id)['name'])->toBe('못푸는사람');
+});
+
+it('국적·지역 칸이 없는 명단은 기본값으로 채운다', function () {
+    // 지자체가 주는 명단에는 한 시군·한 나라 사람만 실려 있어 그 칸을 아예 안 적는다.
+    $city = City::factory()->create(['name' => '당진시']);
+
+    actingAs($this->admin)->post(route('admin.grid.workers.import'), [
+        'file' => UploadedFile::fake()->createWithContent('w.csv', "이름,성별\nMIA MD HABIB,남자 01\n"),
+        'default_nationality' => 'BD',
+        'default_city_id' => $city->id,
+    ])->assertOk();
+
+    $w = Worker::firstOrFail();
+
+    expect($w->nationality)->toBe('BD')
+        ->and($w->city_id)->toBe($city->id)
+        // 국적을 아는 이상 알림 언어도 거기서 시작한다 (§6).
+        ->and($w->locale)->toBe('bn');
+});
+
+it('파일에 적힌 값이 기본값을 이긴다', function () {
+    // 명단에 다른 나라 사람이 섞여 있으면 조용히 바뀌면 안 된다.
+    actingAs($this->admin)->post(route('admin.grid.workers.import'), [
+        'file' => UploadedFile::fake()->createWithContent('w.csv', "이름,국적\nTran Van A,베트남\n"),
+        'default_nationality' => 'BD',
+    ])->assertOk();
+
+    expect(Worker::firstOrFail()->nationality)->toBe('VN');
+});
+
+it('쪽마다 다시 나오는 머리글은 사람으로 등록하지 않는다', function () {
+    // 인쇄 서식은 쪽수마다 머리글을 다시 박아 온다.
+    actingAs($this->admin)->post(route('admin.grid.workers.import'), [
+        'file' => UploadedFile::fake()->createWithContent('w.csv',
+            "이름,성별\nA,남자 01\n이름,성별\nB,여자 02\n이름,성별\nC,남자 03\n"),
+        'default_nationality' => 'BD',
+    ])->assertOk();
+
+    expect(Worker::pluck('name')->all())->toBe(['A', 'B', 'C']);
+});
+
+it('성별 뒤에 붙은 일련번호를 떼고 읽는다', function () {
+    // '남자 01' 을 그대로 두면 매칭에서 성별 조건이 영영 '정보 없음' 이 된다.
+    actingAs($this->admin)->post(route('admin.grid.workers.import'), [
+        'file' => UploadedFile::fake()->createWithContent('w.csv',
+            "이름,성별\nA,남자 01\nB,여자 03\nC,\n"),
+        'default_nationality' => 'BD',
+    ])->assertOk();
+
+    expect(Worker::where('name', 'A')->firstOrFail()->gender?->value)->toBe('male')
+        ->and(Worker::where('name', 'B')->firstOrFail()->gender?->value)->toBe('female')
+        ->and(Worker::where('name', 'C')->firstOrFail()->gender)->toBeNull();
+});
+
+it('명단이 아닌 시트는 건너뛴다', function () {
+    // 지자체 서식은 한 파일에 신청농가·근로자 리스트를 함께 담아 온다.
+    // (CSV 는 시트가 하나라, 이름이 다르면 아무것도 읽지 않는 것으로 확인한다.)
+    actingAs($this->admin)->post(route('admin.grid.workers.import'), [
+        'file' => UploadedFile::fake()->createWithContent('w.csv', "이름,성별\nA,남자 01\n"),
+        'default_nationality' => 'BD',
+        'sheet' => '근로자 리스트',
+    ])->assertOk();
+
+    expect(Worker::count())->toBe(0);
+});
+
+it('근로자를 지우면 배정이 취소되어 농가 자리가 빈다', function () {
+    // 사람만 지우면 '없는 사람이 배정된 자리' 가 남아 농가 정원이 계속 찬다.
+    $farm = Farm::factory()->create();
+    $worker = Worker::factory()->create();
+    $placement = Placement::factory()->create([
+        'worker_id' => $worker->id,
+        'farm_id' => $farm->id,
+        'status' => PlacementStatus::Confirmed,
+    ]);
+
+    $res = actingAs($this->admin)->postJson(route('admin.grid.workers.save'), [
+        'deleted' => [['id' => $worker->id]],
+    ])->assertOk();
+
+    expect(Worker::find($worker->id))->toBeNull()
+        ->and(Placement::find($placement->id))->toBeNull()
+        // 취소를 거쳐야 왜 빠졌는지가 남는다.
+        ->and(Placement::withTrashed()->findOrFail($placement->id)->status)
+        ->toBe(PlacementStatus::Cancelled)
+        ->and($res->json('message'))->toContain('근로자 1명 삭제');
+
+    // 농가 쪽에서 자리가 실제로 비었는지.
+    $row = collect(MatchingController::farmRows())->firstWhere('id', $farm->id);
+    expect($row['placed'])->toBe(0);
+});
+
+it('근로자를 지우면 딸린 자료도 함께 정리된다', function () {
+    $worker = Worker::factory()->create();
+    SupportTicket::factory()->create(['worker_id' => $worker->id]);
+
+    actingAs($this->admin)->postJson(route('admin.grid.workers.save'), [
+        'deleted' => [['id' => $worker->id]],
+    ])->assertOk();
+
+    expect(DB::table('support_tickets')->where('worker_id', $worker->id)->count())->toBe(0);
 });

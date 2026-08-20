@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Domains\Demand\Models\City;
+use App\Domains\Recruitment\Actions\DeleteWorkerAction;
+use App\Domains\Recruitment\Enums\Nationality;
 use App\Domains\Recruitment\Models\Worker;
 use App\Http\Controllers\Controller;
+use App\Shared\Enums\Gender;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -110,6 +113,7 @@ class WorkerGridController extends Controller
             'passport_no' => ['nullable', 'string', 'max:64'],
             'birth_date' => ['nullable', 'date'],
             'note' => ['nullable', 'string', 'max:500'],
+            'gender' => ['nullable', 'in:male,female'],
         ];
     }
 
@@ -140,7 +144,48 @@ class WorkerGridController extends Controller
                 : null,
             'birth_date' => $this->date($row['birth_date'] ?? null),
             'note' => $text('note'),
+            'gender' => $this->gender($row['gender'] ?? null),
         ];
+    }
+
+    /**
+     * 성별 정규화.
+     *
+     * 지자체 명단은 '남자 01' 처럼 성별 뒤에 일련번호를 붙여 온다. 그대로 두면
+     * 매칭에서 성별 조건이 영영 '정보 없음' 이 되어 추천이 어긋난다.
+     */
+    private function gender(mixed $value): ?string
+    {
+        $raw = trim((string) $value);
+
+        if ($raw === '') {
+            return null;
+        }
+
+        // 여성을 먼저 본다 — 'female' 안에 'male' 이 들어 있어 순서를 바꾸면
+        // 여성이 전부 남성으로 읽힌다.
+        $raw = mb_strtolower($raw);
+
+        if (str_contains($raw, '여') || str_contains($raw, 'female') || $raw === 'f') {
+            return Gender::Female->value;
+        }
+
+        if (str_contains($raw, '남') || str_contains($raw, 'male') || $raw === 'm') {
+            return Gender::Male->value;
+        }
+
+        return null;
+    }
+
+    /**
+     * 국적으로 기본 언어를 정한다.
+     *
+     * 명단에 언어 칸이 없다고 전부 한국어로 두면, 그 사람들에게 가는 알림이
+     * 읽지 못하는 말로 나간다(§6). 국적을 아는 이상 거기서 시작하는 편이 맞다.
+     */
+    private static function localeFor(?string $nationality): string
+    {
+        return Nationality::tryFrom((string) $nationality)?->locale() ?? 'ko';
     }
 
     /**
@@ -174,11 +219,14 @@ class WorkerGridController extends Controller
             'deleted' => ['array'],
         ]);
 
+        $swept = [];
         try {
-            DB::transaction(function () use ($payload) {
+            DB::transaction(function () use ($payload, &$swept) {
                 $delIds = collect($payload['deleted'] ?? [])->pluck('id')->filter()->all();
                 if ($delIds) {
-                    Worker::whereIn('id', $delIds)->get()->each->delete();
+                    // 사람만 지우면 '없는 사람이 배정된 자리' 가 농가에 남아 정원이 계속 찬다.
+                    $swept = app(DeleteWorkerAction::class)
+                        ->execute(array_map('intval', $delIds), Auth::user());
                 }
 
                 foreach ($payload['updated'] ?? [] as $i => $u) {
@@ -204,7 +252,12 @@ class WorkerGridController extends Controller
             return response()->json(['ok' => false, 'message' => $e->getMessage()], 422);
         }
 
-        return response()->json(['ok' => true, 'message' => '저장했습니다.', 'rows' => self::rows()]);
+        return response()->json([
+            'ok' => true,
+            // 한 사람을 지운 것이 어디까지 번졌는지 그 자리에서 알려 준다.
+            'message' => trim('저장했습니다. '.DeleteWorkerAction::describe($swept)),
+            'rows' => self::rows(),
+        ]);
     }
 
     /**
@@ -264,9 +317,20 @@ class WorkerGridController extends Controller
      */
     public function import(Request $request): JsonResponse
     {
-        $request->validate([
+        $data = $request->validate([
             'file' => ['required', 'file', 'mimes:xlsx,xls,csv,txt', 'max:5120'],
+            // 파일에 그 칸이 아예 없을 때 쓸 기본값. 지자체가 주는 명단에는
+            // 한 시군·한 나라 사람만 실려 있어 국적·지역 칸을 아예 안 적는다.
+            'default_nationality' => ['nullable', 'string', 'size:2'],
+            'default_city_id' => ['nullable', 'integer', 'exists:cities,id'],
+            'sheet' => ['nullable', 'string', 'max:100'],
         ]);
+
+        $defaults = [
+            'nationality' => strtoupper(trim((string) ($data['default_nationality'] ?? ''))),
+            'city_id' => $data['default_city_id'] ?? null,
+        ];
+        $wantSheet = $data['sheet'] ?? null;
 
         // 받는 엑셀마다 머리글이 달라 흔한 표기를 모두 받는다(공백은 무시).
         $map = [
@@ -280,6 +344,7 @@ class WorkerGridController extends Controller
             '전화' => 'phone_home_country', '전화번호' => 'phone_home_country',
             '이메일' => 'email', '메일' => 'email',
             '비고' => 'note', '메모' => 'note',
+            '성별' => 'gender', '이름FullName' => 'name', '이름Fullname' => 'name',
         ];
         $natMap = ['방글라데시' => 'BD', '방글라' => 'BD', '라오스' => 'LA', '스리랑카' => 'LK', '베트남' => 'VN'];
         // 지역명(예: 당진시) → city_id. 없는 이름은 무시하고 미지정으로 둔다.
@@ -293,24 +358,44 @@ class WorkerGridController extends Controller
             $reader = in_array($ext, ['csv', 'txt'], true) ? new Reader : new \OpenSpout\Reader\XLSX\Reader;
             $reader->open($request->file('file')->getPathname());
 
-            DB::transaction(function () use ($reader, $map, $natMap, $cityMap, &$created, &$updated) {
+            DB::transaction(function () use ($reader, $map, $natMap, $cityMap, $defaults, $wantSheet, &$created, &$updated) {
+                $toKey = fn (string $h) => preg_replace('/\s+/u', '', trim($h));
                 $header = null;
-                $line = 1;
+                $headerKeys = [];
+                $line = 0;
 
                 foreach ($reader->getSheetIterator() as $sheet) {
+                    // 시트를 지정하면 그 시트만 읽는다. 지자체 서식은 한 파일에
+                    // 신청농가·근로자 리스트를 함께 담아 오므로 첫 시트가 명단이 아니다.
+                    if ($wantSheet !== null && $sheet->getName() !== $wantSheet) {
+                        continue;
+                    }
+
                     foreach ($sheet->getRowIterator() as $r) {
-                        $cells = array_map(fn ($c) => (string) $c->getValue(), $r->getCells());
+                        $line++;
+                        $cells = array_map(fn ($c) => self::cell($c->getValue()), $r->getCells());
+                        $keys = array_map($toKey, $cells);
 
                         if ($header === null) {
-                            $header = array_map(
-                                fn ($h) => $map[preg_replace('/\s+/u', '', trim($h))] ?? null,
-                                $cells,
-                            );
+                            // 아는 칸 이름이 둘 이상 보이는 첫 줄을 머리글로 삼는다.
+                            // 하나만 보고 정하면 제목 줄에 '비고' 한 글자가 있는 것만으로
+                            // 그 줄이 머리글이 돼 버린다.
+                            if (count(array_intersect($keys, array_keys($map))) < 2) {
+                                continue;   // 머리글 위의 제목·설명 줄
+                            }
+
+                            $headerKeys = $keys;
+                            $header = array_map(fn ($k) => $map[$k] ?? null, $keys);
 
                             continue;
                         }
 
-                        $line++;
+                        // 머리글은 한 번만 나오지 않는다 — 인쇄 쪽수마다 다시 박혀 온다.
+                        // 그대로 읽으면 '이름 Full Name' 이라는 사람이 등록된다.
+                        if ($keys === $headerKeys) {
+                            continue;
+                        }
+
                         $row = [];
                         foreach ($header as $ci => $field) {
                             if ($field) {
@@ -325,7 +410,15 @@ class WorkerGridController extends Controller
                         $nat = trim($row['nationality'] ?? '');
                         $row['nationality'] = $natMap[$nat] ?? strtoupper($nat);
                         $row['city_id'] = $cityMap[trim($row['city'] ?? '')] ?? null;
-                        $row['locale'] = in_array($row['locale'] ?? '', self::LOCALES, true) ? $row['locale'] : 'ko';
+
+                        // 파일에 그 칸이 없을 때만 기본값을 쓴다. 적혀 있는 값을
+                        // 덮어쓰면 명단에 섞인 다른 나라 사람이 조용히 바뀐다.
+                        $row['nationality'] = $row['nationality'] ?: $defaults['nationality'];
+                        $row['city_id'] = $row['city_id'] ?: $defaults['city_id'];
+
+                        $row['locale'] = in_array($row['locale'] ?? '', self::LOCALES, true)
+                            ? $row['locale']
+                            : self::localeFor($row['nationality']);
                         $row['status'] = ($row['status'] ?? '') ?: 'active';
 
                         $target = $this->findExisting($row);
@@ -360,6 +453,27 @@ class WorkerGridController extends Controller
             'rows' => self::rows(),
             'replace' => true,
         ]);
+    }
+
+    /**
+     * 엑셀 칸 하나를 글자로.
+     *
+     * 날짜 칸은 문자열이 아니라 DateTimeImmutable 로 온다. 그대로 (string) 하면
+     * 'Object of class DateTimeImmutable could not be converted to string' 로
+     * 업로드가 통째로 죽는다 — 생년월일·입국일이 든 명단은 대부분 이 경우다.
+     *
+     * 수식 칸은 계산 결과가 아니라 '=IF(...)' 같은 수식 글자로 온다. 사람이 읽을
+     * 값이 아니므로 빈 칸으로 본다.
+     */
+    private static function cell(mixed $value): string
+    {
+        if ($value instanceof \DateTimeInterface) {
+            return $value->format('Y-m-d');
+        }
+
+        $raw = trim((string) $value);
+
+        return str_starts_with($raw, '=') ? '' : $raw;
     }
 
     /** 이 줄이 가리키는 기존 근로자 (번호 → 여권번호 순). */
