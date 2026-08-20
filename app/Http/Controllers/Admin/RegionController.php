@@ -38,6 +38,9 @@ class RegionController extends Controller
         // 지역별 확정 배정 인원 (농가의 지역 기준)
         $placed = Placement::query()
             ->join('farms', 'farms.id', '=', 'placements.farm_id')
+            // 직접 조인은 Eloquent 의 soft delete 걸림망을 지나치지 않는다 —
+            // 지워진 농가의 배정까지 세지 않도록 여기서 직접 걸러야 한다.
+            ->whereNull('farms.deleted_at')
             ->where('placements.status', PlacementStatus::Confirmed->value)
             ->whereNotNull('farms.city_id')
             ->groupBy('farms.city_id')

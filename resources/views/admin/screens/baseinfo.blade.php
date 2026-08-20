@@ -54,6 +54,8 @@
             title: '농가',
             saveUrl: '{{ route('admin.grid.farms.save') }}',
             importUrl: '{{ route('admin.grid.farms.import') }}',
+            // 농가는 기준정보다 — 지우면 매달린 화면들도 함께 정리된다.
+            deleteWarning: '삭제하면 그 농가의 수요·배정·입국 기록·방문 점검·점검표도 함께 정리되고, 배정돼 있던 근로자는 미배정으로 풀립니다.',
             newRow: { name: '' },
             data: @json($farmRows),
             columns: [

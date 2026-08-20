@@ -4,11 +4,16 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
+use App\Domains\Demand\Actions\DeleteFarmAction;
 use App\Domains\Demand\Models\City;
+use App\Domains\Demand\Models\DemandRequest;
 use App\Domains\Demand\Models\Farm;
+use App\Domains\Recruitment\Models\Worker;
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use OpenSpout\Reader\CSV\Reader;
@@ -64,6 +69,7 @@ class BaseInfoGridController extends Controller
             DB::transaction(function () use ($payload) {
                 $del = collect($payload['deleted'] ?? [])->pluck('id')->filter()->all();
                 if ($del) {
+                    $this->assertCityUnused(array_map('intval', $del));
                     City::whereIn('id', $del)->delete();
                 }
                 foreach ($payload['updated'] ?? [] as $i => $u) {
@@ -86,6 +92,44 @@ class BaseInfoGridController extends Controller
         }
 
         return response()->json(['ok' => true, 'message' => '저장했습니다.', 'rows' => self::cityRows()]);
+    }
+
+    /**
+     * 아직 쓰이는 지자체는 지우지 못하게 막는다.
+     *
+     * DB 는 nullOnDelete 라 지우면 그냥 지워진다 — 대신 그 지자체를 보고 있던
+     * 농가의 지자체 칸과 근로자의 지원 지역이 **말없이 빈칸이 된다**. 나중에
+     * 무엇이 비었는지 되짚을 방법이 없으므로, 옮겨 놓기 전에는 막는 편이 낫다.
+     *
+     * @param  list<int>  $ids
+     *
+     * @throws \RuntimeException
+     */
+    private function assertCityUnused(array $ids): void
+    {
+        foreach (City::whereIn('id', $ids)->get() as $city) {
+            $used = array_filter([
+                '농가' => Farm::where('city_id', $city->id)->count(),
+                '근로자' => Worker::where('city_id', $city->id)->count(),
+                '수요' => DemandRequest::where('city_id', $city->id)->count(),
+                '담당자' => User::where('city_id', $city->id)->count(),
+            ]);
+
+            if ($used === []) {
+                continue;
+            }
+
+            $what = implode(', ', array_map(
+                fn (string $k, int $n) => "{$k} {$n}건",
+                array_keys($used),
+                $used,
+            ));
+
+            throw new \RuntimeException(
+                "'{$city->name}' 은 아직 쓰이고 있어 지울 수 없습니다 ({$what}). "
+                .'다른 지자체로 옮긴 뒤 지우세요.'
+            );
+        }
     }
 
     private function cityFields(array $r): array
@@ -136,11 +180,15 @@ class BaseInfoGridController extends Controller
             'business_reg_no' => ['nullable', 'string', 'max:30', 'regex:/^[0-9-]+$/'],
         ];
         $messages = ['business_reg_no.regex' => '경영체등록번호는 숫자와 - 만 넣을 수 있습니다.'];
+        $swept = [];
         try {
-            DB::transaction(function () use ($payload, $rules, $messages) {
+            DB::transaction(function () use ($payload, $rules, $messages, &$swept) {
                 $del = collect($payload['deleted'] ?? [])->pluck('id')->filter()->all();
                 if ($del) {
-                    Farm::whereIn('id', $del)->get()->each->delete();
+                    // 농가만 지우고 배정을 두면 없는 농가에 매인 줄이 남고,
+                    // 그 근로자는 '이미 배정됨' 으로 묶여 다른 농가에 넣을 수 없다.
+                    $swept = app(DeleteFarmAction::class)
+                        ->execute(array_map('intval', $del), Auth::user());
                 }
                 foreach ($payload['updated'] ?? [] as $i => $u) {
                     $cur = $u['current'] ?? [];
@@ -163,7 +211,8 @@ class BaseInfoGridController extends Controller
 
         return response()->json([
             'ok' => true,
-            'message' => '저장했습니다.',
+            // 농가 한 줄을 지운 것이 어디까지 번졌는지 그 자리에서 알려 준다.
+            'message' => trim('저장했습니다. '.DeleteFarmAction::describe($swept)),
             'rows' => self::rowsFor($payload['rows'] ?? null),
         ]);
     }

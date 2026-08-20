@@ -46,6 +46,8 @@
      *   saveUrl     {string}  변경 저장 POST 엔드포인트 (editable 시)
      *   importUrl   {string}  엑셀 업로드 POST 엔드포인트 (editable 시)
      *   newRow      {object}  '신규 행' 기본값
+     *   savePayload {object}  저장 요청에 함께 보낼 값 (돌려받을 목록의 모양 등)
+     *   deleteWarning {string} 삭제 확인창에 덧붙일 경고 (딸린 자료가 함께 사라질 때)
      *   onRowDblClick {func}  읽기전용 상세 팝업 등 (row) => void
      *   rowCheckbox {bool}    행 체크박스 강제 표시 (읽기전용 목록에서 골라 처리할 때)
      *   buttons     {Array}   추가 툴바 버튼 [{ label, primary, onClick(grid) }]
@@ -144,7 +146,10 @@
         function removeChecked() {
             var checked = grid.getCheckedRows();
             if (!checked.length) { ndnToast('삭제할 행을 선택하세요.', { type: 'info' }); return; }
-            ndnConfirm(checked.length + '개 행을 삭제 목록에 넣습니다. (저장 시 반영)', {
+            // 기준정보처럼 다른 화면이 매달려 있는 표는, 무엇이 함께 사라지는지
+            // 저장하기 전에 알려 준다 (cfg.deleteWarning).
+            ndnConfirm(checked.length + '개 행을 삭제 목록에 넣습니다. (저장 시 반영)'
+                + (cfg.deleteWarning ? ' ' + cfg.deleteWarning : ''), {
                 title: '행 삭제', okText: '삭제', danger: true,
             }).then(function (ok) { if (ok) grid.removeCheckedRows(); });
         }

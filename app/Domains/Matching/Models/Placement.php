@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * 매칭 확정 — 근로자 ↔ 농가 (CLAUDE.md §5).
@@ -21,7 +22,9 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  */
 class Placement extends Model
 {
-    use HasFactory;
+    // 농가가 지워지면 배정도 함께 접힌다. 완전히 지우지 않는 이유는
+    // 누가 어디에 배정됐다가 어떻게 정리됐는지가 증빙으로 남아야 하기 때문이다(업무흐름 §4).
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'worker_id',

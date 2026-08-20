@@ -11,6 +11,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * 입국·이송 기록 (업무흐름 §5).
@@ -21,7 +22,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class ArrivalRecord extends Model
 {
-    use HasFactory;
+    // 배정 확정 때 만들어지므로 배정과 같은 운명을 따른다 —
+    // 농가가 지워지면 배정과 함께 접힌다.
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'placement_id',
