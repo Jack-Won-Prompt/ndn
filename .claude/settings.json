@@ -370,7 +370,20 @@
       "Bash(grep -oE '<\\(button|a|label\\)[^>]*>[^<]{1,25}' resources/views/admin/screens/required-documents.blade.php)",
       "Bash(grep -oE 'id=\"st-[a-z_-]+\"|<label[^>]*>[^<]{1,20}' resources/views/admin/screens/settings.blade.php)",
       "Bash(grep -n '$fields\\\\|'\\\\''label'\\\\'' =>' app/Http/Controllers/Admin/ConsoleController.php)",
-      "Bash(./vendor/bin/pest --filter=WorkerExitTest)"
+      "Bash(./vendor/bin/pest --filter=WorkerExitTest)",
+      "Bash(npx playwright *)",
+      "Read(//c/Program Files/Google/Chrome/Application/**)",
+      "Read(//c/Program Files \\\\\\(x86\\\\\\)/Microsoft/Edge/Application/**)",
+      "Bash(npm ls *)",
+      "Bash(npm install *)",
+      "Bash(node capture.mjs)",
+      "Bash(php \"C:/Users/82103/AppData/Local/Temp/claude/e--xampp-htdocs-ndn/c7b81917-cbdb-4501-b2e9-86761a52e300/scratchpad/embed.php\")",
+      "Bash(node recapture.mjs)",
+      "Bash(xargs -n1 basename)",
+      "Bash(read p *)",
+      "Bash([ -f \"docs/$p\" ])",
+      "Bash(sed -n '/^### 3.6 농가 매칭·배정/,/^목적/p' docs/NDN_전체_화면_버튼_매뉴얼.md)",
+      "Bash(sed -n '/^### 3.16-1/,/^탭 3개/p' docs/NDN_전체_화면_버튼_매뉴얼.md)"
     ],
     "additionalDirectories": [
       "\\tmp"
