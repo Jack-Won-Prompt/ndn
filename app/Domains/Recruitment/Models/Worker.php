@@ -74,6 +74,10 @@ class Worker extends Model implements AuthenticatableContract, CanResetPasswordC
         'screening_note',
         // 담당자 업무 메모. 가입 심사 사유(screening_note)와는 다른 칸이다.
         'note',
+        // 체류·근로 예정 기간. 배정 기간(placements)과 다르다 — 그쪽은 '그 농가에서'
+        // 일하는 기간이고, 이쪽은 지자체 명단으로 먼저 들어오는 그 사람의 기간이다.
+        'work_start_date',
+        'work_end_date',
     ];
 
     /**
@@ -109,6 +113,8 @@ class Worker extends Model implements AuthenticatableContract, CanResetPasswordC
             'screened_at' => 'datetime',
             'supplement_items' => 'array',
             'supplement_requested_at' => 'datetime',
+            'work_start_date' => 'date',
+            'work_end_date' => 'date',
         ];
     }
 

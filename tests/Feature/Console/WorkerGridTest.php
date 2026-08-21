@@ -428,3 +428,67 @@ it('근로자를 지우면 딸린 자료도 함께 정리된다', function () {
 
     expect(DB::table('support_tickets')->where('worker_id', $worker->id)->count())->toBe(0);
 });
+
+it('근로 기간을 목록에 담고 저장한다', function () {
+    $worker = Worker::factory()->create([
+        'work_start_date' => '2026-04-07',
+        'work_end_date' => '2026-07-06',
+    ]);
+
+    actingAs($this->admin);
+    $row = collect(WorkerGridController::rows())->firstWhere('id', $worker->id);
+
+    expect($row['work_start_date'])->toBe('2026-04-07')
+        ->and($row['work_end_date'])->toBe('2026-07-06');
+});
+
+it('엑셀의 개월수로 종료일을 계산한다', function () {
+    // 지자체 명단은 종료일 대신 '3개월' 만 적어 오고, 출국일 칸은 수식이라 비어 온다.
+    actingAs($this->admin)->post(route('admin.grid.workers.import'), [
+        'file' => UploadedFile::fake()->createWithContent('w.csv',
+            "이름,입국일,근로 기간\nA,2026-04-07,3개월\nB,2026-02-24,5개월\nC,2026-04-07,8개월\n"),
+        'default_nationality' => 'BD',
+    ])->assertOk();
+
+    // EDATE(입국일, 개월수) - 1 — 그 달의 같은 날 하루 전까지.
+    expect(Worker::where('name', 'A')->firstOrFail()->work_end_date->toDateString())->toBe('2026-07-06')
+        ->and(Worker::where('name', 'B')->firstOrFail()->work_end_date->toDateString())->toBe('2026-07-23')
+        ->and(Worker::where('name', 'C')->firstOrFail()->work_end_date->toDateString())->toBe('2026-12-06');
+});
+
+it('종료일이 적혀 있으면 개월수보다 그쪽을 따른다', function () {
+    actingAs($this->admin)->post(route('admin.grid.workers.import'), [
+        'file' => UploadedFile::fake()->createWithContent('w.csv',
+            "이름,입국일,근로 기간,출국일\nA,2026-04-07,3개월,2026-06-30\n"),
+        'default_nationality' => 'BD',
+    ])->assertOk();
+
+    expect(Worker::firstOrFail()->work_end_date->toDateString())->toBe('2026-06-30');
+});
+
+it('종료일이 시작일보다 앞서면 막는다', function () {
+    // 그대로 두면 목록에서 기간이 음수로 보이고 만료 알림이 영영 안 뜬다.
+    $res = saveWorkers([[
+        'name' => 'A', 'nationality' => 'BD', 'locale' => 'bn',
+        'work_start_date' => '2026-07-01', 'work_end_date' => '2026-04-01',
+    ]])->assertStatus(422);
+
+    expect($res->json('message'))->toContain('근로 종료')
+        ->and(Worker::count())->toBe(0);
+});
+
+it('근로 기간은 배정 기간과 따로 간다', function () {
+    // 한 사람이 A 농가 두 달, B 농가 한 달 일할 수 있다. 체류 기간은 그대로다.
+    $worker = Worker::factory()->create([
+        'work_start_date' => '2026-04-07',
+        'work_end_date' => '2026-12-06',
+    ]);
+    Placement::factory()->create([
+        'worker_id' => $worker->id,
+        'start_date' => '2026-04-07',
+        'end_date' => '2026-07-06',
+    ]);
+
+    expect($worker->fresh()->work_end_date->toDateString())->toBe('2026-12-06')
+        ->and($worker->placements()->first()->end_date->toDateString())->toBe('2026-07-06');
+});

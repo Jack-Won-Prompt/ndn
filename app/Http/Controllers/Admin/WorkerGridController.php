@@ -10,6 +10,7 @@ use App\Domains\Recruitment\Enums\Nationality;
 use App\Domains\Recruitment\Models\Worker;
 use App\Http\Controllers\Controller;
 use App\Shared\Enums\Gender;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -61,6 +62,9 @@ class WorkerGridController extends Controller
             'passport_no' => $w->plain('passport_no'),
             'birth_date' => $w->plain('birth_date'),
             'note' => $w->note,
+            // 체류·근로 예정 기간. 배정 기간과 다르다 — 아래 workPeriod() 주석 참고.
+            'work_start_date' => $w->work_start_date?->toDateString(),
+            'work_end_date' => $w->work_end_date?->toDateString(),
         ];
     }
 
@@ -114,6 +118,10 @@ class WorkerGridController extends Controller
             'birth_date' => ['nullable', 'date'],
             'note' => ['nullable', 'string', 'max:500'],
             'gender' => ['nullable', 'in:male,female'],
+            'work_start_date' => ['nullable', 'date'],
+            // 시작일보다 앞선 종료일은 사람이 적다가 뒤집은 것이다. 그대로 두면
+            // 목록에서 기간이 음수로 보이고 만료 알림이 영영 안 뜬다.
+            'work_end_date' => ['nullable', 'date', 'after_or_equal:work_start_date'],
         ];
     }
 
@@ -145,7 +153,32 @@ class WorkerGridController extends Controller
             'birth_date' => $this->date($row['birth_date'] ?? null),
             'note' => $text('note'),
             'gender' => $this->gender($row['gender'] ?? null),
-        ];
+        ] + $this->workPeriod($row);
+    }
+
+    /**
+     * 근로 기간 — 시작일과 종료일.
+     *
+     * 명단은 종료일 대신 '3개월' 처럼 개월수를 주는 경우가 많다. 종료일이 비어
+     * 있으면 시작일에서 계산해 채운다 — 엑셀 서식의 EDATE(입국일, 개월수) - 1 과
+     * 같은 셈이다(그 달의 같은 날 하루 전까지 일한다).
+     *
+     * @return array{work_start_date: ?string, work_end_date: ?string}
+     */
+    private function workPeriod(array $row): array
+    {
+        $start = $this->date($row['work_start_date'] ?? null);
+        $end = $this->date($row['work_end_date'] ?? null);
+
+        if ($end === null && $start !== null && filled($row['work_months'] ?? null)) {
+            $months = (int) preg_replace('/[^0-9]/', '', (string) $row['work_months']);
+
+            if ($months > 0) {
+                $end = Carbon::parse($start)->addMonthsNoOverflow($months)->subDay()->toDateString();
+            }
+        }
+
+        return ['work_start_date' => $start, 'work_end_date' => $end];
     }
 
     /**
@@ -277,6 +310,9 @@ class WorkerGridController extends Controller
             'birth_date.date' => '생년월일을 날짜로 읽지 못했습니다.',
             'city_id.exists' => '등록되지 않은 지역입니다.',
             'locale.in' => '쓸 수 없는 언어 코드입니다.',
+            'work_start_date.date' => '근로 시작일을 날짜로 읽지 못했습니다.',
+            'work_end_date.date' => '근로 종료일을 날짜로 읽지 못했습니다.',
+            'work_end_date.after_or_equal' => '근로 종료일이 근로 시작일보다 앞섭니다.',
         ], [
             'name' => '이름',
             'nationality' => '국적',
@@ -286,6 +322,8 @@ class WorkerGridController extends Controller
             'passport_no' => '여권번호',
             'birth_date' => '생년월일',
             'note' => '비고',
+            'work_start_date' => '근로 시작일',
+            'work_end_date' => '근로 종료일',
         ]);
 
         if ($v->fails()) {
@@ -344,6 +382,9 @@ class WorkerGridController extends Controller
             '전화' => 'phone_home_country', '전화번호' => 'phone_home_country',
             '이메일' => 'email', '메일' => 'email',
             '비고' => 'note', '메모' => 'note',
+            '입국일' => 'work_start_date', '근로시작일' => 'work_start_date', '시작일' => 'work_start_date',
+            '출국일' => 'work_end_date', '근로종료일' => 'work_end_date', '종료일' => 'work_end_date',
+            '근로기간' => 'work_months', '계약기간' => 'work_months', '기간' => 'work_months',
             '성별' => 'gender', '이름FullName' => 'name', '이름Fullname' => 'name',
         ];
         $natMap = ['방글라데시' => 'BD', '방글라' => 'BD', '라오스' => 'LA', '스리랑카' => 'LK', '베트남' => 'VN'];
