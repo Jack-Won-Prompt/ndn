@@ -226,6 +226,9 @@ Route::prefix('admin')->group(function () {
         // 계정 삭제 요청 처리 (Google Play 데이터 삭제 정책)
         Route::post('/account-deletions/{accountDeletionRequest}/process', [AccountDeletionAdminController::class, 'process'])
             ->whereNumber('accountDeletionRequest')->name('admin.account-deletions.process');
+        // 표에서 상태를 고쳐 한 번에 저장 (수요 신청 화면과 같은 [변경 저장] 흐름)
+        Route::post('/account-deletions/save', [AccountDeletionAdminController::class, 'save'])
+            ->name('admin.account-deletions.save');
 
         // 근로자 공지사항 발송 (FCM 푸시 + 인앱)
         Route::post('/notices', [NoticeController::class, 'store'])->name('admin.notices.store');
