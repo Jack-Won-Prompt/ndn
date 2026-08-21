@@ -5,7 +5,7 @@
     <div class="screen__head">
         <div>
             <h1 class="screen__title">농가·지자체 기준정보</h1>
-            <p class="screen__sub">수요 신청·배치의 기준이 되는 지자체·농가 정보 등록·수정 · <strong>각 표 편집 후 [변경 저장]</strong></p>
+            <p class="screen__sub">수요 신청·배치의 기준이 되는 지자체·농가 정보 등록·수정 · <strong>각 표 편집 후 [변경 저장]</strong> · <strong>[행 삭제]</strong>는 확인하면 그 자리에서 지웁니다</p>
         </div>
     </div>
 

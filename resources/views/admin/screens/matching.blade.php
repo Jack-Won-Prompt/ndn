@@ -24,6 +24,7 @@
         <div id="mt-fpanel" class="mt-panel" hidden></div>
         <p class="mt-hint">
             농가는 이 표에서 바로 등록·수정합니다 (<strong>[신규 행] → 입력 → [변경 저장]</strong>, 엑셀 업로드도 같은 방식).
+            <strong>[행 삭제]</strong>는 확인하면 그 자리에서 지웁니다.
             저장한 뒤 <strong>[인력 배정 ▸]</strong> 칸을 누르면 아래에 그 농가의 수요와 배정 화면이 열립니다.
             <br>표의 내용은 <strong>[농가·지자체 기준정보]</strong> 화면과 같은 자료입니다.
         </p>

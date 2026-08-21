@@ -156,3 +156,23 @@ it('화면이 표로 그려진다', function () {
         // 접수는 본인이 하는 것이라 여기서 새로 만들지 않는다.
         ->and($html)->toContain('canAdd: false');
 });
+
+it('삭제와 수정이 한 번에 들어와도 둘 다 반영된다', function () {
+    // [행 삭제] 는 저장하지 않은 다른 변경까지 함께 보낸다 — 한 요청이 한 트랜잭션이라
+    // 갈라 보낼 수 없다. 그래서 확인창이 무엇이 함께 저장되는지 먼저 말한다.
+    $keep = makeRequest(['email' => 'keep@example.com']);
+    $drop = makeRequest(['email' => 'drop@example.com']);
+
+    saveDeletions(
+        [['current' => [
+            'id' => $keep->id,
+            'status' => AccountDeletionRequest::STATUS_COMPLETED,
+            'admin_note' => '처리함',
+        ]]],
+        [['id' => $drop->id]],
+    )->assertOk();
+
+    expect(AccountDeletionRequest::find($drop->id))->toBeNull()
+        ->and($keep->fresh()->status)->toBe(AccountDeletionRequest::STATUS_COMPLETED)
+        ->and($keep->fresh()->admin_note)->toBe('처리함');
+});

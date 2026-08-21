@@ -143,16 +143,32 @@
                 .catch(function () { ndnToast('네트워크 오류로 저장하지 못했습니다.', { type: 'error', title: '저장 실패' }); });
         }
 
-        /* ---------- 삭제 (체크 행) ---------- */
+        /* ---------- 삭제 (체크 행) ----------
+         * 누르면 **그 자리에서 지운다.** 예전에는 삭제 목록에 표시만 하고
+         * [변경 저장] 을 눌러야 반영됐는데, 화면에서는 행이 곧바로 사라지니
+         * 지워진 줄 알고 넘어가게 된다. 실제로 그런 문의가 왔다 —
+         * "체크 후 삭제 버튼을 눌러도 데이터가 안 지워진다".
+         *
+         * 저장하지 않은 다른 변경이 있으면 그것도 함께 저장된다. 한 번의 요청이
+         * 한 트랜잭션이라 갈라 보낼 수 없고, 무엇이 함께 저장되는지 먼저 말한다.
+         */
         function removeChecked() {
             var checked = grid.getCheckedRows();
             if (!checked.length) { ndnToast('삭제할 행을 선택하세요.', { type: 'info' }); return; }
-            // 기준정보처럼 다른 화면이 매달려 있는 표는, 무엇이 함께 사라지는지
-            // 저장하기 전에 알려 준다 (cfg.deleteWarning).
-            ndnConfirm(checked.length + '개 행을 삭제 목록에 넣습니다. (저장 시 반영)'
+
+            var pending = grid.getModifiedRows();
+            var others = pending.updated.length + pending.added.length;
+
+            // 기준정보처럼 다른 화면이 매달려 있는 표는, 무엇이 함께 사라지는지 먼저 알려 준다.
+            ndnConfirm(checked.length + '개 행을 삭제합니다.'
+                + (others ? ' 저장하지 않은 다른 변경 ' + others + '건도 함께 저장됩니다.' : '')
                 + (cfg.deleteWarning ? ' ' + cfg.deleteWarning : ''), {
                 title: '행 삭제', okText: '삭제', danger: true,
-            }).then(function (ok) { if (ok) grid.removeCheckedRows(); });
+            }).then(function (ok) {
+                if (!ok) return;
+                grid.removeCheckedRows();
+                save();
+            });
         }
 
         /* ---------- 엑셀 업로드(가져오기) ---------- */
