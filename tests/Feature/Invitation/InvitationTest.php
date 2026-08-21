@@ -130,3 +130,76 @@ it('공개 수락 POST 로 계정을 만들 수 있다', function () {
     expect($user)->not->toBeNull();
     expect($user->hasRole(UserRole::FarmOwner->value))->toBeTrue();
 });
+
+/** 초대를 실제 발송 경로로 만든다 — Invitation 에는 팩토리가 없다. */
+function makeInvitation(User $admin, string $email = 'invitee@example.com'): Invitation
+{
+    return app(SendInvitationAction::class)->execute($email, UserRole::FarmOwner, $admin)['invitation'];
+}
+
+/** ndn_admin 한 명 */
+function inviteAdmin(): User
+{
+    $u = User::factory()->create();
+    $u->assignRole(UserRole::NdnAdmin->value);
+
+    return $u;
+}
+
+it('표에서 체크한 초대를 한 번에 철회한다', function () {
+    // 표 안에는 버튼을 둘 수 없어(편집기 없는 칸은 글자만 그린다) 체크 → 툴바로 처리한다.
+    $admin = inviteAdmin();
+
+    $a = makeInvitation($admin, 'a@example.com');
+    $b = makeInvitation($admin, 'b@example.com');
+
+    $res = $this->actingAs($admin)->postJson(route('admin.invitations.revoke-bulk'), [
+        'ids' => [$a->id, $b->id],
+    ])->assertOk();
+
+    expect($a->fresh()->revoked_at)->not->toBeNull()
+        ->and($b->fresh()->revoked_at)->not->toBeNull()
+        ->and($res->json('message'))->toContain('2건')
+        // 표를 다시 그릴 목록을 함께 준다.
+        ->and($res->json('rows'))->toHaveCount(2);
+});
+
+it('대기 중이 아닌 초대는 건너뛰고 나머지는 철회한다', function () {
+    // 하나가 걸렸다고 스무 건이 통째로 되돌아가면 무엇이 걸렸는지 찾기만 어려워진다.
+    $admin = inviteAdmin();
+
+    $live = makeInvitation($admin, 'live@example.com');
+    $gone = makeInvitation($admin, 'gone@example.com');
+    $gone->forceFill(['revoked_at' => now()])->save();
+
+    $res = $this->actingAs($admin)->postJson(route('admin.invitations.revoke-bulk'), [
+        'ids' => [$live->id, $gone->id],
+    ])->assertOk();
+
+    expect($live->fresh()->revoked_at)->not->toBeNull()
+        ->and($res->json('message'))->toContain('1건을 철회')
+        ->and($res->json('message'))->toContain('건너뜀');
+});
+
+it('관리자가 아니면 일괄 철회를 못 한다', function () {
+    $officer = User::factory()->create();
+    $officer->assignRole(UserRole::CityOfficer->value);
+    $inv = makeInvitation(inviteAdmin(), 'safe@example.com');
+
+    $this->actingAs($officer)->postJson(route('admin.invitations.revoke-bulk'), [
+        'ids' => [$inv->id],
+    ])->assertForbidden();
+
+    expect($inv->fresh()->revoked_at)->toBeNull();
+});
+
+it('초대 화면이 표로 그려진다', function () {
+    $admin = inviteAdmin();
+    makeInvitation($admin, 'grid@example.com');
+
+    $html = $this->actingAs($admin)->get(url('admin/screen/invitations'))->assertOk()->getContent();
+
+    expect($html)->toContain('grid-invitations')
+        ->and($html)->toContain('wwConsole(')
+        ->and($html)->toContain('grid@example.com');
+});

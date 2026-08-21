@@ -50,48 +50,15 @@
     </div>{{-- /탭:form --}}
 
     <div data-tabpane="list">
-    <div class="signup-wrap">
-        <table class="signup-table" id="inv-table">
-            <thead>
-                <tr>
-                    <th style="width:60px">번호</th>
-                    <th>이메일</th>
-                    <th style="width:120px">역할</th>
-                    <th style="width:90px">상태</th>
-                    <th>초대자</th>
-                    <th style="width:150px">발송</th>
-                    <th style="width:150px">만료</th>
-                    <th style="width:150px">처리</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($rows as $r)
-                    <tr data-id="{{ $r['id'] }}">
-                        <td class="c">{{ $r['id'] }}</td>
-                        <td>{{ $r['email'] }}</td>
-                        <td class="c">{{ $r['role'] }}</td>
-                        <td class="c"><span class="inv-badge inv-badge--{{ $r['status'] }}">{{ $r['status_label'] }}</span></td>
-                        <td>{{ $r['invited_by'] }}</td>
-                        <td class="c">{{ $r['created'] }}</td>
-                        <td class="c">{{ $r['expires'] }}</td>
-                        <td class="c">
-                            @if ($r['can_manage'])
-                                <button type="button" class="su-btn su-btn--ok" data-act="resend">재발송</button>
-                                <button type="button" class="su-btn su-btn--no" data-act="revoke">철회</button>
-                            @else
-                                <span class="inv-dash">—</span>
-                            @endif
-                        </td>
-                    </tr>
-                @empty
-                    <tr id="inv-empty"><td colspan="8" class="su-empty">발송된 초대가 없습니다.</td></tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
+        <div id="grid-invitations"></div>
+        <p class="inv-hint">
+            철회할 초대를 <strong>체크</strong>한 뒤 툴바의 <strong>[초대 철회]</strong>를 누르세요.
+            재발송은 새 링크가 <strong>한 번만</strong> 보이므로 한 건씩 <strong>[재발송]</strong> 으로 합니다.
+        </p>
     </div>{{-- /탭:list --}}
 
     <style>
+        .inv-hint { font-size: var(--mv2-fz-xs); color: var(--mv2-text-faint); margin: 10px 2px 0; line-height: 1.7; }
         .inv-send { border: 1px solid var(--mv2-border-default); border-radius: var(--mv2-r-lg); background: #fff; padding: 16px; margin-bottom: 14px; box-shadow: 0 1px 2px rgba(15,23,42,.04); }
         .inv-send__row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
         .inv-field { display: flex; flex-direction: column; gap: 4px; }
@@ -105,13 +72,6 @@
         .inv-linkbox__row { display: flex; gap: 8px; margin-top: 6px; }
         .inv-linkbox__row input { flex: 1; font-family: inherit; font-size: var(--mv2-fz-xs); padding: 8px 10px; border: 1px solid var(--mv2-border-default); border-radius: var(--mv2-r-sm); background: #fff; }
         .inv-copybtn { font-family: inherit; font-weight: 700; font-size: var(--mv2-fz-xs); background: var(--mv2-primary-500); color: #fff; border: 0; border-radius: var(--mv2-r-sm); padding: 0 16px; cursor: pointer; }
-        .signup-wrap { border: 1px solid var(--mv2-border-default); border-radius: var(--mv2-r-lg); overflow: hidden; background: #fff; box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 6px 20px rgba(15,23,42,.05); }
-        .signup-table { width: 100%; border-collapse: collapse; font-size: var(--mv2-fz-sm); }
-        .signup-table thead th { text-align: left; background: var(--mv2-slate-25); color: var(--mv2-text-muted); font-weight: 700; font-size: var(--mv2-fz-xs); padding: 11px 14px; border-bottom: 1px solid var(--mv2-border-soft); white-space: nowrap; }
-        .signup-table tbody td { padding: 11px 14px; border-bottom: 1px solid var(--mv2-border-soft); color: var(--mv2-text-strong); }
-        .signup-table tbody tr:last-child td { border-bottom: 0; }
-        .signup-table tbody tr:hover { background: var(--mv2-slate-25); }
-        .signup-table td.c { text-align: center; }
         .su-empty { text-align: center; color: var(--mv2-text-faint); padding: 34px 0; }
         .su-btn { font-family: inherit; font-size: var(--mv2-fz-xs); font-weight: 700; border: 1px solid transparent; border-radius: var(--mv2-r-sm); padding: 5px 12px; cursor: pointer; margin: 0 2px; }
         .su-btn--ok { background: var(--mv2-primary-500); color: #fff; }
@@ -125,6 +85,32 @@
         .inv-badge--expired { background: var(--mv2-slate-25); color: var(--mv2-text-muted); }
         .inv-badge--revoked { background: var(--mv2-pill-err-bg); color: var(--mv2-pill-err-fg); }
     </style>
+@endsection
+
+@section('wwgrid')
+<script>
+    // 초대 기록은 **읽기 전용**이다. 발송한 내용을 나중에 고칠 수 있으면
+    // '누구를 어떤 역할로 불렀나' 가 증빙이 되지 않는다. 처리(철회·재발송)만 한다.
+    wwConsole({
+        el: 'grid-invitations',
+        title: '조직초대',
+        data: @json($rows, JSON_UNESCAPED_UNICODE),
+        rowCheckbox: true,
+        buttons: [
+            { label: '초대 철회', onClick: function (g) { window.invRevoke(g); } },
+            { label: '재발송', onClick: function (g) { window.invResend(g); } },
+        ],
+        columns: [
+            { header: '번호', name: 'id', width: 60, align: 'center', sortable: true },
+            { header: '이메일', name: 'email', width: 240, sortable: true },
+            { header: '역할', name: 'role', width: 120, align: 'center', sortable: true },
+            { header: '상태', name: 'status_label', width: 90, align: 'center', sortable: true },
+            { header: '초대자', name: 'invited_by', width: 130 },
+            { header: '발송', name: 'created', width: 150, align: 'center', sortable: true },
+            { header: '만료', name: 'expires', width: 150, align: 'center' },
+        ],
+    });
+</script>
 @endsection
 
 @section('script')
@@ -179,32 +165,50 @@
                                 : (document.execCommand('copy'), ndnToast('링크를 복사했습니다.', { type: 'success' }));
         });
 
-        document.getElementById('inv-table').addEventListener('click', function (e) {
-            var btn = e.target.closest('.su-btn');
-            if (!btn) return;
-            var tr = btn.closest('tr[data-id]');
-            var id = tr.getAttribute('data-id');
-            var act = btn.getAttribute('data-act');
+        /* ── 표 툴바에서 부르는 두 동작 ────────────────────────────────
+         * 표 안에는 버튼을 둘 수 없어(편집기 없는 칸은 글자만 그린다) 체크 →
+         * 툴바 순서로 처리한다. 표는 위쪽 wwgrid 구역에서 만들고, 그 표가 부를
+         * 수 있도록 창구만 열어 둔다.
+         */
+        window.invRevoke = function (grid) {
+            var rows = grid.getCheckedRows();
+            if (!rows.length) { ndnToast('철회할 초대를 체크하세요.', { type: 'info' }); return; }
 
-            if (act === 'resend') {
-                jpost(BASE + '/' + id + '/resend').then(function (res) {
-                    if (!res.ok) { ndnToast(res.j.message || '재발송 실패', { type: 'error' }); return; }
-                    ndnToast('재발송했습니다. 새 링크를 복사하세요.', { type: 'success' });
-                    showLink(res.j.url);
-                    setTimeout(function () { location.reload(); }, 1400);
-                });
-            } else {
-                ndnConfirm('이 초대를 철회할까요? 링크가 무효화됩니다.', { title: '초대 철회', okText: '철회', danger: true })
-                    .then(function (ok) {
-                        if (!ok) return;
-                        jpost(BASE + '/' + id + '/revoke').then(function (res) {
+            var live = rows.filter(function (r) { return r.can_manage; }).length;
+            var tail = rows.length - live
+                ? ' (대기 중이 아닌 ' + (rows.length - live) + '건은 건너뜁니다)' : '';
+
+            ndnConfirm(live + '건의 초대를 철회합니다' + tail + '. 링크가 무효화됩니다.',
+                { title: '초대 철회', okText: '철회', danger: true })
+                .then(function (ok) {
+                    if (!ok) return;
+                    jpost(BASE + '/revoke-bulk', { ids: rows.map(function (r) { return r.id; }) })
+                        .then(function (res) {
                             if (!res.ok) { ndnToast(res.j.message || '철회 실패', { type: 'error' }); return; }
-                            ndnToast('철회했습니다.', { type: 'success' });
-                            setTimeout(function () { location.reload(); }, 800);
+                            grid.setData(res.j.rows);
+                            ndnToast(res.j.message, { type: 'success' });
                         });
-                    });
+                });
+        };
+
+        // 재발송은 새 링크가 **한 번만** 보인다. 여러 건을 한꺼번에 하면 링크를
+        // 놓치므로 한 건씩만 받는다.
+        window.invResend = function (grid) {
+            var rows = grid.getCheckedRows().filter(function (r) { return r.can_manage; });
+
+            if (rows.length !== 1) {
+                ndnToast('재발송은 한 건씩만 됩니다. 대기 중인 초대 하나만 체크하세요.', { type: 'info' });
+                return;
             }
-        });
+
+            jpost(BASE + '/' + rows[0].id + '/resend').then(function (res) {
+                if (!res.ok) { ndnToast(res.j.message || '재발송 실패', { type: 'error' }); return; }
+                ndnToast('재발송했습니다. [초대 발송] 탭에서 새 링크를 복사하세요.', { type: 'success' });
+                showLink(res.j.url);
+                window.ndnSwitchTab('form');
+                setTimeout(function () { location.reload(); }, 2500);
+            });
+        };
     })();
 </script>
 @endsection

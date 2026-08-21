@@ -90,6 +90,45 @@ class InvitationController extends Controller
         return response()->json(['ok' => true, 'url' => $result['url']]);
     }
 
+    /**
+     * 표에서 체크한 초대를 한 번에 철회한다.
+     *
+     * 표 안에는 버튼을 둘 수 없어(편집기 없는 칸은 글자만 그린다) 체크 → 툴바
+     * 순서로 처리한다. 재발송은 여기 넣지 않았다 — 재발송은 사람마다 새 링크가
+     * 한 번만 보이는 동작이라, 여러 건을 한꺼번에 하면 링크를 놓친다.
+     *
+     * 대기 중이 아닌 건이 섞여도 그것만 건너뛴다. 이미 수락한 초대가 섞였다고
+     * 스무 건이 통째로 되돌아가면 무엇이 걸렸는지 찾기만 어려워진다.
+     */
+    public function bulkRevoke(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', 'exists:invitations,id'],
+        ]);
+
+        $done = 0;
+        $skipped = 0;
+
+        foreach (Invitation::whereIn('id', $data['ids'])->get() as $invitation) {
+            if (! $invitation->isPending()) {
+                $skipped++;
+
+                continue;
+            }
+
+            $invitation->forceFill(['revoked_at' => now()])->save();
+            $done++;
+        }
+
+        return response()->json([
+            'ok' => true,
+            'message' => "{$done}건을 철회했습니다."
+                .($skipped > 0 ? " (대기 중이 아닌 {$skipped}건은 건너뜀)" : ''),
+            'rows' => self::rows(),
+        ]);
+    }
+
     public function revoke(Invitation $invitation): JsonResponse
     {
         if (! $invitation->isPending()) {

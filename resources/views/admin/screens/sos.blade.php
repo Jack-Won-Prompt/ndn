@@ -15,140 +15,103 @@
         </div>
     @endif
 
-    <div class="sos-wrap">
-        <table class="sos-table">
-            <thead>
-                <tr>
-                    <th style="width:88px">상태</th>
-                    <th style="width:150px">근로자</th>
-                    <th style="width:180px">소속</th>
-                    <th style="width:150px">발신 시각</th>
-                    <th style="width:110px">경과·대응</th>
-                    <th style="width:220px">좌표</th>
-                    <th>확인</th>
-                    <th style="width:150px"></th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($rows as $r)
-                    <tr data-id="{{ $r['id'] }}" class="sos-row sos-row--{{ $r['status'] }}">
-                        <td class="c">
-                            <span class="sos-badge sos-badge--{{ $r['status'] }}">{{ $r['status_label'] }}</span>
-                        </td>
-                        <td>
-                            <b>{{ $r['worker'] }}</b>
-                            <span class="sos-dim">{{ $r['nationality'] }}</span>
-                        </td>
-                        <td>{{ $r['city'] }} · {{ $r['farm'] }}</td>
-                        <td class="c">{{ $r['alerted_at'] }}</td>
-                        <td class="c {{ $r['status'] === 'open' && $r['minutes'] >= 30 ? 'sos-late' : '' }}">
-                            {{ $r['elapsed'] }}
-                        </td>
-                        <td class="c sos-coord">
-                            @if ($r['map_url'])
-                                <span class="sos-dim">{{ $r['coords'] }}</span>
-                                <a class="sos-map" href="{{ $r['map_url'] }}" target="_blank" rel="noopener">지도</a>
-                            @else
-                                <span class="sos-dim">좌표 없음</span>
-                            @endif
-                        </td>
-                        <td>
-                            @if ($r['status'] === 'open')
-                                <span class="sos-dim">—</span>
-                            @else
-                                {{ $r['acknowledged_by'] }} <span class="sos-dim">{{ $r['acknowledged_at'] }}</span>
-                            @endif
-                        </td>
-                        <td class="c">
-                            @if ($r['status'] === 'open')
-                                <button type="button" class="sos-btn sos-btn--primary"
-                                        data-act="acknowledged" data-worker="{{ $r['worker'] }}">확인 처리</button>
-                            @elseif ($r['status'] === 'acknowledged')
-                                <button type="button" class="sos-btn"
-                                        data-act="closed" data-worker="{{ $r['worker'] }}">종료 처리</button>
-                            @else
-                                <span class="sos-dim">처리 완료</span>
-                            @endif
-                        </td>
-                    </tr>
-                    @if ($r['note'] !== '')
-                        <tr class="sos-noterow"><td colspan="8"><span class="sos-dim">메모</span> {{ $r['note'] }}</td></tr>
-                    @endif
-                @empty
-                    <tr><td colspan="8" class="sos-empty">접수된 SOS 가 없습니다.</td></tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
+    <div id="grid-sos"></div>
+
+    <p class="sos-hint">
+        처리할 건을 <strong>체크</strong>한 뒤 툴바의 <strong>[확인 처리]</strong> · <strong>[종료 처리]</strong>를 누르세요.
+        <strong>[지도 ▸]</strong> 칸을 누르면 그 좌표가 새 창에 열립니다.
+        <br>신고 내용(발신 시각·좌표·근로자)은 근로자가 보낸 것이라 <strong>고칠 수 없습니다</strong> —
+        여기서 하는 일은 대응 상태를 남기는 것뿐입니다.
+    </p>
 
     <style>
+        .sos-hint{font-size:var(--mv2-fz-xs);color:var(--mv2-text-faint);margin:10px 2px 0;line-height:1.7;}
         .sos-alert{background:#FDECEC;border:1px solid #F5C2C0;color:#8A1F1C;border-radius:var(--mv2-r-lg);
             padding:13px 16px;margin-bottom:14px;font-size:var(--mv2-fz-sm);line-height:1.6;}
         .sos-alert b{font-weight:800;}
-        .sos-wrap{border:1px solid var(--mv2-border-default);border-radius:var(--mv2-r-lg);overflow:hidden;background:#fff;box-shadow:0 1px 2px rgba(15,23,42,.04);}
-        .sos-table{width:100%;border-collapse:collapse;font-size:var(--mv2-fz-sm);}
-        .sos-table thead th{text-align:left;background:var(--mv2-slate-25);color:var(--mv2-text-muted);font-weight:700;font-size:var(--mv2-fz-xs);padding:11px 14px;border-bottom:1px solid var(--mv2-border-soft);white-space:nowrap;}
-        .sos-table tbody td{padding:11px 14px;border-bottom:1px solid var(--mv2-border-soft);color:var(--mv2-text-strong);}
-        .sos-table td.c{text-align:center;}
-        .sos-row--open{background:#FFFBFB;}
-        .sos-noterow td{padding-top:0;padding-bottom:11px;font-size:var(--mv2-fz-xs);color:var(--mv2-text-muted);}
         .sos-dim{color:var(--mv2-text-faint);font-size:var(--mv2-fz-xs);}
         .sos-late{color:#B3261E;font-weight:800;}
-        .sos-empty{text-align:center;color:var(--mv2-text-faint);padding:34px 0;}
-        .sos-badge{display:inline-block;padding:2px 10px;border-radius:100px;font-size:12px;font-weight:800;}
-        .sos-badge--open{background:#FDECEC;color:#8A1F1C;}
-        .sos-badge--acknowledged{background:#FFF4E0;color:#8A5A00;}
-        .sos-badge--closed{background:#F1F3F7;color:#6B7280;}
-        /* 좌표와 [지도] 가 갈라져 두 줄이 되지 않게 한 덩어리로 둔다 */
-        .sos-coord{white-space:nowrap;}
-        .sos-map{display:inline-block;margin-left:6px;padding:2px 9px;border-radius:100px;font-size:12px;font-weight:700;
-            background:var(--mv2-slate-25);border:1px solid var(--mv2-border-default);color:var(--mv2-text-strong);text-decoration:none;}
-        .sos-map:hover{border-color:var(--mv2-text-strong);}
-        .sos-btn{font-family:inherit;font-size:var(--mv2-fz-xs);font-weight:700;border:1px solid var(--mv2-border-default);background:#fff;border-radius:var(--mv2-r-sm);padding:7px 15px;cursor:pointer;white-space:nowrap;}
-        .sos-btn--primary{background:var(--mv2-primary-500);color:#fff;border-color:transparent;}
-        .sos-btn--primary:hover{background:var(--mv2-primary-600);}
     </style>
 @endsection
 
-@section('script')
+@section('wwgrid')
 <script>
-    (function () {
-        var token = document.querySelector('meta[name="csrf-token"]').content;
-        var BASE = '{{ url('admin/sos') }}';
+    var SOS_BASE = '{{ url('admin/sos') }}';
 
-        document.querySelector('.sos-table').addEventListener('click', function (e) {
-            var btn = e.target.closest('[data-act]');
-            if (!btn) return;
+    // 신고 내용은 근로자가 보낸 것이라 **읽기 전용**이다. 여기서 하는 일은
+    // 대응 상태를 남기는 것뿐이라 [신규 행]·[변경 저장] 을 두지 않는다.
+    var sosGrid = wwConsole({
+        el: 'grid-sos',
+        title: '긴급SOS',
+        data: @json($rows, JSON_UNESCAPED_UNICODE),
+        rowCheckbox: true,
+        buttons: [
+            { label: '확인 처리', primary: true, onClick: function (g) { sosBulk(g, 'acknowledged'); } },
+            { label: '종료 처리', onClick: function (g) { sosBulk(g, 'closed'); } },
+        ],
+        columns: [
+            { header: '상태', name: 'status_label', width: 84, align: 'center', sortable: true },
+            { header: '근로자', name: 'worker', width: 150, sortable: true },
+            { header: '국적', name: 'nationality', width: 66, align: 'center' },
+            { header: '소속', name: 'belong', width: 200 },
+            { header: '발신 시각', name: 'alerted_at', width: 150, align: 'center', sortable: true },
+            { header: '경과·대응', name: 'elapsed', width: 100, align: 'center' },
+            { header: '지연', name: 'late', width: 60, align: 'center' },
+            { header: '좌표', name: 'coords', width: 165, align: 'center' },
+            { header: '지도', name: 'map', width: 74, align: 'center' },
+            { header: '확인자', name: 'acknowledged_by', width: 120 },
+            { header: '확인 시각', name: 'acknowledged_at', width: 150, align: 'center' },
+            { header: '메모', name: 'note', width: 220 },
+        ],
+    });
 
-            var id = btn.closest('tr[data-id]').getAttribute('data-id');
-            var act = btn.getAttribute('data-act');
-            var worker = btn.getAttribute('data-worker');
-            var label = act === 'acknowledged' ? '확인 처리' : '종료 처리';
-            var msg = act === 'acknowledged'
-                ? worker + ' 님의 긴급 요청을 확인 처리합니다. 확인한 사람과 시각이 기록됩니다.'
-                : worker + ' 님의 긴급 요청을 종료 처리합니다.';
+    // 좌표는 §7-2 가 허용한 두 자리 중 하나다 — 누른 그 순간 1회분. 새 창으로만 연다.
+    document.getElementById('grid-sos').addEventListener('click', function (e) {
+        var cell = e.target.closest('[data-col-name="map"][data-row-index]');
+        if (!cell) return;
+        var row = sosGrid.getData()[parseInt(cell.getAttribute('data-row-index'), 10)];
+        if (row && row.map_url) window.open(row.map_url, '_blank', 'noopener');
+    });
 
-            ndnConfirm(msg, { title: label, okText: label }).then(function (ok) {
+    function sosBulk(grid, status) {
+        var picked = grid.getCheckedRows();
+        if (!picked.length) { ndnToast('처리할 건을 체크하세요.', { type: 'info' }); return; }
+
+        // 확인은 미확인만, 종료는 확인된 것만 넘어갈 수 있다.
+        var rows = picked.filter(function (r) {
+            return status === 'acknowledged' ? r.status === 'open' : r.status === 'acknowledged';
+        });
+        var label = status === 'acknowledged' ? '확인 처리' : '종료 처리';
+
+        if (!rows.length) {
+            ndnToast('체크한 ' + picked.length + '건은 지금 ' + label + '할 수 있는 상태가 아닙니다.', { type: 'info' });
+            return;
+        }
+
+        var skipped = picked.length - rows.length;
+        var tail = skipped ? ' (상태가 맞지 않는 ' + skipped + '건은 건너뜁니다)' : '';
+
+        ndnConfirm(rows.length + '건을 ' + label + '합니다' + tail
+            + (status === 'acknowledged' ? '. 확인한 사람과 시각이 기록됩니다.' : '.'),
+            { title: label, okText: label })
+            .then(function (ok) {
                 if (!ok) return;
-                btn.disabled = true;
-                fetch(BASE + '/' + id + '/status', {
+                fetch(SOS_BASE + '/status-bulk', {
                     method: 'POST',
-                    headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token },
-                    body: JSON.stringify({ status: act }),
+                    headers: {
+                        'Accept': 'application/json', 'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name=\'csrf-token\']').content,
+                    },
+                    body: JSON.stringify({ status: status, ids: rows.map(function (r) { return r.id; }) }),
                 })
                     .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
                     .then(function (res) {
-                        if (res.ok && res.j.ok) {
-                            ndnToast(label + '했습니다.', { type: 'success' });
-                            setTimeout(function () { location.reload(); }, 700);
-                        } else {
-                            btn.disabled = false;
-                            ndnToast(res.j.message || '처리하지 못했습니다.', { type: 'error' });
-                        }
+                        if (!res.ok) { ndnToast(res.j.message || '처리하지 못했습니다.', { type: 'error' }); return; }
+                        grid.setData(res.j.rows);
+                        ndnToast(res.j.message, { type: 'success' });
                     })
-                    .catch(function () { btn.disabled = false; ndnToast('처리하지 못했습니다.', { type: 'error' }); });
+                    .catch(function () { ndnToast('처리하지 못했습니다.', { type: 'error' }); });
             });
-        });
-    })();
+    }
 </script>
 @endsection

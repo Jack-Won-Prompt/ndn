@@ -301,6 +301,9 @@ Route::prefix('admin')->group(function () {
         // 긴급 SOS — 확인·종료 처리 (상황판은 화면 디스패치가 그린다)
         Route::post('/sos/{sos}/status', [SosController::class, 'updateStatus'])
             ->whereNumber('sos')->name('admin.sos.status');
+        // 표에서 체크한 건을 한 번에 (셀 안에 버튼을 둘 수 없어 툴바로 처리한다)
+        Route::post('/sos/status-bulk', [SosController::class, 'bulkStatus'])
+            ->name('admin.sos.status-bulk');
 
         // 근무상태 종합 점검표 — 작성·상세·서명 이미지(§12)
         // 월별 점검(6항목) 직접 입력이 있던 자리다. 그쪽은 폐기됐다.
@@ -355,6 +358,9 @@ Route::prefix('admin')->group(function () {
             ->whereNumber('invitation')->name('admin.invitations.resend');
         Route::post('/invitations/{invitation}/revoke', [InvitationController::class, 'revoke'])
             ->whereNumber('invitation')->name('admin.invitations.revoke');
+        // 표에서 체크한 초대를 한 번에 철회 (셀 안에 버튼을 둘 수 없어 툴바로 처리한다)
+        Route::post('/invitations/revoke-bulk', [InvitationController::class, 'bulkRevoke'])
+            ->name('admin.invitations.revoke-bulk');
 
         Route::get('/onboarding/{submission}', [ConsoleController::class, 'onboardingDetail'])
             ->whereNumber('submission')->name('admin.onboarding.detail');

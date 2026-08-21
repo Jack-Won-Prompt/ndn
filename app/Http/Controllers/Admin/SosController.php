@@ -69,9 +69,59 @@ class SosController extends Controller
                     'acknowledged_by' => $a->acknowledgedBy?->name ?? '—',
                     'acknowledged_at' => LocalTime::format($a->acknowledged_at) ?? '—',
                     'note' => $a->note ?? '',
+                    // 표에 그리려면 '소속' 이 한 칸이어야 한다.
+                    'belong' => trim(($farm?->city?->name ?? '-').' / '.($farm?->name ?? '-')),
+                    // 미확인이 30분 넘게 방치되면 눈에 띄어야 한다.
+                    'late' => $a->status === SosStatus::Open && $minutes !== null && $minutes >= 30 ? '지연' : '',
+                    // 편집기가 없는 칸이라 눌러도 셀이 열리지 않는다 → 여는 버튼으로 쓴다.
+                    'map' => $a->lat !== null && $a->lng !== null ? '지도 ▸' : '',
                 ];
             })
             ->all();
+    }
+
+    /**
+     * 표에서 체크한 건을 한 번에 확인·종료 처리한다.
+     *
+     * 표 안에는 버튼을 둘 수 없어(편집기 없는 칸은 글자만 그린다) 체크 → 툴바
+     * 순서로 처리한다. 신고 내용 자체(발신 시각·좌표·근로자)는 근로자가 보낸
+     * 것이라 손대지 않는다 — 여기서 하는 일은 대응 상태를 남기는 것뿐이다.
+     *
+     * 한 건이 막혀도 나머지는 진행한다. 이미 종료된 건이 섞였다고 통째로
+     * 되돌아가면 무엇이 걸렸는지 찾기만 어려워진다.
+     */
+    public function bulkStatus(Request $request, UpdateSosStatusAction $action): JsonResponse
+    {
+        $data = $request->validate([
+            'status' => ['required', Rule::in([SosStatus::Acknowledged->value, SosStatus::Closed->value])],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', 'exists:sos_alerts,id'],
+            'note' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $target = SosStatus::from($data['status']);
+        $done = 0;
+        $failed = [];
+
+        foreach (SosAlert::whereIn('id', $data['ids'])->get() as $sos) {
+            try {
+                $action->execute($sos, $target, Auth::user(), $data['note'] ?? null);
+                $done++;
+            } catch (RuntimeException $e) {
+                $failed[] = '#'.$sos->id.' '.$e->getMessage();
+            }
+        }
+
+        $word = $target === SosStatus::Acknowledged ? '확인' : '종료';
+
+        return response()->json([
+            'ok' => true,
+            'message' => $failed === []
+                ? "{$done}건을 {$word} 처리했습니다."
+                : "{$done}건 {$word} · ".count($failed).'건 건너뜀 — '.implode(' / ', array_slice($failed, 0, 3)),
+            'rows' => self::rows(),
+            'open_count' => self::openCount(),
+        ]);
     }
 
     /** 아직 아무도 확인하지 않은 건수 — 사이드바 배지. */
