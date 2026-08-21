@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domains\Arrival\Models\ArrivalRecord;
 use App\Domains\Demand\Enums\DemandStatus;
 use App\Domains\Demand\Models\City;
 use App\Domains\Demand\Models\DemandRequest;
@@ -9,6 +10,7 @@ use App\Domains\Demand\Models\Farm;
 use App\Domains\Matching\Enums\PlacementStatus;
 use App\Domains\Matching\Models\Placement;
 use App\Domains\Recruitment\Enums\WorkerStatus;
+use App\Domains\Recruitment\Models\Candidate;
 use App\Domains\Recruitment\Models\Worker;
 use App\Http\Controllers\Admin\MatchingController;
 use App\Models\User;
@@ -296,4 +298,105 @@ it('표에 그릴 수 있는 모양으로 내려온다', function () {
 
     expect(MatchingController::placementRows()[0]['group_label'])->toBe('그룹')
         ->and(MatchingController::rows()[0]['pick'])->toBe('인력 배정 ▸');
+});
+
+it('체크한 배정을 지우면 근로자가 풀리고 농가 자리가 빈다', function () {
+    // 그냥 지우면 사람만 소리 없이 사라진다 — 취소를 거쳐야 자리가 실제로 빈다.
+    $worker = Worker::factory()->create(['status' => WorkerStatus::Active->value]);
+    $p = Placement::factory()->create([
+        'farm_id' => $this->farm->id,
+        'worker_id' => $worker->id,
+        'status' => PlacementStatus::Confirmed,
+    ]);
+    ArrivalRecord::factory()->create(['placement_id' => $p->id]);
+
+    $res = actingAs($this->admin)->postJson(route('admin.matching.bulk'), [
+        'action' => 'delete',
+        'ids' => [$p->id],
+        'reason' => '중복 등록',
+    ])->assertOk();
+
+    expect(Placement::find($p->id))->toBeNull()
+        // 지우기만 하고 없애지는 않는다 — 누가 어디에 있었는지가 증빙으로 남는다.
+        ->and(Placement::withTrashed()->findOrFail($p->id)->status)->toBe(PlacementStatus::Cancelled)
+        ->and(Placement::withTrashed()->findOrFail($p->id)->note)->toBe('중복 등록')
+        ->and(ArrivalRecord::count())->toBe(0)
+        ->and(Worker::unassigned()->pluck('id'))->toContain($worker->id)
+        ->and($res->json('message'))->toContain('배정 1건을 삭제');
+
+    $row = collect(MatchingController::farmRows())->firstWhere('id', $this->farm->id);
+    expect($row['placed'])->toBe(0);
+});
+
+it('이미 취소된 배정도 목록에서 치울 수 있다', function () {
+    // 삭제는 상태를 가리지 않는다 — 확정·취소 버튼과 다른 점이다.
+    $p = Placement::factory()->create([
+        'farm_id' => $this->farm->id,
+        'status' => PlacementStatus::Cancelled,
+    ]);
+
+    actingAs($this->admin)->postJson(route('admin.matching.bulk'), [
+        'action' => 'delete', 'ids' => [$p->id],
+    ])->assertOk();
+
+    expect(Placement::find($p->id))->toBeNull()
+        ->and(MatchingController::placementRows())->toBe([]);
+});
+
+it('수요를 지워도 그 농가의 배정은 남는다', function () {
+    // 배정은 농가에 매여 있지 수요에 매여 있지 않다. 잘못 적은 신청서를 지웠다고
+    // 이미 그 농가에서 일하는 사람이 사라지면 안 된다.
+    $demand = DemandRequest::factory()->create([
+        'farm_id' => $this->farm->id,
+        'status' => DemandStatus::Submitted,
+    ]);
+    $placement = Placement::factory()->create([
+        'farm_id' => $this->farm->id,
+        'status' => PlacementStatus::Confirmed,
+    ]);
+
+    $res = actingAs($this->admin)->postJson(route('admin.matching.demands.delete'), [
+        'ids' => [$demand->id],
+    ])->assertOk();
+
+    expect(DemandRequest::find($demand->id))->toBeNull()
+        ->and(Placement::find($placement->id))->not->toBeNull()
+        ->and(Placement::find($placement->id)->status)->toBe(PlacementStatus::Confirmed)
+        ->and($res->json('message'))->toContain('배정은 농가에 매여 있어 그대로 남습니다')
+        ->and($res->json('rows'))->toBe([])
+        ->and($res->json('farm_rows'))->toBeArray();
+});
+
+it('수요를 지우면 그 수요를 보던 후보자의 연결을 끊는다', function () {
+    // nullOnDelete 는 행이 실제로 지워질 때만 돈다 — 수요는 soft delete 라 돌지 않는다.
+    $demand = DemandRequest::factory()->create(['farm_id' => $this->farm->id]);
+    $candidate = Candidate::factory()
+        ->create(['demand_request_id' => $demand->id]);
+
+    actingAs($this->admin)->postJson(route('admin.matching.demands.delete'), [
+        'ids' => [$demand->id],
+    ])->assertOk();
+
+    expect($candidate->fresh()->demand_request_id)->toBeNull()
+        // 후보자 자체는 남는다 — 사람은 수요와 함께 사라지지 않는다.
+        ->and($candidate->fresh())->not->toBeNull();
+});
+
+it('관리자가 아니면 수요를 지울 수 없다', function () {
+    $officer = User::factory()->create();
+    $officer->assignRole(UserRole::CityOfficer->value);
+    $demand = DemandRequest::factory()->create(['farm_id' => $this->farm->id]);
+
+    actingAs($officer)->postJson(route('admin.matching.demands.delete'), [
+        'ids' => [$demand->id],
+    ])->assertForbidden();
+
+    expect(DemandRequest::find($demand->id))->not->toBeNull();
+});
+
+it('지울 것을 고르지 않으면 막는다', function () {
+    actingAs($this->admin)->postJson(route('admin.matching.demands.delete'), ['ids' => []])
+        ->assertStatus(422);
+    actingAs($this->admin)->postJson(route('admin.matching.bulk'), ['action' => 'delete', 'ids' => []])
+        ->assertStatus(422);
 });

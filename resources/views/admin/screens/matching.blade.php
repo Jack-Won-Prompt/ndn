@@ -156,6 +156,11 @@
             title: '수요별 매칭',
             data: @json($rows),
             height: 360,
+            // 잘못 적은 신청서를 지울 수 있어야 한다. 배정은 농가에 매여 있어 함께 지우지 않는다.
+            rowCheckbox: true,
+            buttons: [
+                { label: '수요 삭제', onClick: function (g) { window.mtDeleteDemands(g); } },
+            ],
             columns: [
                 { header: '번호', name: 'id', width: 60, align: 'center', sortable: true },
                 { header: '농가', name: 'farm', width: 150, sortable: true },
@@ -195,6 +200,7 @@
             buttons: [
                 { label: '배정 확정', primary: true, onClick: function (g) { window.mtBulk(g, 'confirm'); } },
                 { label: '배정 취소', onClick: function (g) { window.mtBulk(g, 'cancel'); } },
+                { label: '배정 삭제', onClick: function (g) { window.mtBulk(g, 'delete'); } },
             ],
             columns: [
                 { header: '번호', name: 'id', width: 60, align: 'center', sortable: true },
@@ -595,12 +601,12 @@
 
         // 취소 사유는 증빙으로 남는다(업무흐름 §4). 확인창만으로는 사유를 받을 수 없어
         // 입력칸이 있는 작은 창을 따로 띄운다.
-        function askReason(message) {
+        function askReason(message, title) {
             return new Promise(function (resolve) {
                 var wrap = document.createElement('div');
                 wrap.className = 'mt-ask';
                 wrap.innerHTML = '<div class="mt-ask__box">'
-                    + '<div class="mt-ask__title">배정 취소</div>'
+                    + '<div class="mt-ask__title">' + esc(title || '배정 취소') + '</div>'
                     + '<p class="mt-ask__msg">' + esc(message
                         || '취소하면 이 근로자는 다시 미배정이 되어 다른 수요의 후보로 잡힙니다.')
                     + ' 사유는 감사 기록에 함께 남습니다.</p>'
@@ -638,9 +644,12 @@
          * 순서로 처리한다. 취소는 사유를 함께 받는다(업무흐름 §4).
          */
         window.mtBulk = function (grid, action) {
-            var rows = grid.getCheckedRows().filter(function (r) {
-                return action === 'confirm' ? r.can_confirm : r.can_cancel;
-            });
+            // 삭제는 상태를 가리지 않는다 — 취소된 건도 목록에서 치울 수 있어야 한다.
+            var rows = action === 'delete'
+                ? grid.getCheckedRows()
+                : grid.getCheckedRows().filter(function (r) {
+                    return action === 'confirm' ? r.can_confirm : r.can_cancel;
+                });
             var picked = grid.getCheckedRows().length;
 
             if (!picked) { ndnToast('처리할 행을 체크하세요.', { type: 'info' }); return; }
@@ -664,6 +673,16 @@
 
             var tail = skipped ? ' (상태가 맞지 않는 ' + skipped + '건은 건너뜁니다)' : '';
 
+            if (action === 'delete') {
+                // 진행 중인 건이 섞였으면 사람이 농가에서 빠진다는 뜻이다. 그걸 먼저 말한다.
+                var live = rows.filter(function (r) { return r.can_cancel; }).length;
+                askReason(ids.length + '건을 목록에서 지웁니다.'
+                    + (live ? ' 그중 진행 중인 ' + live + '건은 취소 처리되어 근로자가 미배정으로 돌아가고 농가 자리가 빕니다.' : ''),
+                    '배정 삭제')
+                    .then(function (reason) { if (reason !== null) send(reason); });
+                return;
+            }
+
             if (action === 'confirm') {
                 ndnConfirm(ids.length + '건을 확정합니다' + tail
                     + '. 근로자에게 알림이 가고 입국 준비 기록이 만들어집니다.',
@@ -675,6 +694,38 @@
             askReason(ids.length + '건을 취소합니다' + tail
                 + '. 취소하면 이 근로자들은 다시 미배정이 되어 다른 수요의 후보로 잡힙니다.')
                 .then(function (reason) { if (reason !== null) send(reason); });
+        };
+
+        /* ── 수요 삭제 ─────────────────────────────────────────────────
+         * 배정은 함께 지우지 않는다. 배정은 농가에 매여 있지 수요에 매여 있지 않아,
+         * 잘못 적은 신청서를 지웠다고 이미 일하는 사람이 사라지면 안 된다.
+         */
+        window.mtDeleteDemands = function (grid) {
+            var rows = grid.getCheckedRows();
+            if (!rows.length) { ndnToast('지울 수요를 체크하세요.', { type: 'info' }); return; }
+
+            var ids = rows.map(function (r) { return r.id; });
+            var filled = rows.reduce(function (n, r) { return n + (r.filled || 0); }, 0);
+
+            ndnConfirm(ids.length + '건의 수요를 지웁니다.'
+                + (filled ? ' 이 농가들에 이미 배정된 ' + filled + '명은 그대로 남습니다 — 사람을 빼려면 [배정 현황] 에서 처리하세요.' : ''),
+                { title: '수요 삭제', okText: '삭제', danger: true })
+                .then(function (ok) {
+                    if (!ok) return;
+                    post(BASE + '/demands/delete', { ids: ids }, function (j) {
+                        grid.setData(j.rows);
+                        // 농가 표의 '수요' 숫자도 함께 어긋난다.
+                        var fh = document.getElementById('grid-farms-mt');
+                        if (fh && fh.wwgrid && Array.isArray(j.farm_rows)) fh.wwgrid.setData(j.farm_rows);
+                        // 지운 수요를 펴 놓고 있었다면 그 패널도 닫는다.
+                        if (current.demand && ids.indexOf(Number(current.demand)) !== -1) {
+                            panel.hidden = true;
+                            panel.innerHTML = '';
+                            current = { demand: null, host: null };
+                        }
+                        ndnToast(j.message, { type: 'success' });
+                    });
+                });
         };
     })();
 </script>

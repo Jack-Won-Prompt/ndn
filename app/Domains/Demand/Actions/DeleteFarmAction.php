@@ -4,16 +4,13 @@ declare(strict_types=1);
 
 namespace App\Domains\Demand\Actions;
 
-use App\Domains\Arrival\Models\ArrivalRecord;
 use App\Domains\Demand\Models\DemandRequest;
 use App\Domains\Demand\Models\Farm;
-use App\Domains\Matching\Actions\CancelPlacementAction;
-use App\Domains\Matching\Enums\PlacementStatus;
+use App\Domains\Matching\Actions\ClosePlacementsAction;
 use App\Domains\Matching\Models\Placement;
 use App\Domains\Monitoring\Models\FarmVisit;
 use App\Domains\Monitoring\Models\WorkReview;
 use App\Models\User;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -56,10 +53,16 @@ class DeleteFarmAction
             }
 
             $ids = $farms->pluck('id')->all();
-            $summary = ['farms' => $farms->count()];
+            $names = $farms->pluck('name', 'id');
 
-            $summary['cancelled'] = $this->cancelLivePlacements($ids, $farms, $actor);
-            $summary += $this->closeDependents($ids);
+            // 배정을 접는 순서(취소 → 입국 기록 → 배정)는 한 군데서만 정한다.
+            $summary = ['farms' => $farms->count()]
+                + app(ClosePlacementsAction::class)->execute(
+                    Placement::whereIn('farm_id', $ids)->get(),
+                    $actor,
+                    '농가 삭제: '.$names->values()->implode(', '),
+                )
+                + $this->closeDependents($ids);
 
             $farms->each->delete();
 
@@ -73,57 +76,14 @@ class DeleteFarmAction
     }
 
     /**
-     * 아직 살아 있는(제안·확정) 배정을 취소한다.
-     *
-     * 취소를 거치는 이유는 두 가지다. 근로자가 미배정으로 풀려야 다른 농가에
-     * 넣을 수 있고, 왜 풀렸는지가 남아야 나중에 "이 사람 왜 빠졌지" 에 답할 수 있다.
-     *
-     * @param  list<int>  $farmIds
-     * @param  Collection<int, Farm>  $farms
-     */
-    private function cancelLivePlacements(array $farmIds, $farms, User $actor): int
-    {
-        $names = $farms->pluck('name', 'id');
-        $cancel = app(CancelPlacementAction::class);
-
-        $live = Placement::whereIn('farm_id', $farmIds)
-            ->whereIn('status', [
-                PlacementStatus::Proposed->value,
-                PlacementStatus::Confirmed->value,
-            ])
-            ->get();
-
-        foreach ($live as $placement) {
-            $cancel->execute(
-                $placement,
-                $actor,
-                '농가 삭제: '.($names[$placement->farm_id] ?? '이름 없음'),
-            );
-        }
-
-        return $live->count();
-    }
-
-    /**
-     * 농가에 매인 나머지를 접는다.
-     *
-     * 입국 기록은 배정에 매달려 있으므로 배정을 접기 전에 먼저 걷어야 한다 —
-     * 순서가 바뀌면 어느 배정에 딸린 것인지 찾을 수 없다.
+     * 배정 말고 농가에 매인 나머지 — 수요·방문 점검·점검표.
      *
      * @param  list<int>  $farmIds
      * @return array<string, int>
      */
     private function closeDependents(array $farmIds): array
     {
-        $placementIds = Placement::whereIn('farm_id', $farmIds)->pluck('id')->all();
-
-        $arrivals = $placementIds === []
-            ? 0
-            : ArrivalRecord::whereIn('placement_id', $placementIds)->delete();
-
         return [
-            'arrivals' => (int) $arrivals,
-            'placements' => Placement::whereIn('farm_id', $farmIds)->delete(),
             'demands' => DemandRequest::whereIn('farm_id', $farmIds)->delete(),
             'visits' => FarmVisit::whereIn('farm_id', $farmIds)->delete(),
             'reviews' => WorkReview::whereIn('farm_id', $farmIds)->delete(),

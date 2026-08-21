@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Domains\Demand\Actions\CreateDemandRequestAction;
+use App\Domains\Demand\Actions\DeleteDemandRequestAction;
 use App\Domains\Demand\Actions\SubmitDemandRequestAction;
 use App\Domains\Demand\Enums\DemandStatus;
 use App\Domains\Demand\Models\DemandRequest;
 use App\Domains\Demand\Models\Farm;
 use App\Domains\Matching\Actions\CancelPlacementAction;
+use App\Domains\Matching\Actions\ClosePlacementsAction;
 use App\Domains\Matching\Actions\ConfirmPlacementAction;
 use App\Domains\Matching\Actions\CreatePlacementAction;
 use App\Domains\Matching\Actions\MatchCandidatesAction;
@@ -316,16 +318,37 @@ class MatchingController extends Controller
         CancelPlacementAction $cancel,
     ): JsonResponse {
         $data = $request->validate([
-            'action' => ['required', 'in:confirm,cancel'],
+            'action' => ['required', 'in:confirm,cancel,delete'],
             'ids' => ['required', 'array', 'min:1'],
             'ids.*' => ['integer', 'exists:placements,id'],
             'reason' => ['nullable', 'string', 'max:500'],
         ]);
 
+        $picked = Placement::whereIn('id', $data['ids'])->get();
+
+        if ($data['action'] === 'delete') {
+            // 지우기 전에 취소를 거친다 — 그래야 근로자가 풀리고 농가 자리가 빈다.
+            // 그 순서는 ClosePlacementsAction 한 곳에서만 정한다.
+            $swept = app(ClosePlacementsAction::class)->execute(
+                $picked,
+                Auth::user(),
+                filled($data['reason'] ?? null) ? $data['reason'] : '배정 삭제',
+            );
+
+            return response()->json([
+                'ok' => true,
+                'message' => "배정 {$swept['placements']}건을 삭제했습니다."
+                    .($swept['cancelled'] > 0 ? " (진행 중이던 {$swept['cancelled']}건은 취소 처리해 근로자를 미배정으로 돌렸습니다)" : '')
+                    .($swept['arrivals'] > 0 ? " · 입국 기록 {$swept['arrivals']}건 정리" : ''),
+                'rows' => self::placementRows(),
+                'demand_rows' => self::rows(),
+            ]);
+        }
+
         $done = 0;
         $failed = [];
 
-        foreach (Placement::whereIn('id', $data['ids'])->get() as $placement) {
+        foreach ($picked as $placement) {
             try {
                 $data['action'] === 'confirm'
                     ? $confirm->execute($placement, Auth::user())
@@ -346,6 +369,30 @@ class MatchingController extends Controller
             'rows' => self::placementRows(),
             // 확정·취소는 농가 정원을 움직인다. 수요 표의 진행률도 함께 새로 준다.
             'demand_rows' => self::rows(),
+        ]);
+    }
+
+    /**
+     * 수요 표에서 체크한 건을 지운다.
+     *
+     * 배정은 함께 지우지 않는다 — 배정은 농가에 매여 있지 수요에 매여 있지 않다.
+     * 잘못 적은 신청서를 지웠다고 이미 그 농가에서 일하는 사람이 사라지면 안 된다.
+     */
+    public function deleteDemands(Request $request, DeleteDemandRequestAction $action): JsonResponse
+    {
+        $data = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', 'exists:demand_requests,id'],
+        ]);
+
+        $swept = $action->execute(array_map('intval', $data['ids']), Auth::user());
+
+        return response()->json([
+            'ok' => true,
+            'message' => DeleteDemandRequestAction::describe($swept),
+            'rows' => self::rows(),
+            // 농가 표의 '수요' 숫자도 함께 어긋난다.
+            'farm_rows' => self::farmRows(),
         ]);
     }
 

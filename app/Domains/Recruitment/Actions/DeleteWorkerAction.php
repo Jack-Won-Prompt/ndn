@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domains\Recruitment\Actions;
 
-use App\Domains\Matching\Actions\CancelPlacementAction;
-use App\Domains\Matching\Enums\PlacementStatus;
+use App\Domains\Matching\Actions\ClosePlacementsAction;
 use App\Domains\Matching\Models\Placement;
 use App\Domains\Recruitment\Models\Worker;
 use App\Models\User;
@@ -49,8 +48,13 @@ class DeleteWorkerAction
 
             $ids = $workers->pluck('id')->all();
 
+            // 배정을 접는 순서(취소 → 입국 기록 → 배정)는 한 군데서만 정한다.
             $summary = ['workers' => $workers->count()]
-                + ['cancelled' => $this->cancelLivePlacements($ids, $actor)]
+                + app(ClosePlacementsAction::class)->execute(
+                    Placement::whereIn('worker_id', $ids)->get(),
+                    $actor,
+                    '근로자 삭제',
+                )
                 + $this->closeDependents($ids);
 
             $workers->each->delete();
@@ -63,32 +67,6 @@ class DeleteWorkerAction
 
             return array_filter($summary);
         });
-    }
-
-    /**
-     * 살아 있는(제안·확정) 배정을 취소한다.
-     *
-     * 취소를 거쳐야 농가 정원이 실제로 비고, 왜 빠졌는지가 남는다. 바로 접어
-     * 버리면 농가 쪽에서는 사람이 소리 없이 사라진 것으로 보인다.
-     *
-     * @param  list<int>  $workerIds
-     */
-    private function cancelLivePlacements(array $workerIds, User $actor): int
-    {
-        $cancel = app(CancelPlacementAction::class);
-
-        $live = Placement::whereIn('worker_id', $workerIds)
-            ->whereIn('status', [
-                PlacementStatus::Proposed->value,
-                PlacementStatus::Confirmed->value,
-            ])
-            ->get();
-
-        foreach ($live as $placement) {
-            $cancel->execute($placement, $actor, '근로자 삭제');
-        }
-
-        return $live->count();
     }
 
     /**
@@ -124,9 +102,6 @@ class DeleteWorkerAction
         ] as $table => $key) {
             $out[$key] = DB::table($table)->whereIn('worker_id', $ids)->delete();
         }
-
-        // 배정은 마지막에 접는다 — 위에서 취소 사유를 먼저 남겨야 하기 때문이다.
-        $out['placements'] = Placement::whereIn('worker_id', $ids)->delete();
 
         // 기기 토큰은 다형 관계라 타입까지 맞춰야 남의 토큰을 지우지 않는다.
         $out['devices'] = DeviceToken::query()
