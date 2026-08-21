@@ -31,102 +31,26 @@
 
     {{-- 수요별 매칭 --}}
     <div data-tabpane="demands" hidden>
-        <div class="mt-listwrap">
-            <table class="mt-table" id="mt-demands">
-                <thead>
-                    <tr>
-                        <th style="width:56px">번호</th>
-                        <th>농가</th>
-                        <th style="width:90px">지역</th>
-                        <th style="width:90px">국적</th>
-                        <th style="width:100px">품목</th>
-                        <th style="width:110px">조건</th>
-                        <th style="width:130px">진행</th>
-                        <th style="width:170px">기간</th>
-                        <th style="width:90px">상태</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($rows as $r)
-                        <tr data-id="{{ $r['id'] }}">
-                            <td class="c">{{ $r['id'] }}</td>
-                            <td>{{ $r['farm'] }}@if ($r['allow_siblings']) <span class="mt-tag">형제동반</span>@endif</td>
-                            <td class="c">{{ $r['city'] }}</td>
-                            <td class="c">{{ $r['nationality'] }}</td>
-                            <td class="c">{{ $r['crop'] ?: '—' }}</td>
-                            <td class="c">{{ $r['gender'] }} · {{ $r['age'] }}</td>
-                            <td class="c">
-                                <b>{{ $r['filled'] }}</b> / {{ $r['headcount'] }}명
-                                @if ($r['remaining'] > 0)<span class="mt-rem">{{ $r['remaining'] }} 남음</span>@else<span class="mt-full">충원 완료</span>@endif
-                            </td>
-                            <td class="c">{{ $r['period'] }}</td>
-                            <td class="c"><span class="mt-badge">{{ $r['status_label'] }}</span></td>
-                        </tr>
-                    @empty
-                        <tr><td colspan="9" class="mt-emptyrow">매칭을 진행할 수요가 없습니다. [수요 신청] 화면에서 먼저 등록·취합하세요.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-
+        <div id="grid-demands-mt"></div>
         <div id="mt-panel" class="mt-panel" hidden></div>
-        <p class="mt-hint">수요 행을 클릭하면 아래에 추천 인력과 이 농가의 배정 현황이 열립니다.</p>
+        <p class="mt-hint">
+            <strong>[인력 배정 ▸]</strong> 칸을 누르면 아래에 추천 인력과 이 농가의 배정 현황이 열립니다.
+            수요 자체를 고치려면 <strong>[수요 신청]</strong> 화면에서 하세요 — 여기서는 사람을 붙이는 일만 합니다.
+        </p>
     </div>
 
     {{-- 배정 현황 --}}
     <div data-tabpane="placements" hidden>
-        <div class="mt-listwrap">
-            <table class="mt-table" id="mt-placements">
-                <thead>
-                    <tr>
-                        <th style="width:56px">번호</th>
-                        <th style="width:130px">근로자</th>
-                        <th style="width:90px">국적</th>
-                        <th>농가</th>
-                        <th style="width:170px">기간</th>
-                        <th style="width:90px">상태</th>
-                        <th style="width:150px">처리</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($placements as $p)
-                        <tr data-pid="{{ $p['id'] }}">
-                            <td class="c">{{ $p['id'] }}</td>
-                            <td>{{ $p['worker'] }}@if ($p['group']) <span class="mt-tag">그룹</span>@endif</td>
-                            <td class="c">{{ $p['nationality'] }}</td>
-                            <td>{{ $p['farm'] }}@if ($p['note']) <span class="mt-note">{{ $p['note'] }}</span>@endif</td>
-                            <td class="c">{{ $p['start_date'] }} ~ {{ $p['end_date'] }}</td>
-                            <td class="c"><span class="mt-badge mt-badge--{{ $p['status'] }}">{{ $p['status_label'] }}</span></td>
-                            <td class="c">
-                                @if ($p['can_confirm'])<button type="button" class="mt-mini" data-confirm="{{ $p['id'] }}">확정</button>@endif
-                                @if ($p['can_cancel'])<button type="button" class="mt-mini mt-mini--warn" data-cancel="{{ $p['id'] }}">취소</button>@endif
-                                @if (! $p['can_confirm'] && ! $p['can_cancel'])—@endif
-                            </td>
-                        </tr>
-                    @empty
-                        <tr><td colspan="7" class="mt-emptyrow">배정된 건이 없습니다.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+        <div id="grid-placements-mt"></div>
+        <p class="mt-hint">
+            처리할 행을 <strong>체크</strong>한 뒤 툴바의 <strong>[배정 확정]</strong> · <strong>[배정 취소]</strong>를 누르세요.
+            여러 건을 한 번에 처리할 수 있고, 처리할 수 없는 상태가 섞여 있으면 그 건만 건너뛰고 이유를 알려 줍니다.
+        </p>
     </div>
 
     <style>
-        .mt-listwrap{border:1px solid var(--mv2-border-default);border-radius:var(--mv2-r-lg);overflow:hidden;background:#fff;box-shadow:0 1px 2px rgba(15,23,42,.04),0 6px 20px rgba(15,23,42,.05);}
-        .mt-table{width:100%;border-collapse:collapse;font-size:var(--mv2-fz-sm);}
-        .mt-table thead th{text-align:left;background:var(--mv2-slate-25);color:var(--mv2-text-muted);font-weight:700;font-size:var(--mv2-fz-xs);padding:10px 14px;border-bottom:1px solid var(--mv2-border-soft);white-space:nowrap;}
-        .mt-table tbody td{padding:11px 14px;border-bottom:1px solid var(--mv2-border-soft);color:var(--mv2-text-strong);}
-        .mt-table tbody tr:last-child td{border-bottom:0;}
-        .mt-table tbody tr[data-id]{cursor:pointer;}
-        .mt-table tbody tr[data-id]:hover{background:var(--mv2-slate-25);}
-        .mt-table tbody tr.is-picked{background:var(--mv2-primary-50,#E9F6F4);}
-        .mt-table td.c{text-align:center;}
-        .mt-emptyrow{text-align:center;color:var(--mv2-text-faint);padding:34px 0;}
         .mt-hint{font-size:var(--mv2-fz-xs);color:var(--mv2-text-faint);margin:10px 2px 0;}
         .mt-tag{font-size:10px;font-weight:700;background:var(--mv2-slate-25);color:var(--mv2-text-muted);border-radius:100px;padding:1px 7px;margin-left:4px;}
-        .mt-note{display:block;font-size:11px;color:var(--mv2-text-faint);}
-        .mt-rem{display:block;font-size:11px;color:var(--mv2-primary-600);font-weight:700;}
-        .mt-full{display:block;font-size:11px;color:var(--mv2-text-faint);}
         .mt-badge{font-size:11px;font-weight:700;border-radius:100px;padding:2px 9px;background:var(--mv2-slate-25);color:var(--mv2-text-muted);}
         .mt-badge--proposed{background:#FEF3C7;color:#8a6d00;}
         .mt-badge--confirmed{background:#E7F6EC;color:#1B7F43;}
@@ -218,6 +142,79 @@
             { header: '인력 배정', name: 'assign', width: 110, align: 'center' },
         ],
     });
+
+    /* ── 수요별 매칭 · 배정 현황 ────────────────────────────────────────
+     * 숨은 탭에서 표를 만들면 폭이 0 으로 잡혀 칸이 다 뭉개진다.
+     * 탭이 처음 보이는 순간에 만든다(농가·지자체 기준정보와 같은 방식).
+     */
+    var mtGrids = {};
+
+    function mtInitDemands() {
+        if (mtGrids.demands) return;
+        mtGrids.demands = wwConsole({
+            el: 'grid-demands-mt',
+            title: '수요별 매칭',
+            data: @json($rows),
+            height: 360,
+            columns: [
+                { header: '번호', name: 'id', width: 60, align: 'center', sortable: true },
+                { header: '농가', name: 'farm', width: 150, sortable: true },
+                { header: '지역', name: 'city', width: 90, align: 'center' },
+                { header: '국적', name: 'nationality', width: 66, align: 'center' },
+                { header: '품목', name: 'crop', width: 90 },
+                { header: '성별', name: 'gender', width: 66, align: 'center' },
+                { header: '나이', name: 'age', width: 82, align: 'center' },
+                // 정원 대비 얼마나 찼는지 — 이 화면에서 제일 자주 보는 숫자다.
+                { header: '정원', name: 'headcount', width: 60, align: 'center' },
+                { header: '배정', name: 'filled', width: 60, align: 'center' },
+                { header: '남음', name: 'remaining', width: 60, align: 'center' },
+                { header: '기간', name: 'period', width: 175, align: 'center' },
+                { header: '상태', name: 'status_label', width: 110, align: 'center' },
+                { header: '인력 배정', name: 'pick', width: 110, align: 'center' },
+            ],
+        });
+
+        // 편집기가 없는 표라 어느 칸을 눌러도 셀이 열리지 않는다.
+        document.getElementById('grid-demands-mt').addEventListener('click', function (e) {
+            var cell = e.target.closest('[data-col-name="pick"][data-row-index]');
+            if (!cell) return;
+            var row = mtGrids.demands.getData()[parseInt(cell.getAttribute('data-row-index'), 10)];
+            if (row && row.id) window.mtOpenDemand(row.id);
+        });
+    }
+
+    function mtInitPlacements() {
+        if (mtGrids.placements) return;
+        mtGrids.placements = wwConsole({
+            el: 'grid-placements-mt',
+            title: '배정 현황',
+            data: @json($placements),
+            height: 460,
+            // 셀 안에 버튼을 둘 수 없어(편집기 없는 칸은 글자만 그린다) 체크 → 툴바로 처리한다.
+            rowCheckbox: true,
+            buttons: [
+                { label: '배정 확정', primary: true, onClick: function (g) { window.mtBulk(g, 'confirm'); } },
+                { label: '배정 취소', onClick: function (g) { window.mtBulk(g, 'cancel'); } },
+            ],
+            columns: [
+                { header: '번호', name: 'id', width: 60, align: 'center', sortable: true },
+                { header: '근로자', name: 'worker', width: 160, sortable: true },
+                { header: '국적', name: 'nationality', width: 66, align: 'center' },
+                { header: '농가', name: 'farm', width: 150, sortable: true },
+                { header: '동반', name: 'group_label', width: 60, align: 'center' },
+                { header: '시작일', name: 'start_date', width: 105, align: 'center' },
+                { header: '종료일', name: 'end_date', width: 105, align: 'center' },
+                { header: '상태', name: 'status_label', width: 100, align: 'center' },
+                { header: '비고', name: 'note', width: 220 },
+            ],
+        });
+    }
+
+    // 탭 전환(ui.js)이 패널을 보이게 한 다음(setTimeout 0) 표를 만든다.
+    document.querySelector('.screen-tab[data-tab="demands"]')
+        .addEventListener('click', function () { setTimeout(mtInitDemands, 0); });
+    document.querySelector('.screen-tab[data-tab="placements"]')
+        .addEventListener('click', function () { setTimeout(mtInitPlacements, 0); });
 </script>
 @endsection
 
@@ -336,15 +333,11 @@
                 .catch(function () { host.innerHTML = '<div class="mt-empty">불러오지 못했습니다.</div>'; });
         }
 
-        /* ── 수요별 매칭 탭 ──────────────────────────────────────────── */
-        document.getElementById('mt-demands').addEventListener('click', function (e) {
-            var tr = e.target.closest('tr[data-id]');
-            if (!tr) return;
-            [].forEach.call(document.querySelectorAll('#mt-demands tr[data-id]'), function (row) {
-                row.classList.toggle('is-picked', row === tr);
-            });
-            openDemand(tr.getAttribute('data-id'), panel);
-        });
+        /* ── 수요별 매칭 탭 ──────────────────────────────────────────────
+         * 표는 위쪽 wwgrid 구역에서 만든다(그쪽이 먼저 실행된다). 그 표가 부를 수
+         * 있도록 창구만 열어 둔다 — 표는 눌린 순간에야 이걸 찾으므로 순서 문제가 없다.
+         */
+        window.mtOpenDemand = function (id) { openDemand(id, panel); };
 
         /* ── 농가별 배정 탭 ──────────────────────────────────────────── */
         function demandChip(d) {
@@ -491,6 +484,14 @@
         // 배정 뒤 화면을 다시 그린다. 농가 탭에서 시작했으면 농가째로 다시 열어
         // 수요별 진행률과 표의 숫자까지 함께 맞춘다.
         function refresh() {
+            // 배정 현황 표는 탭을 열 때 만들어진다. 패널에서 확정·취소하면 그 표가
+            // 옛 숫자를 들고 있게 되므로, 다음에 열 때 새로 만들도록 버린다.
+            if (mtGrids.placements) {
+                mtGrids.placements = null;
+                var host = document.getElementById('grid-placements-mt');
+                if (host) { host.innerHTML = ''; if (host.previousElementSibling) host.previousElementSibling.remove(); }
+            }
+
             if (current.host === document.getElementById('mt-fbody') && currentFarm) {
                 openFarm(currentFarm, current.demand, true);
                 return;
@@ -594,13 +595,15 @@
 
         // 취소 사유는 증빙으로 남는다(업무흐름 §4). 확인창만으로는 사유를 받을 수 없어
         // 입력칸이 있는 작은 창을 따로 띄운다.
-        function askReason() {
+        function askReason(message) {
             return new Promise(function (resolve) {
                 var wrap = document.createElement('div');
                 wrap.className = 'mt-ask';
                 wrap.innerHTML = '<div class="mt-ask__box">'
                     + '<div class="mt-ask__title">배정 취소</div>'
-                    + '<p class="mt-ask__msg">취소하면 이 근로자는 다시 미배정이 되어 다른 수요의 후보로 잡힙니다. 사유는 감사 기록에 함께 남습니다.</p>'
+                    + '<p class="mt-ask__msg">' + esc(message
+                        || '취소하면 이 근로자는 다시 미배정이 되어 다른 수요의 후보로 잡힙니다.')
+                    + ' 사유는 감사 기록에 함께 남습니다.</p>'
                     + '<textarea class="mt-ask__input" rows="3" placeholder="예: 농가 사정으로 수요 축소"></textarea>'
                     + '<div class="mt-ask__btns"><button type="button" class="mt-mini" data-no>닫기</button>'
                     + '<button type="button" class="mt-mini mt-mini--warn" data-yes>취소 처리</button></div></div>';
@@ -630,13 +633,49 @@
             });
         }
 
-        // 배정 현황 탭 — 여기서는 목록 전체가 서버에서 그려져 있어 새로 고친다.
-        document.getElementById('mt-placements').addEventListener('click', function (e) {
-            var c = e.target.closest('[data-confirm]');
-            if (c) { doConfirm(c.getAttribute('data-confirm'), function () { location.reload(); }); return; }
-            var x = e.target.closest('[data-cancel]');
-            if (x) { doCancel(x.getAttribute('data-cancel'), function () { location.reload(); }); }
-        });
+        /* ── 배정 현황 탭 — 체크한 건을 한 번에 ──────────────────────────
+         * 표 안에는 버튼을 둘 수 없어(편집기 없는 칸은 글자만 그린다) 체크 → 툴바
+         * 순서로 처리한다. 취소는 사유를 함께 받는다(업무흐름 §4).
+         */
+        window.mtBulk = function (grid, action) {
+            var rows = grid.getCheckedRows().filter(function (r) {
+                return action === 'confirm' ? r.can_confirm : r.can_cancel;
+            });
+            var picked = grid.getCheckedRows().length;
+
+            if (!picked) { ndnToast('처리할 행을 체크하세요.', { type: 'info' }); return; }
+            if (!rows.length) {
+                ndnToast('체크한 ' + picked + '건은 지금 ' + (action === 'confirm' ? '확정' : '취소')
+                    + '할 수 있는 상태가 아닙니다.', { type: 'info' });
+                return;
+            }
+
+            var ids = rows.map(function (r) { return r.id; });
+            var skipped = picked - ids.length;
+
+            function send(reason) {
+                post(BASE + '/placements/bulk', { action: action, ids: ids, reason: reason }, function (j) {
+                    grid.setData(j.rows);
+                    // 확정·취소는 농가 정원을 움직인다. 수요 표의 진행률도 함께 맞춘다.
+                    if (mtGrids.demands && Array.isArray(j.demand_rows)) mtGrids.demands.setData(j.demand_rows);
+                    ndnToast(j.message, { type: 'success' });
+                });
+            }
+
+            var tail = skipped ? ' (상태가 맞지 않는 ' + skipped + '건은 건너뜁니다)' : '';
+
+            if (action === 'confirm') {
+                ndnConfirm(ids.length + '건을 확정합니다' + tail
+                    + '. 근로자에게 알림이 가고 입국 준비 기록이 만들어집니다.',
+                    { title: '배정 확정', okText: '확정' })
+                    .then(function (ok) { if (ok) send(null); });
+                return;
+            }
+
+            askReason(ids.length + '건을 취소합니다' + tail
+                + '. 취소하면 이 근로자들은 다시 미배정이 되어 다른 수요의 후보로 잡힙니다.')
+                .then(function (reason) { if (reason !== null) send(reason); });
+        };
     })();
 </script>
 @endsection

@@ -213,3 +213,87 @@ it('농가 근로자 이름을 띄우면 열람 기록이 남는다', function (
     expect(Activity::where('log_name', 'personal-data-access')
         ->where('properties->reason', 'matching-farm')->exists())->toBeTrue();
 });
+
+it('배정 현황 표에서 체크한 건을 한 번에 확정한다', function () {
+    // 표 안에는 버튼을 둘 수 없어 체크 → 툴바로 처리한다. 스무 건을 스무 번
+    // 누르지 않아도 되는 편이 낫기도 하다.
+    $a = Placement::factory()->create(['farm_id' => $this->farm->id, 'status' => PlacementStatus::Proposed]);
+    $b = Placement::factory()->create(['farm_id' => $this->farm->id, 'status' => PlacementStatus::Proposed]);
+
+    $res = actingAs($this->admin)->postJson(route('admin.matching.bulk'), [
+        'action' => 'confirm',
+        'ids' => [$a->id, $b->id],
+    ])->assertOk();
+
+    expect($a->fresh()->status)->toBe(PlacementStatus::Confirmed)
+        ->and($b->fresh()->status)->toBe(PlacementStatus::Confirmed)
+        ->and($res->json('message'))->toContain('2건')
+        // 표를 다시 그릴 목록을 함께 준다.
+        ->and($res->json('rows'))->toHaveCount(2)
+        ->and($res->json('demand_rows'))->toBeArray();
+});
+
+it('한 건이 막혀도 나머지는 처리한다', function () {
+    // 이미 확정된 건이 섞였다고 스무 건이 통째로 되돌아가면 무엇이 걸렸는지
+    // 찾기만 어려워진다.
+    $ok = Placement::factory()->create(['farm_id' => $this->farm->id, 'status' => PlacementStatus::Proposed]);
+    $already = Placement::factory()->create(['farm_id' => $this->farm->id, 'status' => PlacementStatus::Cancelled]);
+
+    $res = actingAs($this->admin)->postJson(route('admin.matching.bulk'), [
+        'action' => 'confirm',
+        'ids' => [$ok->id, $already->id],
+    ])->assertOk();
+
+    expect($ok->fresh()->status)->toBe(PlacementStatus::Confirmed)
+        ->and($already->fresh()->status)->toBe(PlacementStatus::Cancelled)
+        ->and($res->json('message'))->toContain('건너뜀')
+        ->and($res->json('message'))->toContain('#'.$already->id);
+});
+
+it('일괄 취소도 사유를 남긴다', function () {
+    $p = Placement::factory()->create(['farm_id' => $this->farm->id, 'status' => PlacementStatus::Confirmed]);
+
+    actingAs($this->admin)->postJson(route('admin.matching.bulk'), [
+        'action' => 'cancel',
+        'ids' => [$p->id],
+        'reason' => '농가 사정으로 수요 축소',
+    ])->assertOk();
+
+    expect($p->fresh()->status)->toBe(PlacementStatus::Cancelled)
+        ->and($p->fresh()->note)->toBe('농가 사정으로 수요 축소');
+});
+
+it('아무것도 고르지 않으면 막는다', function () {
+    actingAs($this->admin)->postJson(route('admin.matching.bulk'), [
+        'action' => 'confirm', 'ids' => [],
+    ])->assertStatus(422);
+});
+
+it('관리자가 아니면 일괄 처리를 못 한다', function () {
+    $officer = User::factory()->create();
+    $officer->assignRole(UserRole::CityOfficer->value);
+    $p = Placement::factory()->create(['farm_id' => $this->farm->id, 'status' => PlacementStatus::Proposed]);
+
+    actingAs($officer)->postJson(route('admin.matching.bulk'), [
+        'action' => 'confirm', 'ids' => [$p->id],
+    ])->assertForbidden();
+
+    expect($p->fresh()->status)->toBe(PlacementStatus::Proposed);
+});
+
+it('표에 그릴 수 있는 모양으로 내려온다', function () {
+    // 표는 참/거짓이 아니라 읽을 글자가 필요하다 (엑셀로도 그대로 나간다).
+    Placement::factory()->create([
+        'farm_id' => $this->farm->id,
+        'placement_group_id' => (string) Str::uuid(),
+    ]);
+    DemandRequest::factory()->create([
+        'farm_id' => $this->farm->id,
+        'status' => DemandStatus::Submitted,
+    ]);
+
+    actingAs($this->admin);
+
+    expect(MatchingController::placementRows()[0]['group_label'])->toBe('그룹')
+        ->and(MatchingController::rows()[0]['pick'])->toBe('인력 배정 ▸');
+});

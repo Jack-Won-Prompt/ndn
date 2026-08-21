@@ -271,6 +271,9 @@ Route::prefix('admin')->group(function () {
             ->whereNumber('demand')->name('admin.matching.show');
         Route::post('/matching/placements', [MatchingController::class, 'store'])
             ->name('admin.matching.store');
+        // 배정 현황 표에서 체크한 건을 한 번에 (셀 안에 버튼을 둘 수 없어 툴바로 처리한다)
+        Route::post('/matching/placements/bulk', [MatchingController::class, 'bulk'])
+            ->name('admin.matching.bulk');
         Route::post('/matching/placements/{placement}/confirm', [MatchingController::class, 'confirm'])
             ->whereNumber('placement')->name('admin.matching.confirm');
         Route::post('/matching/placements/{placement}/cancel', [MatchingController::class, 'cancel'])

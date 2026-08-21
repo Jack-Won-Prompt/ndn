@@ -301,6 +301,54 @@ class MatchingController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    /**
+     * 배정 현황 표에서 체크한 건을 한 번에 확정·취소한다.
+     *
+     * 표에는 셀 안에 버튼을 둘 수 없어(편집기 없는 칸은 글자만 그린다) 체크 →
+     * 툴바 순서로 처리한다. 스무 건을 스무 번 누르지 않아도 되는 편이 낫기도 하다.
+     *
+     * 한 건이 막혀도 나머지는 진행한다. 이미 확정된 건이 섞였다고 스무 건이 통째로
+     * 되돌아가면 무엇이 걸렸는지 찾기만 어려워진다 — 대신 몇 건이 왜 걸렸는지 돌려준다.
+     */
+    public function bulk(
+        Request $request,
+        ConfirmPlacementAction $confirm,
+        CancelPlacementAction $cancel,
+    ): JsonResponse {
+        $data = $request->validate([
+            'action' => ['required', 'in:confirm,cancel'],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', 'exists:placements,id'],
+            'reason' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $done = 0;
+        $failed = [];
+
+        foreach (Placement::whereIn('id', $data['ids'])->get() as $placement) {
+            try {
+                $data['action'] === 'confirm'
+                    ? $confirm->execute($placement, Auth::user())
+                    : $cancel->execute($placement, Auth::user(), $data['reason'] ?? null);
+                $done++;
+            } catch (RuntimeException $e) {
+                $failed[] = '#'.$placement->id.' '.$e->getMessage();
+            }
+        }
+
+        $word = $data['action'] === 'confirm' ? '확정' : '취소';
+
+        return response()->json([
+            'ok' => true,
+            'message' => $failed === []
+                ? "{$done}건을 {$word}했습니다."
+                : "{$done}건 {$word} · ".count($failed).'건 건너뜀 — '.implode(' / ', array_slice($failed, 0, 3)),
+            'rows' => self::placementRows(),
+            // 확정·취소는 농가 정원을 움직인다. 수요 표의 진행률도 함께 새로 준다.
+            'demand_rows' => self::rows(),
+        ]);
+    }
+
     /** 배정 취소 (사유 기록). */
     public function cancel(Request $request, Placement $placement, CancelPlacementAction $action): JsonResponse
     {
@@ -352,6 +400,8 @@ class MatchingController extends Controller
             'period' => trim(($demand->period_start?->toDateString() ?? '').' ~ '.($demand->period_end?->toDateString() ?? '')),
             'status' => $demand->status->value,
             'status_label' => $demand->status->label(),
+            // 편집기가 없는 칸이라 눌러도 셀이 열리지 않는다 → 여는 버튼으로 쓴다.
+            'pick' => '인력 배정 ▸',
         ];
     }
 
@@ -368,6 +418,8 @@ class MatchingController extends Controller
             'status_label' => $placement->status->label(),
             // 같은 값이면 형제·가족으로 함께 움직이는 건
             'group' => $placement->placement_group_id !== null,
+            // 표에는 참/거짓이 아니라 읽을 글자가 필요하다 (엑셀로도 그대로 나간다).
+            'group_label' => $placement->placement_group_id !== null ? '그룹' : '',
             'start_date' => $placement->start_date?->toDateString() ?? '—',
             'end_date' => $placement->end_date?->toDateString() ?? '—',
             'note' => $placement->note,
