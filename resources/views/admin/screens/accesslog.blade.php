@@ -47,58 +47,7 @@
         <span class="al-tz">시각 기준 <b>{{ $displayTz }}</b> — 보는 사람의 지역 시간으로 표시합니다</span>
     </div>
 
-    <div class="signup-wrap">
-        <table class="signup-table" id="al-table">
-            <thead>
-                <tr>
-                    <th style="width:230px">시각 ({{ $displayTz }})</th>
-                    <th style="width:220px">사용자 · 로그인 ID</th>
-                    <th style="width:60px">방식</th>
-                    <th>경로</th>
-                    <th style="width:60px">상태</th>
-                    <th style="width:120px">IP</th>
-                    <th style="width:110px">접속 국가</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($rows as $r)
-                    <tr data-auth="{{ $r['is_guest'] ? '0' : '1' }}"
-                        data-foreign="{{ $r['is_foreign'] ? '1' : '0' }}"
-                        data-search="{{ strtolower(($r['actor'] ?? '').' '.($r['email'] ?? '').' '.$r['path'].' '.($r['ip'] ?? '').' '.$r['country_label']) }}">
-                        <td class="c">
-                            {{ $r['at'] }}
-                            {{-- 상대 시간을 함께 둔다. 방금 한 일이 '9시간 전'으로 보이면
-                                 저장·표시 타임존이 어긋난 것이라 여기서 바로 드러난다. --}}
-                            <div class="al-ago">{{ $r['ago'] }}</div>
-                        </td>
-                        <td>
-                            @if ($r['is_guest'])
-                                <span class="al-tag al-tag--guest">게스트</span>
-                            @else
-                                <span class="al-tag al-tag--auth">{{ $r['actor'] }}</span>
-                                @if ($r['email'])
-                                    <div class="al-email">{{ $r['email'] }}</div>
-                                @endif
-                            @endif
-                        </td>
-                        <td class="c">{{ $r['method'] }}</td>
-                        <td class="al-path" title="{{ $r['route'] }}">{{ $r['path'] }}</td>
-                        <td class="c">
-                            <span class="al-status al-status--{{ $r['status'] >= 400 ? 'err' : ($r['status'] >= 300 ? 'redir' : 'ok') }}">{{ $r['status'] }}</span>
-                        </td>
-                        <td class="c">{{ $r['ip'] }}</td>
-                        <td class="c">
-                            <span class="al-country {{ $r['is_foreign'] ? 'al-country--warn' : ($r['country'] === null ? 'al-country--none' : '') }}">
-                                {{ $r['country_label'] }}
-                            </span>
-                        </td>
-                    </tr>
-                @empty
-                    <tr id="al-empty"><td colspan="7" class="su-empty">기록된 접속 로그가 없습니다.</td></tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
+    <div id="grid-accesslog"></div>
 
     <style>
         .al-summary { display: flex; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
@@ -121,49 +70,51 @@
         .al-chip b { color: var(--mv2-text-strong); margin-left: 3px; }
         .al-chip--warn { background: var(--mv2-pill-err-bg); border-color: transparent; color: var(--mv2-pill-err-fg); }
         .al-chip--warn b { color: var(--mv2-pill-err-fg); }
-        .al-ago { font-size: 11px; color: var(--mv2-text-faint); margin-top: 2px; }
-        .al-country { font-size: 12px; font-weight: 700; }
-        .al-country--warn { color: var(--mv2-pill-err-fg); }
-        .al-country--none { color: var(--mv2-text-faint); font-weight: 500; }
-        .signup-wrap { border: 1px solid var(--mv2-border-default); border-radius: var(--mv2-r-lg); overflow: hidden; background: #fff; box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 6px 20px rgba(15,23,42,.05); }
-        .signup-table { width: 100%; border-collapse: collapse; font-size: var(--mv2-fz-sm); }
-        .signup-table thead th { text-align: left; background: var(--mv2-slate-25); color: var(--mv2-text-muted); font-weight: 700; font-size: var(--mv2-fz-xs); padding: 10px 14px; border-bottom: 1px solid var(--mv2-border-soft); white-space: nowrap; }
-        .signup-table tbody td { padding: 9px 14px; border-bottom: 1px solid var(--mv2-border-soft); color: var(--mv2-text-strong); }
-        .signup-table tbody tr:last-child td { border-bottom: 0; }
-        .signup-table tbody tr:hover { background: var(--mv2-slate-25); }
-        .signup-table td.c { text-align: center; }
-        .al-path { font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; font-size: var(--mv2-fz-xs); color: var(--mv2-text-strong); word-break: break-all; }
-        .su-empty { text-align: center; color: var(--mv2-text-faint); padding: 34px 0; }
-        .al-tag { display: inline-block; font-size: 11px; font-weight: 700; border-radius: 100px; padding: 2px 9px; }
-        .al-tag--guest { background: var(--mv2-slate-25); color: var(--mv2-text-muted); }
-        .al-tag--auth { background: var(--mv2-primary-50, #E9F6F4); color: var(--mv2-primary-600); }
-        .al-email { font-size: 11px; color: var(--mv2-text-muted); margin-top: 3px; font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; }
-        .al-status { font-weight: 700; font-size: 12px; }
-        .al-status--ok { color: #1B7F43; }
-        .al-status--redir { color: #8a6d00; }
-        .al-status--err { color: var(--mv2-pill-err-fg); }
     </style>
 @endsection
 
-@section('script')
+@section('wwgrid')
 <script>
+    var AL_ROWS = @json($rows, JSON_UNESCAPED_UNICODE);
+
+    // 접속 로그는 **읽기 전용**이다. 감사 기록을 손으로 고칠 수 있으면 §7-6 의 뜻이
+    // 사라진다. 그래서 [신규 행]·[행 삭제]·[변경 저장] 없이 엑셀 다운로드만 둔다.
+    var alGrid = wwConsole({
+        el: 'grid-accesslog',
+        title: '접속로그',
+        data: AL_ROWS,
+        columns: [
+            { header: '시각 ({{ $displayTz }})', name: 'at', width: 165, align: 'center', sortable: true },
+            // 방금 한 일이 '9시간 전' 으로 보이면 저장·표시 타임존이 어긋난 것이라 여기서 드러난다.
+            { header: '경과', name: 'ago', width: 90, align: 'center' },
+            { header: '사용자', name: 'actor', width: 140, sortable: true },
+            { header: '로그인 ID', name: 'email', width: 190 },
+            { header: '방식', name: 'method', width: 66, align: 'center' },
+            { header: '경로', name: 'path', width: 300 },
+            { header: '상태', name: 'status', width: 60, align: 'center', sortable: true },
+            { header: 'IP', name: 'ip', width: 125, align: 'center' },
+            { header: '접속 국가', name: 'country_label', width: 100, align: 'center', sortable: true },
+        ],
+    });
+
     (function () {
         var search = document.getElementById('al-search');
         var authOnly = document.getElementById('al-authonly');
         var foreignOnly = document.getElementById('al-foreignonly');
-        var rows = [].slice.call(document.querySelectorAll('#al-table tbody tr[data-search]'));
 
+        // 표 자체를 걸러 다시 그린다. 행을 숨기는 방식은 그리드의 줄 번호·건수와
+        // 어긋나고, 엑셀 다운로드에는 숨긴 줄까지 따라간다.
         function apply() {
             var q = search.value.trim().toLowerCase();
-            var onlyAuth = authOnly.checked;
-            var onlyForeign = foreignOnly.checked;
-            rows.forEach(function (tr) {
-                var okText = !q || tr.getAttribute('data-search').indexOf(q) !== -1;
-                var okAuth = !onlyAuth || tr.getAttribute('data-auth') === '1';
-                var okForeign = !onlyForeign || tr.getAttribute('data-foreign') === '1';
-                tr.style.display = (okText && okAuth && okForeign) ? '' : 'none';
-            });
+            alGrid.setData(AL_ROWS.filter(function (r) {
+                if (authOnly.checked && r.is_guest) return false;
+                if (foreignOnly.checked && !r.is_foreign) return false;
+                if (!q) return true;
+                return [r.actor, r.email, r.path, r.ip, r.country_label]
+                    .join(' ').toLowerCase().indexOf(q) !== -1;
+            }));
         }
+
         var t;
         search.addEventListener('input', function () { clearTimeout(t); t = setTimeout(apply, 150); });
         authOnly.addEventListener('change', apply);

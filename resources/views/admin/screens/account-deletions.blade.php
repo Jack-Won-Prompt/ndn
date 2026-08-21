@@ -35,7 +35,7 @@
         // 접수는 본인이 하는 것이라 여기서 새로 만들지 않는다.
         canAdd: false,
         deleteWarning: '접수 기록이 사라집니다. 계정 자체는 [근로자] 화면에서 따로 처리해야 합니다.',
-        data: @json($rows),
+        data: @json($rows, JSON_UNESCAPED_UNICODE),
         columns: [
             { header: '번호', name: 'id', width: 60, align: 'center', sortable: true },
             { header: '이름', name: 'name', width: 130, sortable: true },

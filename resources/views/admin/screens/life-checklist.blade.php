@@ -115,7 +115,7 @@
         el: 'grid-lifechecklist',
         editable: false,
         title: '생활체크리스트',
-        data: @json($rows),
+        data: @json($rows, JSON_UNESCAPED_UNICODE),
         columns: [
             { header: '근로자', name: 'worker', width: 130, sortable: true },
             { header: '국적', name: 'nationality', width: 90, align: 'center', sortable: true },

@@ -24,7 +24,7 @@
 
 @section('wwgrid')
 <script>
-    var CITY_OPTIONS = @json($cityOptions);
+    var CITY_OPTIONS = @json($cityOptions, JSON_UNESCAPED_UNICODE);
 
     // 지자체 그리드 — 기본 탭이라 즉시 초기화
     wwConsole({
@@ -33,7 +33,7 @@
         title: '지자체',
         saveUrl: '{{ route('admin.grid.cities.save') }}',
         newRow: { name: '', region: '', quota: '', recruiting: 1 },
-        data: @json($cityRows),
+        data: @json($cityRows, JSON_UNESCAPED_UNICODE),
         columns: [
             { header: '지자체명', name: 'name', width: 180, editor: 'text', sortable: true },
             { header: '광역/도', name: 'region', width: 180, editor: 'text' },
@@ -57,7 +57,7 @@
             // 농가는 기준정보다 — 지우면 매달린 화면들도 함께 정리된다.
             deleteWarning: '삭제하면 그 농가의 수요·배정·입국 기록·방문 점검·점검표도 함께 정리되고, 배정돼 있던 근로자는 미배정으로 풀립니다.',
             newRow: { name: '' },
-            data: @json($farmRows),
+            data: @json($farmRows, JSON_UNESCAPED_UNICODE),
             columns: [
                 { header: '농가명', name: 'name', width: 160, editor: 'text', sortable: true },
                 { header: '지자체', name: 'city_id', width: 140, editor: 'combo', options: CITY_OPTIONS },

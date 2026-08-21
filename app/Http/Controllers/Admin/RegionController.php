@@ -73,6 +73,12 @@ class RegionController extends Controller
                     // 남은 정원 — 미설정이면 null(제한 없음)
                     'remaining' => $quota === null ? null : max($quota - $applicants, 0),
                     'open' => $c->isOpenForSignup(),
+                    // 표에는 참/거짓이 아니라 읽을 글자가 필요하다 (엑셀로도 그대로 나간다).
+                    'quota_label' => $quota === null ? '제한 없음' : $quota.'명',
+                    'remaining_label' => $quota === null ? '—' : (string) max($quota - $applicants, 0),
+                    'open_label' => $c->isOpenForSignup() ? '모집 중' : ($c->recruiting ? '정원 마감' : '중지'),
+                    // 편집기가 없는 칸이라 눌러도 셀이 열리지 않는다 → 여는 버튼으로 쓴다.
+                    'pick' => '농가별 ▸',
                 ];
             })->all();
     }

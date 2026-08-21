@@ -5,7 +5,10 @@
     <div class="screen__head">
         <div>
             <h1 class="screen__title">지역별 모집·배치</h1>
-            <p class="screen__sub">시군별로 모집 정원과 배치 현황을 나눠 봅니다 · <strong>행을 클릭</strong>하면 해당 지역의 농가별 배치 인원이 열립니다 · 정원·모집 여부는 <strong>농가·지자체</strong> 화면에서 수정</p>
+            <p class="screen__sub">
+                시군별로 모집 정원과 배치 현황을 나눠 봅니다 · <strong>[농가별 ▸]</strong> 칸을 누르면 해당 지역의 농가별 배치 인원이 열립니다 ·
+                정원·모집 여부는 <strong>농가·지자체</strong> 화면에서 수정합니다
+            </p>
         </div>
     </div>
 
@@ -15,107 +18,96 @@
     </div>
 
     <div data-tabpane="list">
-        <div class="rg-wrap">
-            <table class="rg-table" id="rg-table">
-                <thead>
-                    <tr>
-                        <th>지역</th>
-                        <th style="width:80px">모집</th>
-                        <th style="width:80px">정원</th>
-                        <th style="width:80px">지원자</th>
-                        <th style="width:80px">승인대기</th>
-                        <th style="width:80px">잔여</th>
-                        <th style="width:90px">배치 인원</th>
-                        <th style="width:70px">농가</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($rows as $r)
-                        <tr data-id="{{ $r['id'] }}">
-                            <td><b>{{ $r['name'] }}</b> <span class="rg-region">{{ $r['region'] ?? '' }}</span></td>
-                            <td class="c">
-                                <span class="rg-badge rg-badge--{{ $r['open'] ? 'open' : 'closed' }}">
-                                    {{ $r['open'] ? '모집 중' : ($r['recruiting'] ? '정원 마감' : '중지') }}
-                                </span>
-                            </td>
-                            <td class="c">{{ $r['quota'] ?? '—' }}</td>
-                            <td class="c">{{ $r['applicants'] }}</td>
-                            <td class="c">{{ $r['pending'] }}</td>
-                            <td class="c">{{ $r['remaining'] ?? '—' }}</td>
-                            <td class="c"><b>{{ $r['placed'] }}</b></td>
-                            <td class="c">{{ $r['farms'] }}</td>
-                        </tr>
-                    @empty
-                        <tr><td colspan="8" class="rg-empty">등록된 지자체가 없습니다. <b>농가·지자체</b> 화면에서 먼저 등록하세요.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+        <div id="grid-regions"></div>
     </div>
 
     <div data-tabpane="detail" hidden>
-        <div id="rg-detail" class="dtl"><div class="dtl-empty">지역을 클릭하면 농가별 배치 현황이 표시됩니다.</div></div>
+        <div class="dtl-head">
+            <b id="rg-title">농가별 배치</b>
+            <div class="dtl-head__actions">
+                <button type="button" class="dtl-back" onclick="window.ndnSwitchTab('list')">← 지역 현황</button>
+            </div>
+        </div>
+        <dl class="dtl-dl" id="rg-summary"></dl>
+        <div id="grid-region-farms"></div>
     </div>
 
     <style>
-        .rg-wrap{border:1px solid var(--mv2-border-default);border-radius:var(--mv2-r-lg);overflow:hidden;background:#fff;box-shadow:0 1px 2px rgba(15,23,42,.04);}
-        .rg-table{width:100%;border-collapse:collapse;font-size:var(--mv2-fz-sm);}
-        .rg-table thead th{text-align:left;background:var(--mv2-slate-25);color:var(--mv2-text-muted);font-weight:700;font-size:var(--mv2-fz-xs);padding:11px 14px;border-bottom:1px solid var(--mv2-border-soft);white-space:nowrap;}
-        .rg-table tbody td{padding:11px 14px;border-bottom:1px solid var(--mv2-border-soft);color:var(--mv2-text-strong);}
-        .rg-table tbody tr:last-child td{border-bottom:0;}
-        .rg-table tbody tr[data-id]{cursor:pointer;}
-        .rg-table tbody tr[data-id]:hover{background:var(--mv2-slate-25);}
-        .rg-table td.c{text-align:center;}
-        .rg-region{color:var(--mv2-text-faint);font-size:var(--mv2-fz-xs);margin-left:6px;}
-        .rg-empty{text-align:center;color:var(--mv2-text-faint);padding:34px 0;}
-        .rg-badge{display:inline-block;padding:2px 9px;border-radius:100px;font-size:12px;font-weight:700;white-space:nowrap;}
-        .rg-badge--open{background:#E7F3F1;color:#12695F;}
-        .rg-badge--closed{background:#FDECEC;color:#B42318;}
+        .dtl-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+        .dtl-back { font-family: inherit; font-size: var(--mv2-fz-xs); font-weight: 700; background: #fff;
+            border: 1px solid var(--mv2-border-default); border-radius: var(--mv2-r-sm); padding: 6px 13px; cursor: pointer; }
+        .dtl-dl { display: grid; grid-template-columns: 110px 1fr; gap: 4px 12px; margin: 0 0 14px;
+            font-size: var(--mv2-fz-sm); color: var(--mv2-text-strong); }
+        .dtl-dl dt { color: var(--mv2-text-muted); font-weight: 700; }
+        .dtl-dl dd { margin: 0; }
     </style>
 @endsection
 
-@section('script')
+@section('wwgrid')
 <script>
-    (function () {
-        var BASE = '{{ url('admin/regions') }}';
+    // 지역 현황은 **읽기 전용**이다. 정원·모집 여부는 기준정보(농가·지자체)가 원본이고,
+    // 여기서 고칠 수 있게 하면 같은 값을 두 곳에서 고치게 된다.
+    var rgGrid = wwConsole({
+        el: 'grid-regions',
+        title: '지역별모집배치',
+        data: @json($rows, JSON_UNESCAPED_UNICODE),
+        columns: [
+            { header: '지역', name: 'name', width: 130, sortable: true },
+            { header: '광역/도', name: 'region', width: 110, sortable: true },
+            { header: '모집', name: 'open_label', width: 90, align: 'center', sortable: true },
+            { header: '정원', name: 'quota_label', width: 90, align: 'center' },
+            { header: '지원자', name: 'applicants', width: 80, align: 'center', sortable: true },
+            { header: '승인대기', name: 'pending', width: 84, align: 'center' },
+            { header: '잔여', name: 'remaining_label', width: 70, align: 'center' },
+            { header: '배치 인원', name: 'placed', width: 90, align: 'center', sortable: true },
+            { header: '농가', name: 'farms', width: 70, align: 'center', sortable: true },
+            { header: '농가별', name: 'pick', width: 96, align: 'center' },
+        ],
+    });
 
-        function esc(s) { return (s == null ? '' : String(s)); }
+    // 농가별 표는 지역을 고르기 전에는 채울 것이 없다. 처음 열 때 만든다.
+    var rgFarmGrid = null;
 
-        document.getElementById('rg-table').addEventListener('click', function (e) {
-            var tr = e.target.closest('tr[data-id]');
-            if (!tr) return;
+    document.getElementById('grid-regions').addEventListener('click', function (e) {
+        var cell = e.target.closest('[data-col-name="pick"][data-row-index]');
+        if (!cell) return;
 
-            fetch(BASE + '/' + tr.getAttribute('data-id'), { headers: { 'Accept': 'application/json' } })
-                .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
-                .then(function (d) {
-                    var html = '<div class="dtl-head"><b>' + esc(d.label) + ' · 농가별 배치</b>'
-                        + '<div class="dtl-head__actions"><button type="button" class="dtl-back" onclick="window.ndnSwitchTab(\'list\')">← 지역 현황</button></div></div>';
+        var row = rgGrid.getData()[parseInt(cell.getAttribute('data-row-index'), 10)];
+        if (!row || !row.id) return;
 
-                    html += '<dl class="dtl-dl">'
-                        + '<dt>모집 정원</dt><dd>' + (d.quota == null ? '제한 없음' : d.quota + '명') + '</dd>'
-                        + '<dt>지원자</dt><dd>' + d.applicants + '명</dd>'
-                        + '<dt>모집 상태</dt><dd>' + (d.recruiting ? '모집 중' : '중지') + '</dd></dl>';
+        fetch('{{ url('admin/regions') }}/' + row.id, { headers: { 'Accept': 'application/json' } })
+            .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+            .then(function (d) {
+                document.getElementById('rg-title').textContent = d.label + ' · 농가별 배치';
+                document.getElementById('rg-summary').innerHTML =
+                    '<dt>모집 정원</dt><dd>' + (d.quota == null ? '제한 없음' : d.quota + '명') + '</dd>'
+                    + '<dt>지원자</dt><dd>' + d.applicants + '명</dd>'
+                    + '<dt>모집 상태</dt><dd>' + (d.recruiting ? '모집 중' : '중지') + '</dd>';
 
-                    html += '<div class="dtl-sec"><div class="dtl-sec__title">농가 (' + d.farms.length + ')</div>';
-                    if (d.farms.length) {
-                        html += '<table class="rg-table"><thead><tr><th>농가</th><th style="width:110px">품목</th>'
-                            + '<th>주소</th><th style="width:90px">배치 인원</th></tr></thead><tbody>';
-                        d.farms.forEach(function (f) {
-                            html += '<tr><td>' + esc(f.name) + '</td><td class="c">' + esc(f.main_crop || '—') + '</td>'
-                                + '<td>' + esc(f.address || '—') + '</td><td class="c"><b>' + f.placed + '</b></td></tr>';
+                document.getElementById('rg-detail-tab').hidden = false;
+                window.ndnSwitchTab('detail');
+
+                // 탭이 보이게 된 다음에 만든다 — 숨은 채로 만들면 폭이 0 으로 잡힌다.
+                setTimeout(function () {
+                    if (!rgFarmGrid) {
+                        rgFarmGrid = wwConsole({
+                            el: 'grid-region-farms',
+                            title: '지역농가배치',
+                            height: 420,
+                            data: d.farms,
+                            columns: [
+                                { header: '농가', name: 'name', width: 200, sortable: true },
+                                { header: '품목', name: 'main_crop', width: 120, align: 'center' },
+                                { header: '주소', name: 'address', width: 320 },
+                                { header: '배치 인원', name: 'placed', width: 100, align: 'center', sortable: true },
+                            ],
                         });
-                        html += '</tbody></table>';
-                    } else {
-                        html += '<div class="dtl-empty">이 지역에 등록된 농가가 없습니다.</div>';
+                        return;
                     }
-                    html += '</div>';
-
-                    document.getElementById('rg-detail').innerHTML = html;
-                    document.getElementById('rg-detail-tab').hidden = false;
-                    window.ndnSwitchTab('detail');
-                })
-                .catch(function () { ndnToast('지역 상세를 불러오지 못했습니다.', { type: 'error' }); });
-        });
-    })();
+                    rgFarmGrid.setData(d.farms);
+                }, 0);
+            })
+            .catch(function () { ndnToast('지역 상세를 불러오지 못했습니다.', { type: 'error' }); });
+    });
 </script>
 @endsection

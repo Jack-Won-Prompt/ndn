@@ -128,10 +128,10 @@
         deleteWarning: '삭제하면 그 농가의 수요·배정·입국 기록·방문 점검·점검표도 함께 정리되고, 배정돼 있던 근로자는 미배정으로 풀립니다.',
         newRow: { name: '' },
         height: 340,
-        data: @json($farmRows),
+        data: @json($farmRows, JSON_UNESCAPED_UNICODE),
         columns: [
             { header: '농가명', name: 'name', width: 150, editor: 'text', sortable: true },
-            { header: '지자체', name: 'city_id', width: 130, editor: 'combo', options: @json($cityOptions) },
+            { header: '지자체', name: 'city_id', width: 130, editor: 'combo', options: @json($cityOptions, JSON_UNESCAPED_UNICODE) },
             { header: '주작물', name: 'main_crop', width: 110, editor: 'text' },
             { header: '연락처', name: 'contact_phone', width: 140, editor: 'text' },
             { header: '주소', name: 'address', width: 220, editor: 'text' },
@@ -154,7 +154,7 @@
         mtGrids.demands = wwConsole({
             el: 'grid-demands-mt',
             title: '수요별 매칭',
-            data: @json($rows),
+            data: @json($rows, JSON_UNESCAPED_UNICODE),
             height: 360,
             // 잘못 적은 신청서를 지울 수 있어야 한다. 배정은 농가에 매여 있어 함께 지우지 않는다.
             rowCheckbox: true,
@@ -193,7 +193,7 @@
         mtGrids.placements = wwConsole({
             el: 'grid-placements-mt',
             title: '배정 현황',
-            data: @json($placements),
+            data: @json($placements, JSON_UNESCAPED_UNICODE),
             height: 460,
             // 셀 안에 버튼을 둘 수 없어(편집기 없는 칸은 글자만 그린다) 체크 → 툴바로 처리한다.
             rowCheckbox: true,
@@ -237,7 +237,7 @@
     (function () {
         var token = document.querySelector('meta[name="csrf-token"]').content;
         var BASE = '{{ url('admin/matching') }}';
-        var NATIONS = @json($natOptions);
+        var NATIONS = @json($natOptions, JSON_UNESCAPED_UNICODE);
 
         var panel = document.getElementById('mt-panel');    // 수요별 매칭 탭
         var fpanel = document.getElementById('mt-fpanel');  // 농가별 배정 탭

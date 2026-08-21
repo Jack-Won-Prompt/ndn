@@ -602,7 +602,7 @@
         el: 'grid-workreviews',
         editable: false,
         title: '근무상태점검표',
-        data: @json($rows),
+        data: @json($rows, JSON_UNESCAPED_UNICODE),
         // 읽기전용 목록이지만 골라서 관계기관에 보내야 해 체크박스를 켠다.
         rowCheckbox: true,
         buttons: [{

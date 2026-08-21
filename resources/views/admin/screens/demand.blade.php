@@ -20,8 +20,8 @@
         ->map(fn ($label, $code) => ['value' => $code, 'label' => $label])->values();
 @endphp
 <script>
-    var FARMS  = @json($farms);
-    var CITIES = @json($cities);
+    var FARMS  = @json($farms, JSON_UNESCAPED_UNICODE);
+    var CITIES = @json($cities, JSON_UNESCAPED_UNICODE);
 
     wwConsole({
         el: 'grid-demand',
@@ -30,12 +30,12 @@
         saveUrl: '{{ route('admin.grid.demand.save') }}',
         importUrl: '{{ route('admin.grid.demand.import') }}',
         newRow: { nationality: 'BD', gender: 'any', headcount: 1, status: 'draft' },
-        data: @json($rows),
+        data: @json($rows, JSON_UNESCAPED_UNICODE),
         columns: [
             { header: '농가', name: 'farm_id', width: 150, editor: 'combo', options: FARMS, sortable: true },
             { header: '지자체', name: 'city_id', width: 130, editor: 'combo', options: CITIES },
             { header: '국적', name: 'nationality', width: 80, editor: 'combo', align: 'center',
-              options: @json($natOptions) },
+              options: @json($natOptions, JSON_UNESCAPED_UNICODE) },
             { header: '인원', name: 'headcount', width: 80, editor: 'number', min: 1, max: 999 },
             { header: '성별', name: 'gender', width: 90, editor: 'combo', align: 'center',
               options: [{value:'male',label:'남성'},{value:'female',label:'여성'},{value:'any',label:'무관'}] },

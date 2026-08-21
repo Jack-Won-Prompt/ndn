@@ -309,7 +309,7 @@
         // 사람을 지우면 배정도 함께 정리된다 — 농가 자리가 실제로 비어야 한다.
         deleteWarning: '삭제하면 그 사람의 배정이 취소되어 농가 자리가 비고, 후보자·온보딩·정착 신청·민원·서류도 함께 정리됩니다.',
         newRow: { nationality: 'BD', city_id: null, locale: 'bn', status: 'active' },
-        data: @json($rows),
+        data: @json($rows, JSON_UNESCAPED_UNICODE),
         // 칸이 열한 개다. 폭을 줄여 1500px 안팎이면 한 화면에 들어오게 맞췄고,
         // 그보다 좁으면 표를 옆으로 밀어 본다(가로 스크롤바를 눈에 띄게 해 두었다).
         columns: [
@@ -319,7 +319,7 @@
               options: [{value:'BD',label:'방글라'},{value:'LA',label:'라오스'},{value:'LK',label:'스리랑카'},{value:'VN',label:'베트남'}] },
             // 지원 지자체 — 가입 시 근로자가 고른 지역. 이전 가입자는 여기서 채운다.
             { header: '지원 지역', name: 'city_id', width: 110, editor: 'combo', align: 'center',
-              options: @json($cityOptions) },
+              options: @json($cityOptions, JSON_UNESCAPED_UNICODE) },
             { header: '언어', name: 'locale', width: 84, editor: 'combo', align: 'center',
               options: [{value:'ko',label:'한국어'},{value:'bn',label:'벵골어'},{value:'lo',label:'라오어'},{value:'si',label:'싱할라어'},{value:'vi',label:'베트남어'},{value:'ne',label:'네팔어'},{value:'ky',label:'키르기스어'}] },
             { header: '상태', name: 'status', width: 88, editor: 'combo', align: 'center',

@@ -62,7 +62,7 @@
         el: 'grid-onboarding',
         editable: false,
         title: '온보딩',
-        data: @json($rows),
+        data: @json($rows, JSON_UNESCAPED_UNICODE),
         columns: [
             { header: '번호', name: 'id', width: 70, align: 'center', sortable: true },
             { header: '근로자', name: 'worker', width: 160, sortable: true },

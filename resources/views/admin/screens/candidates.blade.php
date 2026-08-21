@@ -85,12 +85,12 @@
         saveUrl: '{{ route('admin.grid.candidates.save') }}',
         importUrl: '{{ route('admin.grid.candidates.import') }}',
         newRow: { nationality: 'BD', gender: 'male', status: 'applied' },
-        data: @json($rows),
+        data: @json($rows, JSON_UNESCAPED_UNICODE),
         columns: [
             { header: '번호', name: 'id', width: 64, align: 'center', sortable: true },
             { header: '이름', name: 'name', width: 160, editor: 'text', sortable: true },
             { header: '국적', name: 'nationality', width: 100, editor: 'combo', align: 'center',
-              options: @json($natOptions) },
+              options: @json($natOptions, JSON_UNESCAPED_UNICODE) },
             { header: '나이', name: 'age', width: 80, editor: 'number', min: 18, max: 70 },
             { header: '성별', name: 'gender', width: 90, editor: 'combo', align: 'center',
               options: [{value:'male',label:'남성'},{value:'female',label:'여성'}] },
@@ -112,7 +112,7 @@
             title: '평가 항목',
             saveUrl: '{{ route('admin.grid.evaluation-items.save') }}',
             newRow: { key: '', label: '', hint: '', max_score: 20, sort_order: 99, active: 1 },
-            data: @json($itemRows),
+            data: @json($itemRows, JSON_UNESCAPED_UNICODE),
             columns: [
                 { header: '번호', name: 'id', width: 64, align: 'center' },
                 { header: '키(영문)', name: 'key', width: 160, editor: 'text' },

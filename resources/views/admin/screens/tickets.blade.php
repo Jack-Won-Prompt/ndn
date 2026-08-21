@@ -21,7 +21,7 @@
         canDelete: false,
         title: '민원',
         saveUrl: '{{ route('admin.grid.tickets.save') }}',
-        data: @json($rows),
+        data: @json($rows, JSON_UNESCAPED_UNICODE),
         columns: [
             { header: '번호', name: 'id', width: 70, align: 'center', sortable: true },
             { header: '근로자', name: 'worker', width: 140, sortable: true },
