@@ -79,48 +79,21 @@
 
     {{-- 목록 (탭) --}}
     <div data-tabpane="list">
-    <div class="fv-listwrap">
-        <table class="fv-table" id="fv-table">
-            <thead>
-                <tr>
-                    <th style="width:56px">번호</th>
-                    <th>농가</th>
-                    <th style="width:110px">방문일</th>
-                    <th style="width:120px">점검자</th>
-                    <th style="width:90px">농가</th>
-                    <th style="width:90px">근무</th>
-                    <th style="width:70px">인원</th>
-                    <th style="width:70px">사진</th>
-                    <th style="width:70px">애로</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($rows as $r)
-                    <tr data-id="{{ $r['id'] }}">
-                        <td class="c">{{ $r['id'] }}</td>
-                        <td>{{ $r['farm'] }}</td>
-                        <td class="c">{{ $r['visited_on'] }}</td>
-                        <td>{{ $r['inspector'] }}</td>
-                        <td class="c"><span class="fv-badge fv-badge--{{ $r['farm_status'] }}">{{ $r['farm_status_label'] }}</span></td>
-                        <td class="c"><span class="fv-badge fv-badge--{{ $r['worker_status'] }}">{{ $r['worker_status_label'] }}</span></td>
-                        <td class="c">{{ $r['headcount'] ?? '—' }}</td>
-                        <td class="c">{{ $r['photos'] ? '📷 '.$r['photos'] : '—' }}</td>
-                        <td class="c">{{ $r['has_issue'] ? '⚠' : '—' }}</td>
-                    </tr>
-                @empty
-                    <tr id="fv-empty"><td colspan="9" class="fv-emptyrow">등록된 방문 점검이 없습니다. 위 폼에서 등록하세요.</td></tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
+        <div id="grid-farmvisits"></div>
+        <p class="fv-listhint">
+            <strong>[상세 ▸]</strong> 칸을 누르면 점검 내용과 사진이 열립니다.
+            새 방문은 <strong>[방문 등록]</strong> 탭에서 만듭니다 — 사진을 함께 올려야 해서
+            표에서 한 줄로 만들 수 없습니다.
+        </p>
     </div>{{-- /탭:list --}}
 
     {{-- 상세 (목록에서 행 더블클릭 시 이 탭으로) --}}
     <div data-tabpane="detail" hidden>
-        <div id="fv-detail" class="fv-detailwrap"><div class="dtl-empty">목록에서 방문을 더블클릭하면 상세가 표시됩니다.</div></div>
+        <div id="fv-detail" class="fv-detailwrap"><div class="dtl-empty">목록에서 <b>[상세 ▸]</b> 칸을 누르면 상세가 표시됩니다.</div></div>
     </div>{{-- /탭:detail --}}
 
     <style>
+        .fv-listhint{font-size:var(--mv2-fz-xs);color:var(--mv2-text-faint);margin:10px 2px 0;line-height:1.7;}
         .fv-form{background:#fff;border:1px solid var(--mv2-border-default);border-radius:var(--mv2-r-lg);padding:18px;margin-bottom:14px;box-shadow:0 1px 2px rgba(15,23,42,.04);}
         .fv-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px 16px;}
         .fv-field{display:flex;flex-direction:column;gap:5px;}
@@ -134,15 +107,6 @@
         .fv-actions{display:flex;justify-content:flex-end;margin-top:16px;}
         .fv-btn{font-family:inherit;font-size:var(--mv2-fz-sm);font-weight:700;background:var(--mv2-primary-500);color:#fff;border:0;border-radius:var(--mv2-r-sm);padding:10px 20px;cursor:pointer;}
         .fv-btn:hover{background:var(--mv2-primary-600);}
-        .fv-listwrap{border:1px solid var(--mv2-border-default);border-radius:var(--mv2-r-lg);overflow:hidden;background:#fff;box-shadow:0 1px 2px rgba(15,23,42,.04),0 6px 20px rgba(15,23,42,.05);}
-        .fv-table{width:100%;border-collapse:collapse;font-size:var(--mv2-fz-sm);}
-        .fv-table thead th{text-align:left;background:var(--mv2-slate-25);color:var(--mv2-text-muted);font-weight:700;font-size:var(--mv2-fz-xs);padding:10px 14px;border-bottom:1px solid var(--mv2-border-soft);white-space:nowrap;}
-        .fv-table tbody td{padding:11px 14px;border-bottom:1px solid var(--mv2-border-soft);color:var(--mv2-text-strong);}
-        .fv-table tbody tr:last-child td{border-bottom:0;}
-        .fv-table tbody tr[data-id]{cursor:pointer;}
-        .fv-table tbody tr[data-id]:hover{background:var(--mv2-slate-25);}
-        .fv-table td.c{text-align:center;}
-        .fv-emptyrow{text-align:center;color:var(--mv2-text-faint);padding:34px 0;}
         .fv-badge{font-size:11px;font-weight:700;border-radius:100px;padding:2px 9px;}
         .fv-badge--normal{background:#E7F6EC;color:#1B7F43;}
         .fv-badge--caution{background:#FEF3C7;color:#8a6d00;}
@@ -188,6 +152,36 @@
         .fv-hist__row{font-size:12px;color:var(--mv2-text-muted);padding:3px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
         @media (max-width:820px){.fv-grid{grid-template-columns:1fr;}}
     </style>
+@endsection
+
+@section('wwgrid')
+<script>
+    // 점검 기록은 **읽기 전용**이다. 방문해서 본 것이 증빙이라 나중에 표에서
+    // 고칠 수 있으면 안 된다. 새 방문은 [방문 등록] 탭에서 사진과 함께 올린다.
+    var fvGrid = wwConsole({
+        el: 'grid-farmvisits',
+        title: '농가방문점검',
+        data: @json($rows, JSON_UNESCAPED_UNICODE),
+        columns: [
+            { header: '농가', name: 'farm', width: 180, sortable: true },
+            { header: '방문일', name: 'visited_on', width: 110, align: 'center', sortable: true },
+            { header: '점검자', name: 'inspector', width: 120, sortable: true },
+            { header: '농가 상태', name: 'farm_status_label', width: 100, align: 'center', sortable: true },
+            { header: '근무 상태', name: 'worker_status_label', width: 100, align: 'center', sortable: true },
+            { header: '인원', name: 'headcount_label', width: 74, align: 'center' },
+            { header: '사진', name: 'photos_label', width: 70, align: 'center' },
+            { header: '애로', name: 'issue_label', width: 70, align: 'center', sortable: true },
+            { header: '상세', name: 'detail', width: 74, align: 'center' },
+        ],
+    });
+
+    document.getElementById('grid-farmvisits').addEventListener('click', function (e) {
+        var cell = e.target.closest('[data-col-name="detail"][data-row-index]');
+        if (!cell) return;
+        var row = fvGrid.getData()[parseInt(cell.getAttribute('data-row-index'), 10)];
+        if (row && row.id) window.fvOpenDetail(row.id);
+    });
+</script>
 @endsection
 
 @section('script')
@@ -323,9 +317,9 @@
                     window.ndnSwitchTab('detail');
                 });
         }
-        document.getElementById('fv-table').addEventListener('dblclick', function (e) {
-            var tr = e.target.closest('tr[data-id]'); if (tr) openDetail(tr.getAttribute('data-id'));
-        });
+        // 표는 위쪽 wwgrid 구역에서 만든다(그쪽이 먼저 실행된다). 표가 부를 수
+        // 있도록 창구만 열어 둔다.
+        window.fvOpenDetail = function (id) { openDetail(id); };
         // 근로자별 점검 '이력' 토글 (상세 탭 위임)
         document.getElementById('fv-detail').addEventListener('click', function (e) {
             var b = e.target.closest('[data-hist]'); if (!b) return;

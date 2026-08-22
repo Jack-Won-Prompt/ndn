@@ -45,6 +45,22 @@ class RequiredDocumentAdminController extends Controller
                 'file' => $d->file,
                 'file_url' => $d->hasFile() ? route('admin.required-documents.file', $d) : null,
                 'updated' => LocalTime::format($d->updated_at),
+                // 표에는 참/거짓이나 배열이 아니라 읽을 글자가 필요하다 (엑셀로도 그대로 나간다).
+                'title_label' => ($d->title('ko') ?: $d->code).' ('.$d->code.')',
+                'version_label' => 'v'.$d->version,
+                'required_label' => $d->required ? '필수' : '열람만',
+                'active_label' => $d->active ? '사용' : '미사용',
+                // 어느 언어가 아직 비었는지가 이 화면의 핵심이다(§6). 채운 것만 늘어놓으면
+                // 무엇이 빠졌는지 세어 봐야 하므로 '채움/전체' 로 함께 보여 준다.
+                'locales_label' => collect(RequiredDocument::LOCALES)
+                    ->filter(fn (string $l) => $d->hasTranslation($l))->count()
+                    .'/'.count(RequiredDocument::LOCALES).' — '
+                    .collect(RequiredDocument::LOCALES)
+                        ->reject(fn (string $l) => $d->hasTranslation($l))
+                        ->pipe(fn ($missing) => $missing->isEmpty() ? '모두 채움' : '빠짐: '.$missing->implode(', ')),
+                'file_label' => $d->hasFile() ? '내려받기 ▸' : '',
+                // 편집기가 없는 칸이라 눌러도 셀이 열리지 않는다 → 여는 자리로 쓴다.
+                'edit' => '본문 편집 ▸',
             ])->all();
     }
 

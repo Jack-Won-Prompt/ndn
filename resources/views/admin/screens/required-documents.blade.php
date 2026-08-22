@@ -15,64 +15,21 @@
     </div>
 
     <div data-tabpane="list">
-        <div class="rd-wrap">
-            <table class="rd-table" id="rd-table">
-                <thead>
-                    <tr>
-                        <th style="width:56px">순서</th>
-                        <th>문서</th>
-                        <th style="width:70px">버전</th>
-                        <th style="width:150px">번역 완료 언어</th>
-                        <th style="width:130px">원본 서식</th>
-                        <th style="width:80px">동의 필수</th>
-                        <th style="width:90px">사용</th>
-                        <th style="width:90px">동의 인원</th>
-                    </tr>
-                </thead>
-                <tbody id="rd-tbody">
-                    @foreach ($rows as $i => $r)
-                        <tr data-id="{{ $r['id'] }}">
-                            <td class="c">{{ $i + 1 }}</td>
-                            <td><b>{{ $r['title'] ?: $r['code'] }}</b> <span class="rd-code">{{ $r['code'] }}</span></td>
-                            <td class="c">v{{ $r['version'] }}</td>
-                            <td class="c">
-                                @foreach (\App\Domains\Onboarding\Models\RequiredDocument::LOCALES as $loc)
-                                    <span class="rd-loc rd-loc--{{ in_array($loc, $r['filled'], true) ? 'on' : 'off' }}">{{ $loc }}</span>
-                                @endforeach
-                            </td>
-                            <td class="c">
-                                @if ($r['file_url'])
-                                    {{-- 행 클릭이 편집으로 가므로 링크 클릭은 전파를 막는다 --}}
-                                    <a class="rd-file" href="{{ $r['file_url'] }}" onclick="event.stopPropagation()">내려받기</a>
-                                @else
-                                    <span class="rd-nofile">—</span>
-                                @endif
-                            </td>
-                            <td class="c">{{ $r['required'] ? '필수' : '열람만' }}</td>
-                            <td class="c">
-                                <span class="rd-badge rd-badge--{{ $r['active'] ? 'on' : 'off' }}">{{ $r['active'] ? '사용' : '미사용' }}</span>
-                            </td>
-                            <td class="c">{{ $r['agreed'] }}</td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
+        <div id="grid-required-documents"></div>
+        <p class="rd-listhint">
+            <strong>[본문 편집 ▸]</strong> 칸을 누르면 언어별 본문 편집기가 열립니다.
+            <strong>[내려받기 ▸]</strong> 는 원본 서식이 붙은 문서에만 뜹니다.
+            <br>문안이 바뀌면 <strong>새 버전으로 저장</strong>해야 이미 동의한 사람도 다시 받습니다 —
+            같은 버전에서 글자만 고치면 동의 이력이 실제 문안과 어긋납니다.
+        </p>
     </div>
 
     <div data-tabpane="edit" hidden>
-        <div id="rd-edit" class="dtl"><div class="dtl-empty">목록에서 문서를 클릭하면 본문 편집기가 열립니다.</div></div>
+        <div id="rd-edit" class="dtl"><div class="dtl-empty">목록에서 <b>[본문 편집 ▸]</b> 칸을 누르면 본문 편집기가 열립니다.</div></div>
     </div>
 
     <style>
-        .rd-wrap{border:1px solid var(--mv2-border-default);border-radius:var(--mv2-r-lg);overflow:hidden;background:#fff;box-shadow:0 1px 2px rgba(15,23,42,.04);}
-        .rd-table{width:100%;border-collapse:collapse;font-size:var(--mv2-fz-sm);}
-        .rd-table thead th{text-align:left;background:var(--mv2-slate-25);color:var(--mv2-text-muted);font-weight:700;font-size:var(--mv2-fz-xs);padding:11px 14px;border-bottom:1px solid var(--mv2-border-soft);white-space:nowrap;}
-        .rd-table tbody td{padding:11px 14px;border-bottom:1px solid var(--mv2-border-soft);color:var(--mv2-text-strong);}
-        .rd-table tbody tr:last-child td{border-bottom:0;}
-        .rd-table tbody tr[data-id]{cursor:pointer;}
-        .rd-table tbody tr[data-id]:hover{background:var(--mv2-slate-25);}
-        .rd-table td.c{text-align:center;}
+        .rd-listhint{font-size:var(--mv2-fz-xs);color:var(--mv2-text-faint);margin:10px 2px 0;line-height:1.7;}
         .rd-code{color:var(--mv2-text-faint);font-size:var(--mv2-fz-xs);margin-left:6px;}
         .rd-loc{display:inline-block;min-width:22px;padding:1px 5px;margin:0 1px;border-radius:4px;font-size:11px;font-weight:700;}
         .rd-loc--on{background:#E7F3F1;color:#12695F;}
@@ -99,6 +56,45 @@
         .rd-btn{font-family:inherit;font-size:var(--mv2-fz-xs);font-weight:700;border:1px solid var(--mv2-border-default);background:#fff;border-radius:var(--mv2-r-sm);padding:7px 15px;cursor:pointer;}
         .rd-btn--primary{background:var(--mv2-primary-500);color:#fff;border-color:transparent;}
     </style>
+@endsection
+
+@section('wwgrid')
+<script>
+    // 문서 목록은 **읽기 전용**이다. 제목·사용 여부를 표에서 고칠 수 있게 하면
+    // 본문과 따로 놀게 된다 — 문안과 메타는 같은 편집기에서 함께 저장해야 한다.
+    var rdGrid = wwConsole({
+        el: 'grid-required-documents',
+        title: '필수동의문서',
+        data: @json($rows, JSON_UNESCAPED_UNICODE),
+        columns: [
+            { header: '문서', name: 'title_label', width: 280, sortable: true },
+            { header: '버전', name: 'version_label', width: 70, align: 'center' },
+            // 근로자 대상 문서는 언어가 다 차 있어야 한다(§6).
+            { header: '번역', name: 'locales_label', width: 240 },
+            { header: '원본 서식', name: 'file_label', width: 110, align: 'center' },
+            { header: '동의 필수', name: 'required_label', width: 90, align: 'center', sortable: true },
+            { header: '사용', name: 'active_label', width: 80, align: 'center', sortable: true },
+            { header: '동의 인원', name: 'agreed', width: 90, align: 'center', sortable: true },
+            { header: '수정일시', name: 'updated', width: 150, align: 'center', sortable: true },
+            { header: '본문', name: 'edit', width: 110, align: 'center' },
+        ],
+    });
+
+    document.getElementById('grid-required-documents').addEventListener('click', function (e) {
+        var cell = e.target.closest('[data-col-name][data-row-index]');
+        if (!cell) return;
+
+        var row = rdGrid.getData()[parseInt(cell.getAttribute('data-row-index'), 10)];
+        if (!row) return;
+
+        var col = cell.getAttribute('data-col-name');
+        if (col === 'edit') { window.rdOpenEdit(row.id); return; }
+        // 원본 서식은 새 창으로 받는다 — 편집기를 열면서 받으면 둘 다 어정쩡해진다.
+        if (col === 'file' || col === 'file_label') {
+            if (row.file_url) window.open(row.file_url, '_blank', 'noopener');
+        }
+    });
+</script>
 @endsection
 
 @section('script')
@@ -170,10 +166,9 @@
                 .catch(function () { ndnToast('문서를 불러오지 못했습니다.', { type: 'error' }); });
         }
 
-        document.getElementById('rd-table').addEventListener('click', function (e) {
-            var tr = e.target.closest('tr[data-id]');
-            if (tr) openDoc(tr.getAttribute('data-id'));
-        });
+        // 표는 위쪽 wwgrid 구역에서 만든다(그쪽이 먼저 실행된다). 표가 부를 수
+        // 있도록 창구만 열어 둔다.
+        window.rdOpenEdit = function (id) { openDoc(id); };
 
         // 원본 서식 올리기·떼기
         document.getElementById('rd-edit').addEventListener('change', function (e) {

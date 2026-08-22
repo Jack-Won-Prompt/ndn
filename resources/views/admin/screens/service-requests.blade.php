@@ -16,24 +16,7 @@
     </div>
 
     <div data-tabpane="list">
-        <div class="sr-wrap">
-            <table class="sr-table" id="sr-table">
-                <thead>
-                    <tr>
-                        <th style="width:64px">SR</th>
-                        <th>제목</th>
-                        <th style="width:110px">등록자</th>
-                        <th style="width:110px">담당자</th>
-                        <th style="width:64px">답글</th>
-                        <th style="width:150px">등록일시</th>
-                        <th style="width:100px">상태</th>
-                    </tr>
-                </thead>
-                <tbody id="sr-tbody">
-                    @include('admin.screens._sr_rows', ['rows' => $rows])
-                </tbody>
-            </table>
-        </div>
+            <div id="grid-service-requests"></div>
     </div>
 
     <div data-tabpane="new" hidden>
@@ -57,15 +40,6 @@
     </div>
 
     <style>
-        .sr-wrap{border:1px solid var(--mv2-border-default);border-radius:var(--mv2-r-lg);overflow:hidden;background:#fff;box-shadow:0 1px 2px rgba(15,23,42,.04);}
-        .sr-table{width:100%;border-collapse:collapse;font-size:var(--mv2-fz-sm);}
-        .sr-table thead th{text-align:left;background:var(--mv2-slate-25);color:var(--mv2-text-muted);font-weight:700;font-size:var(--mv2-fz-xs);padding:11px 14px;border-bottom:1px solid var(--mv2-border-soft);white-space:nowrap;}
-        .sr-table tbody td{padding:11px 14px;border-bottom:1px solid var(--mv2-border-soft);color:var(--mv2-text-strong);vertical-align:middle;}
-        .sr-table tbody tr:last-child td{border-bottom:0;}
-        .sr-table tbody tr[data-id]{cursor:pointer;}
-        .sr-table tbody tr[data-id]:hover{background:var(--mv2-slate-25);}
-        .sr-table td.c{text-align:center;}
-        .sr-empty{text-align:center;color:var(--mv2-text-faint);padding:34px 0;}
         .sr-badge{display:inline-block;padding:2px 9px;border-radius:100px;font-size:12px;font-weight:700;white-space:nowrap;}
         .sr-badge--received{background:#FFF3E0;color:#B45309;}
         .sr-badge--in_progress{background:#E8F0FE;color:#1A4FA0;}
@@ -88,6 +62,36 @@
     </style>
 @endsection
 
+@section('wwgrid')
+<script>
+    // SR 은 등록한 사람과 담당자가 주고받은 기록이다. 제목·본문을 표에서 고칠 수
+    // 있으면 무엇을 요청했는지가 흔들리므로 **읽기 전용**으로 둔다. 상태 변경과
+    // 답글은 상세에서 한다.
+    window.srGrid = wwConsole({
+        el: 'grid-service-requests',
+        title: 'SR',
+        data: @json($rows, JSON_UNESCAPED_UNICODE),
+        columns: [
+            { header: 'SR', name: 'sr_no', width: 70, align: 'center', sortable: true },
+            { header: '제목', name: 'title', width: 320, sortable: true },
+            { header: '등록자', name: 'requester', width: 110, align: 'center', sortable: true },
+            { header: '담당자', name: 'assignee', width: 110, align: 'center', sortable: true },
+            { header: '답글', name: 'replies', width: 64, align: 'center', sortable: true },
+            { header: '등록일시', name: 'created', width: 150, align: 'center', sortable: true },
+            { header: '상태', name: 'status_label', width: 100, align: 'center', sortable: true },
+            { header: '상세', name: 'detail', width: 74, align: 'center' },
+        ],
+    });
+
+    document.getElementById('grid-service-requests').addEventListener('click', function (e) {
+        var cell = e.target.closest('[data-col-name="detail"][data-row-index]');
+        if (!cell) return;
+        var row = window.srGrid.getData()[parseInt(cell.getAttribute('data-row-index'), 10)];
+        if (row && row.id) window.srOpenDetail(row.id);
+    });
+</script>
+@endsection
+
 @section('script')
 <script>
     (function () {
@@ -103,23 +107,9 @@
                 + esc(STATUS_LABELS[status] || status) + '</span>';
         }
 
+        // 등록·상태 변경 뒤 목록을 다시 채운다. 표는 위쪽 wwgrid 구역에서 만든다.
         function renderRows(rows) {
-            var tbody = document.getElementById('sr-tbody');
-            if (!rows.length) {
-                tbody.innerHTML = '<tr><td colspan="7" class="sr-empty">등록된 SR 이 없습니다.</td></tr>';
-                return;
-            }
-            tbody.innerHTML = rows.map(function (r) {
-                return '<tr data-id="' + r.id + '">'
-                    + '<td class="c">#' + r.id + '</td>'
-                    + '<td>' + esc(r.title) + '</td>'
-                    + '<td class="c">' + esc(r.requester || '—') + '</td>'
-                    + '<td class="c">' + esc(r.assignee || '—') + '</td>'
-                    + '<td class="c">' + (r.replies || 0) + '</td>'
-                    + '<td class="c">' + esc(r.created) + '</td>'
-                    + '<td class="c">' + badge(r.status) + '</td>'
-                    + '</tr>';
-            }).join('');
+            if (window.srGrid) window.srGrid.setData(rows || []);
         }
 
         // ── 상세 ──
@@ -174,10 +164,8 @@
                 .catch(function () { ndnToast('SR 상세를 불러오지 못했습니다.', { type: 'error' }); });
         }
 
-        document.getElementById('sr-table').addEventListener('click', function (e) {
-            var tr = e.target.closest('tr[data-id]');
-            if (tr) openDetail(tr.getAttribute('data-id'));
-        });
+        // 표가 부를 수 있도록 창구만 열어 둔다 — 표는 눌린 순간에야 이걸 찾는다.
+        window.srOpenDetail = function (id) { openDetail(id); };
 
         // ── 등록 ──
         document.getElementById('sr-submit').addEventListener('click', function () {

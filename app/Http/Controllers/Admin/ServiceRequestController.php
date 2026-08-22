@@ -36,6 +36,9 @@ class ServiceRequestController extends Controller
                 'title' => $sr->title,
                 'status' => $sr->status->value,
                 'status_label' => $sr->status->label(),
+                'sr_no' => '#'.$sr->id,
+                // 편집기가 없는 칸이라 눌러도 셀이 열리지 않는다 → 상세를 여는 자리로 쓴다.
+                'detail' => '상세 ▸',
                 'requester' => $sr->requester?->name,
                 'assignee' => $sr->assignee?->name,
                 'replies' => $sr->replies_count,

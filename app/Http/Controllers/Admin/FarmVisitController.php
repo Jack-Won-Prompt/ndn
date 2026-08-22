@@ -46,6 +46,12 @@ class FarmVisitController extends Controller
                 'headcount' => $v->worker_headcount,
                 'photos' => $v->photos_count,
                 'has_issue' => filled($v->issue_note),
+                // 표에는 참/거짓이 아니라 읽을 글자가 필요하다 (엑셀로도 그대로 나간다).
+                'headcount_label' => $v->worker_headcount === null ? '-' : $v->worker_headcount.'명',
+                'photos_label' => $v->photos_count > 0 ? $v->photos_count.'장' : '',
+                'issue_label' => filled($v->issue_note) ? '있음' : '',
+                // 편집기가 없는 칸이라 눌러도 셀이 열리지 않는다 → 상세를 여는 자리로 쓴다.
+                'detail' => '상세 ▸',
             ])->all();
     }
 
