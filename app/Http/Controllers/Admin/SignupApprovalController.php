@@ -60,6 +60,11 @@ class SignupApprovalController extends Controller
                     'screening_label' => $screening->label(),
                     'tone' => $screening->tone(),
                     'registered' => LocalTime::format($w->created_at),
+                    // 표에는 숫자·코드가 아니라 읽을 글자가 필요하다 (엑셀로도 그대로 나간다).
+                    'files_label' => $w->files_count > 0 ? $w->files_count.'건' : '없음',
+                    'city_label' => $w->city?->name ?? '-',
+                    // 편집기가 없는 칸이라 눌러도 셀이 열리지 않는다 → 상세를 여는 자리로 쓴다.
+                    'detail' => '상세 ▸',
                 ];
             })->all();
     }
@@ -163,6 +168,94 @@ class SignupApprovalController extends Controller
         }
 
         return response()->json(['ok' => true, 'status' => $worker->refresh()->status->value]);
+    }
+
+    /**
+     * 표에서 체크한 신청을 한 번에 심사한다.
+     *
+     * 표 안에는 버튼을 둘 수 없어(편집기 없는 칸은 글자만 그린다) 체크 → 툴바
+     * 순서로 처리한다. 쉰 명이 한꺼번에 들어오는 명단에서 쉰 번 누르지 않아도
+     * 되는 편이 낫기도 하다.
+     *
+     * 한 건이 막혀도 나머지는 진행한다 — 이미 결정 난 건이 섞였다고 통째로
+     * 되돌아가면 무엇이 걸렸는지 찾기만 어려워진다.
+     *
+     * 합격은 계정을 열고 합격 알림을 보낸다(ScreenWorkerAction). 되돌릴 수 없는
+     * 동작이라 화면이 몇 명에게 알림이 나가는지 먼저 말한다.
+     */
+    public function bulkScreen(Request $request, ScreenWorkerAction $action): JsonResponse
+    {
+        $data = $request->validate([
+            'decision' => ['required', Rule::in([
+                ScreeningStatus::Passed->value,
+                ScreeningStatus::Held->value,
+                ScreeningStatus::Failed->value,
+            ])],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', 'exists:workers,id'],
+            'note' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $decision = ScreeningStatus::from($data['decision']);
+        $done = 0;
+        $failed = [];
+
+        foreach (Worker::whereIn('id', $data['ids'])->get() as $worker) {
+            try {
+                $action->execute($worker, $decision, $data['note'] ?? null, Auth::user());
+                $done++;
+            } catch (RuntimeException $e) {
+                // 이름은 적지 않는다 — 메시지가 명단 사본이 되면 안 된다(§7-3).
+                $failed[] = '#'.$worker->id.' '.$e->getMessage();
+            }
+        }
+
+        return response()->json([
+            'ok' => true,
+            'message' => $failed === []
+                ? "{$done}건을 '{$decision->label()}' 처리했습니다."
+                : "{$done}건 처리 · ".count($failed).'건 건너뜀 - '.implode(' / ', array_slice($failed, 0, 3)),
+            'rows' => self::rows(),
+            'open_count' => self::openCount(),
+        ]);
+    }
+
+    /**
+     * 표에서 체크한 신청에 같은 보완 항목을 한 번에 요청한다.
+     *
+     * 같은 서류가 빠진 사람이 무더기로 나오는 것이 보통이라, 항목을 한 번 고르고
+     * 여러 명에게 보낸다. 메일은 각자의 언어로 나간다(RequestSupplementAction).
+     */
+    public function bulkSupplement(Request $request, RequestSupplementAction $action): JsonResponse
+    {
+        $data = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', 'exists:workers,id'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*' => ['string', 'max:100'],
+            'note' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $done = 0;
+        $failed = [];
+
+        foreach (Worker::whereIn('id', $data['ids'])->get() as $worker) {
+            try {
+                $action->execute($worker, $data['items'], $data['note'] ?? null, Auth::user());
+                $done++;
+            } catch (RuntimeException $e) {
+                $failed[] = '#'.$worker->id.' '.$e->getMessage();
+            }
+        }
+
+        return response()->json([
+            'ok' => true,
+            'message' => $failed === []
+                ? "{$done}명에게 보완 요청 메일을 보냈습니다."
+                : "{$done}명 발송 · ".count($failed).'명 건너뜀 - '.implode(' / ', array_slice($failed, 0, 3)),
+            'rows' => self::rows(),
+            'open_count' => self::openCount(),
+        ]);
     }
 
     /** 보완 요청 — 부족한 항목을 골라 근로자에게 메일을 보낸다. */

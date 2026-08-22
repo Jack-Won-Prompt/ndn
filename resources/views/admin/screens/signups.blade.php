@@ -5,7 +5,7 @@
     <div class="screen__head">
         <div>
             <h1 class="screen__title">가입 신청 심사</h1>
-            <p class="screen__sub">웹·앱에서 들어온 신청을 검토합니다 · <strong>행 더블클릭</strong>으로 상세·제출 서류 확인 · <strong>합격하면 계정이 함께 열리고 합격 알림이 나갑니다</strong> · 처리 감사 로그(§7-6)</p>
+            <p class="screen__sub">웹·앱에서 들어온 신청을 검토합니다 · <strong>[상세 ▸]</strong> 칸으로 상세·제출 서류 확인 · <strong>합격하면 계정이 함께 열리고 합격 알림이 나갑니다</strong> · 처리 감사 로그(§7-6)</p>
         </div>
     </div>
 
@@ -15,51 +15,17 @@
     </div>
 
     <div data-tabpane="list">
-        <div class="signup-wrap">
-            <table class="signup-table" id="signup-table">
-                <thead>
-                    <tr>
-                        <th style="width:60px">번호</th>
-                        <th>이름</th>
-                        <th>이메일</th>
-                        <th style="width:70px">국적</th>
-                        <th style="width:110px">지원 지역</th>
-                        <th style="width:70px">언어</th>
-                        <th style="width:70px">서류</th>
-                        <th style="width:100px">진행</th>
-                        <th style="width:140px">신청일시</th>
-                        <th style="width:300px">처리</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($rows as $r)
-                        <tr data-id="{{ $r['id'] }}">
-                            <td class="c">{{ $r['id'] }}</td>
-                            <td>{{ $r['name'] }}</td>
-                            <td>{{ $r['email'] }}</td>
-                            <td class="c">{{ $r['nationality'] }}</td>
-                            <td class="c">{{ $r['city'] ?? '—' }}</td>
-                            <td class="c">{{ $r['locale'] }}</td>
-                            <td class="c {{ $r['files'] ? '' : 'su-nofile' }}">{{ $r['files'] ?: '없음' }}</td>
-                            <td class="c"><span class="su-badge su-badge--{{ $r['tone'] }}">{{ $r['screening_label'] }}</span></td>
-                            <td class="c">{{ $r['registered'] }}</td>
-                            <td class="c">
-                                <button type="button" class="su-btn su-btn--warn" data-act="supplement">보완 요청</button>
-                                <button type="button" class="su-btn su-btn--ok" data-act="passed">합격</button>
-                                <button type="button" class="su-btn" data-act="held">보류</button>
-                                <button type="button" class="su-btn su-btn--no" data-act="failed">불합격</button>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr id="su-empty"><td colspan="10" class="su-empty">심사할 가입 신청이 없습니다.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+        <div id="grid-signups"></div>
+        <p class="su-hint">
+            처리할 신청을 <strong>체크</strong>한 뒤 툴바에서 <strong>[합격]</strong> · <strong>[보류]</strong> ·
+            <strong>[불합격]</strong> · <strong>[보완 요청]</strong>을 누르세요. 여러 건을 한 번에 처리할 수 있습니다.
+            <br><strong>[상세 ▸]</strong> 칸을 누르면 제출 서류까지 볼 수 있습니다.
+            <strong>합격하면 계정이 함께 열리고 합격 알림이 나갑니다</strong> — 되돌릴 수 없으니 확인창의 인원을 보고 누르세요.
+        </p>
     </div>
 
     <div data-tabpane="detail" hidden>
-        <div id="su-detail" class="dtl"><div class="dtl-empty">목록에서 행을 더블클릭하면 상세·제출 서류와 처리 버튼이 표시됩니다.</div></div>
+        <div id="su-detail" class="dtl"><div class="dtl-empty">목록에서 <b>[상세 ▸]</b> 칸을 누르면 상세·제출 서류와 처리 버튼이 표시됩니다.</div></div>
     </div>
 
     {{-- 보완 요청 창 --}}
@@ -90,16 +56,8 @@
     </div>
 
     <style>
-        .signup-wrap { border: 1px solid var(--mv2-border-default); border-radius: var(--mv2-r-lg); overflow: hidden; background: #fff; box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 6px 20px rgba(15,23,42,.05); }
-        .signup-table { width: 100%; border-collapse: collapse; font-size: var(--mv2-fz-sm); }
-        .signup-table thead th { text-align: left; background: var(--mv2-slate-25); color: var(--mv2-text-muted); font-weight: 700; font-size: var(--mv2-fz-xs); padding: 11px 14px; border-bottom: 1px solid var(--mv2-border-soft); white-space: nowrap; }
-        .signup-table tbody td { padding: 11px 14px; border-bottom: 1px solid var(--mv2-border-soft); color: var(--mv2-text-strong); }
-        .signup-table tbody tr:last-child td { border-bottom: 0; }
-        .signup-table tbody tr[data-id] { cursor: pointer; }
-        .signup-table tbody tr:hover { background: var(--mv2-slate-25); }
-        .signup-table td.c { text-align: center; }
+        .su-hint { font-size: var(--mv2-fz-xs); color: var(--mv2-text-faint); margin: 10px 2px 0; line-height: 1.7; }
         .su-nofile { color: var(--mv2-text-faint); }
-        .su-empty { text-align: center; color: var(--mv2-text-faint); padding: 34px 0; }
         .su-badge { font-size: 11px; font-weight: 700; border-radius: 100px; padding: 2px 9px; }
         .su-badge--info { background: #E8F0FE; color: #1a56c4; }
         .su-badge--warn { background: #FEF3C7; color: #8a6d00; }
@@ -131,6 +89,49 @@
     </style>
 @endsection
 
+@section('wwgrid')
+<script>
+    // 신청 내용은 근로자가 낸 것이라 **읽기 전용**이다. 여기서 하는 일은 심사 결과를
+    // 남기는 것뿐이라 [신규 행]·[변경 저장] 을 두지 않는다.
+    var suGrid = wwConsole({
+        el: 'grid-signups',
+        title: '가입승인',
+        data: @json($rows, JSON_UNESCAPED_UNICODE),
+        rowCheckbox: true,
+        buttons: [
+            { label: '합격', primary: true, onClick: function (g) { window.suDecide(g, 'passed'); } },
+            { label: '보류', onClick: function (g) { window.suDecide(g, 'held'); } },
+            { label: '불합격', onClick: function (g) { window.suDecide(g, 'failed'); } },
+            { label: '보완 요청', onClick: function (g) { window.suSupplement(g); } },
+        ],
+        columns: [
+            { header: '이름', name: 'name', width: 150, sortable: true },
+            { header: '이메일', name: 'email', width: 210, sortable: true },
+            { header: '국적', name: 'nationality', width: 66, align: 'center', sortable: true },
+            { header: '지원 지역', name: 'city_label', width: 110, align: 'center', sortable: true },
+            { header: '언어', name: 'locale', width: 66, align: 'center' },
+            { header: '서류', name: 'files_label', width: 70, align: 'center', sortable: true },
+            { header: '진행', name: 'screening_label', width: 100, align: 'center', sortable: true },
+            { header: '신청일시', name: 'registered', width: 150, align: 'center', sortable: true },
+            { header: '상세', name: 'detail', width: 74, align: 'center' },
+        ],
+    });
+
+    // 처리 뒤 목록을 서버 자료로 다시 그린다. 남은 건수 배지도 함께 맞춘다.
+    window.suRefresh = function (rows) {
+        if (Array.isArray(rows)) suGrid.setData(rows);
+    };
+
+    // 편집기가 없는 칸이라 눌러도 셀이 열리지 않는다 → 상세를 여는 자리로 쓴다.
+    document.getElementById('grid-signups').addEventListener('click', function (e) {
+        var cell = e.target.closest('[data-col-name="detail"][data-row-index]');
+        if (!cell) return;
+        var row = suGrid.getData()[parseInt(cell.getAttribute('data-row-index'), 10)];
+        if (row && row.id) window.suOpenDetail(row.id);
+    });
+</script>
+@endsection
+
 @section('script')
 <script>
     (function () {
@@ -149,14 +150,6 @@
             }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok && j.ok !== false, j: j }; }); });
         }
 
-        function removeRow(id) {
-            var tr = document.querySelector('#signup-table tr[data-id="' + id + '"]');
-            if (tr) tr.parentNode.removeChild(tr);
-            var tbody = document.querySelector('#signup-table tbody');
-            if (!tbody.querySelector('tr[data-id]')) {
-                tbody.innerHTML = '<tr id="su-empty"><td colspan="10" class="su-empty">심사할 가입 신청이 없습니다.</td></tr>';
-            }
-        }
 
         /* ---------- 합격 / 보류 / 불합격 ---------- */
         // 무엇이 함께 일어나는지 확인창에 적는다. '합격'이 계정을 여는 줄 모르고 누르면 안 된다.
@@ -164,16 +157,19 @@
             passed: {
                 label: '합격',
                 msg: ' 님을 합격 처리합니다. 계정이 곧바로 활성화되고 근로자에게 합격 알림이 갑니다.',
+                bulk: ' 계정이 곧바로 활성화되고 그 인원 전원에게 합격 알림이 나갑니다.',
                 danger: false,
             },
             held: {
                 label: '보류',
                 msg: ' 님의 신청을 보류합니다. 계정 상태는 그대로 승인 대기로 남습니다.',
+                bulk: ' 계정 상태는 그대로 승인 대기로 남습니다.',
                 danger: false,
             },
             failed: {
                 label: '불합격',
                 msg: ' 님을 불합격 처리합니다. 로그인할 수 없게 되고 결과 알림이 갑니다.',
+                bulk: ' 그 인원은 로그인할 수 없게 되고 결과 알림이 나갑니다.',
                 danger: true,
             },
         };
@@ -185,17 +181,14 @@
             ndnConfirm(esc(name) + d.msg, { title: '가입 신청 ' + d.label, okText: d.label, danger: d.danger })
                 .then(function (ok) {
                     if (!ok) return;
-                    post(BASE + '/' + id + '/screen', { decision: act }).then(function (res) {
+                    // 한 건이어도 일괄 창구를 쓴다 — 목록을 다시 받아 표를 그대로 맞춘다.
+                    post(BASE + '/screen-bulk', { decision: act, ids: [Number(id)] }).then(function (res) {
                         if (!res.ok) { ndnToast(res.j.message || '처리 실패', { type: 'error' }); return; }
-                        ndnToast(d.label + ' 처리했습니다.', { type: 'success' });
-                        // 보류는 목록에 남는다 — 아직 결정이 안 났다.
-                        if (act !== 'held') {
-                            removeRow(id);
-                            document.getElementById('su-detail').innerHTML = '<div class="dtl-empty">처리되었습니다. 목록에서 다른 신청을 선택하세요.</div>';
-                            window.ndnSwitchTab('list');
-                        } else {
-                            setTimeout(function () { location.reload(); }, 700);
-                        }
+                        ndnToast(res.j.message, { type: 'success' });
+                        window.suRefresh(res.j.rows);
+                        document.getElementById('su-detail').innerHTML =
+                            '<div class="dtl-empty">처리되었습니다. 목록에서 다른 신청을 선택하세요.</div>';
+                        window.ndnSwitchTab('list');
                     });
                 });
         }
@@ -203,10 +196,14 @@
         /* ---------- 보완 요청 ---------- */
         var modal = document.getElementById('su-modal');
 
-        function openSupplement(id, name) {
-            target = { id: id, name: name };
+        // 같은 서류가 빠진 사람이 무더기로 나오는 것이 보통이라, 항목을 한 번 고르고
+        // 여러 명에게 보낸다. 한 명이든 여러 명이든 같은 창을 쓴다.
+        function openSupplement(ids, who) {
+            target = { ids: [].concat(ids).map(Number), who: who };
             document.getElementById('su-note').value = '';
             [].forEach.call(modal.querySelectorAll('.su-item input'), function (i) { i.checked = false; });
+            var title = modal.querySelector('.su-box__title');
+            if (title) title.textContent = '서류 보완 요청' + (target.ids.length > 1 ? ' (' + target.ids.length + '명)' : '');
             modal.hidden = false;
         }
 
@@ -220,35 +217,49 @@
             if (!items.length) { ndnToast('부족한 항목을 하나 이상 고르세요.', { type: 'error' }); return; }
 
             btn.disabled = true;
-            post(BASE + '/' + target.id + '/supplement', {
+            post(BASE + '/supplement-bulk', {
+                ids: target.ids,
                 items: items,
                 note: document.getElementById('su-note').value.trim() || null,
             }).then(function (res) {
                 btn.disabled = false;
                 if (!res.ok) { ndnToast(res.j.message || '보내지 못했습니다.', { type: 'error' }); return; }
                 modal.hidden = true;
-                ndnToast('보완 요청 메일을 보냈습니다.', { type: 'success' });
-                setTimeout(function () { location.reload(); }, 900);
+                ndnToast(res.j.message, { type: 'success' });
+                window.suRefresh(res.j.rows);
             });
         });
 
-        /* ---------- 목록 ---------- */
-        document.getElementById('signup-table').addEventListener('click', function (e) {
-            var btn = e.target.closest('.su-btn');
-            if (!btn) return;
-            var tr = btn.closest('tr[data-id]');
-            var id = tr.getAttribute('data-id');
-            var name = tr.children[1].textContent;
+        /* ---------- 표에서 부르는 창구 ----------
+         * 표는 위쪽 wwgrid 구역에서 만든다(그쪽이 먼저 실행된다). 표가 부를 수
+         * 있도록 창구만 열어 둔다 — 표는 눌린 순간에야 이걸 찾으므로 순서 문제가 없다.
+         */
+        window.suOpenDetail = function (id) { openSignup(id); };
 
-            if (btn.getAttribute('data-act') === 'supplement') { openSupplement(id, name); return; }
-            decide(id, name, btn.getAttribute('data-act'));
-        });
+        window.suDecide = function (grid, act) {
+            var rows = grid.getCheckedRows();
+            if (!rows.length) { ndnToast('처리할 신청을 체크하세요.', { type: 'info' }); return; }
 
-        document.getElementById('signup-table').addEventListener('dblclick', function (e) {
-            if (e.target.closest('.su-btn')) return;
-            var tr = e.target.closest('tr[data-id]');
-            if (tr) openSignup(tr.getAttribute('data-id'));
-        });
+            var d = DECISION[act];
+            var ids = rows.map(function (r) { return r.id; });
+
+            ndnConfirm(ids.length + '건을 ' + d.label + ' 처리합니다.' + d.bulk,
+                { title: '가입 신청 ' + d.label, okText: d.label, danger: d.danger })
+                .then(function (ok) {
+                    if (!ok) return;
+                    post(BASE + '/screen-bulk', { decision: act, ids: ids }).then(function (res) {
+                        if (!res.ok) { ndnToast(res.j.message || '처리 실패', { type: 'error' }); return; }
+                        ndnToast(res.j.message, { type: 'success' });
+                        window.suRefresh(res.j.rows);
+                    });
+                });
+        };
+
+        window.suSupplement = function (grid) {
+            var rows = grid.getCheckedRows();
+            if (!rows.length) { ndnToast('보완 요청할 신청을 체크하세요.', { type: 'info' }); return; }
+            openSupplement(rows.map(function (r) { return r.id; }), rows.length + '명');
+        };
 
         /* ---------- 상세 ---------- */
         function openSignup(id) {

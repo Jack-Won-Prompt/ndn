@@ -249,6 +249,11 @@ Route::prefix('admin')->group(function () {
         // 보완 요청 — 기한부 서명 링크를 근로자 이메일로 보낸다.
         Route::post('/signups/{worker}/supplement', [SignupApprovalController::class, 'requestSupplement'])
             ->whereNumber('worker')->name('admin.signups.supplement');
+        // 표에서 체크한 신청을 한 번에 (셀 안에 버튼을 둘 수 없어 툴바로 처리한다)
+        Route::post('/signups/screen-bulk', [SignupApprovalController::class, 'bulkScreen'])
+            ->name('admin.signups.screen-bulk');
+        Route::post('/signups/supplement-bulk', [SignupApprovalController::class, 'bulkSupplement'])
+            ->name('admin.signups.supplement-bulk');
 
         // 필수 확인·동의 문서 — 언어별 본문 편집 + 버전 관리
         Route::get('/required-documents/{requiredDocument}', [RequiredDocumentAdminController::class, 'show'])
