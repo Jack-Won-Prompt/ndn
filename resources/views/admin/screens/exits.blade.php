@@ -17,49 +17,13 @@
 
     {{-- 목록 --}}
     <div data-tabpane="list">
-        <div class="ex-listwrap">
-            <table class="ex-table" id="ex-table">
-                <thead>
-                    <tr>
-                        <th style="width:56px">번호</th>
-                        <th style="width:110px">유형</th>
-                        <th style="width:130px">근로자</th>
-                        <th>농가</th>
-                        <th style="width:110px">사유</th>
-                        <th style="width:110px">기준일</th>
-                        <th style="width:90px">경과</th>
-                        <th style="width:110px">상태</th>
-                        <th style="width:90px">계정</th>
-                        <th style="width:70px">신고</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($rows as $r)
-                        <tr data-id="{{ $r['id'] }}" class="{{ $r['open'] ? '' : 'is-done' }}">
-                            <td class="c">{{ $r['id'] }}</td>
-                            <td class="c"><span class="ex-type ex-type--{{ $r['type'] }}">{{ $r['type_label'] }}</span></td>
-                            <td>{{ $r['worker'] }} <span class="ex-dim">{{ $r['nationality'] }}</span></td>
-                            <td>{{ $r['farm'] }}</td>
-                            <td class="c">{{ $r['reason_label'] }}</td>
-                            <td class="c">{{ $r['occurred_on'] }}<span class="ex-dim ex-dim--b">{{ $r['occurred_label'] }}</span></td>
-                            <td class="c">
-                                @if ($r['days'] !== null)
-                                    <span class="{{ $r['open'] && $r['days'] >= 7 ? 'ex-late' : '' }}">{{ $r['days'] }}일</span>
-                                @else
-                                    —
-                                @endif
-                            </td>
-                            <td class="c"><span class="ex-badge ex-badge--{{ $r['tone'] }}">{{ $r['status_label'] }}</span></td>
-                            <td class="c">{{ $r['worker_status'] }}</td>
-                            <td class="c">{{ $r['reported'] ? '✓' : '—' }}</td>
-                        </tr>
-                    @empty
-                        <tr><td colspan="10" class="ex-emptyrow">등록된 건이 없습니다. [사건 등록] 탭에서 조기 귀국 신청이나 연락두절을 등록하세요.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-        <p class="ex-hint">행을 클릭하면 상세와 처리 버튼이 열립니다. <b>진행 중인 건이 위로, 오래 끌고 있는 것부터</b> 정렬됩니다.</p>
+        <div id="grid-exits"></div>
+        <p class="ex-hint">
+            <strong>[상세 ▸]</strong> 칸을 누르면 상세와 처리 버튼이 열립니다.
+            <b>진행 중인 건이 위로, 오래 끌고 있는 것부터</b> 정렬됩니다.
+            새 사건은 <strong>[사건 등록]</strong> 탭에서 만듭니다 — 목록에서 바로 만들지 않는 이유는
+            유형에 따라 받아야 할 값이 다르기 때문입니다.
+        </p>
     </div>
 
     {{-- 등록 --}}
@@ -172,16 +136,6 @@
     </div>
 
     <style>
-        .ex-listwrap{border:1px solid var(--mv2-border-default);border-radius:var(--mv2-r-lg);overflow:hidden;background:#fff;box-shadow:0 1px 2px rgba(15,23,42,.04),0 6px 20px rgba(15,23,42,.05);}
-        .ex-table{width:100%;border-collapse:collapse;font-size:var(--mv2-fz-sm);}
-        .ex-table thead th{text-align:left;background:var(--mv2-slate-25);color:var(--mv2-text-muted);font-weight:700;font-size:var(--mv2-fz-xs);padding:10px 14px;border-bottom:1px solid var(--mv2-border-soft);white-space:nowrap;}
-        .ex-table tbody td{padding:11px 14px;border-bottom:1px solid var(--mv2-border-soft);color:var(--mv2-text-strong);}
-        .ex-table tbody tr:last-child td{border-bottom:0;}
-        .ex-table tbody tr[data-id]{cursor:pointer;}
-        .ex-table tbody tr[data-id]:hover{background:var(--mv2-slate-25);}
-        .ex-table tbody tr.is-done td{color:var(--mv2-text-faint);}
-        .ex-table td.c{text-align:center;}
-        .ex-emptyrow{text-align:center;color:var(--mv2-text-faint);padding:34px 0;}
         .ex-hint{font-size:var(--mv2-fz-xs);color:var(--mv2-text-faint);margin:10px 2px 0;}
         .ex-dim{font-size:11px;color:var(--mv2-text-faint);}
         .ex-dim--b{display:block;}
@@ -238,6 +192,39 @@
         .ex-box__btns{display:flex;justify-content:flex-end;gap:8px;margin-top:6px;}
         @media (max-width:820px){.ex-grid{grid-template-columns:1fr;}.ex-field--wide{grid-column:auto;}}
     </style>
+@endsection
+
+@section('wwgrid')
+<script>
+    // 사건 기록은 **읽기 전용**이다. 조기 귀국·이탈은 무엇이 언제 있었나가 증빙이라
+    // 나중에 표에서 고칠 수 있으면 안 된다. 처리(확정·취소 등)는 상세에서 한다.
+    var exGrid = wwConsole({
+        el: 'grid-exits',
+        title: '조기귀국이탈',
+        data: @json($rows, JSON_UNESCAPED_UNICODE),
+        columns: [
+            { header: '유형', name: 'type_label', width: 100, align: 'center', sortable: true },
+            { header: '근로자', name: 'worker', width: 140, sortable: true },
+            { header: '국적', name: 'nationality', width: 66, align: 'center' },
+            { header: '농가', name: 'farm', width: 150, sortable: true },
+            { header: '사유', name: 'reason_label', width: 110, align: 'center', sortable: true },
+            { header: '기준일', name: 'occurred_cell', width: 165, align: 'center', sortable: true },
+            { header: '경과', name: 'days_label', width: 74, align: 'center' },
+            { header: '상태', name: 'status_label', width: 110, align: 'center', sortable: true },
+            { header: '계정', name: 'worker_status', width: 90, align: 'center' },
+            { header: '신고', name: 'reported_label', width: 74, align: 'center' },
+            { header: '상세', name: 'detail', width: 74, align: 'center' },
+        ],
+    });
+
+    // 편집기가 없는 칸이라 눌러도 셀이 열리지 않는다 → 상세를 여는 자리로 쓴다.
+    document.getElementById('grid-exits').addEventListener('click', function (e) {
+        var cell = e.target.closest('[data-col-name="detail"][data-row-index]');
+        if (!cell) return;
+        var row = exGrid.getData()[parseInt(cell.getAttribute('data-row-index'), 10)];
+        if (row && row.id) window.exOpenDetail(row.id);
+    });
+</script>
 @endsection
 
 @section('script')
@@ -390,10 +377,9 @@
                 .catch(function () { ndnToast('불러오지 못했습니다.', { type: 'error' }); });
         }
 
-        document.getElementById('ex-table').addEventListener('click', function (e) {
-            var tr = e.target.closest('tr[data-id]');
-            if (tr) open(tr.getAttribute('data-id'));
-        });
+        // 표는 위쪽 wwgrid 구역에서 만든다(그쪽이 먼저 실행된다). 표가 부를 수
+        // 있도록 창구만 열어 둔다 — 표는 눌린 순간에야 이걸 찾으므로 순서 문제가 없다.
+        window.exOpenDetail = function (id) { open(id); };
 
         /* ---------- 처리 창 ---------- */
         var modal = document.getElementById('ex-modal');

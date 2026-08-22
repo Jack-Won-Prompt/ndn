@@ -47,6 +47,8 @@ class NoticeController extends Controller
                     ? $n->recipients->pluck('name')->implode(', ')
                     : '',
                 'sent' => LocalTime::format($n->created_at),
+                // 표에는 숫자가 아니라 읽을 글자가 필요하다 (엑셀로도 그대로 나간다).
+                'count_label' => $n->recipients_count.'명',
             ])->all();
     }
 

@@ -93,35 +93,15 @@
     </div>
 
     <div data-tabpane="history" hidden>
-        <div class="nt-wrap">
-            <table class="nt-table">
-                <thead>
-                    <tr>
-                        <th style="width:56px">번호</th>
-                        <th>제목</th>
-                        <th style="width:180px">대상</th>
-                        <th style="width:80px">수신</th>
-                        <th style="width:150px">발송일시</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($rows as $r)
-                        <tr>
-                            <td class="c">{{ $r['id'] }}</td>
-                            <td>{{ $r['title'] }}@if ($r['who'])<span class="nt-who">{{ $r['who'] }}</span>@endif</td>
-                            <td class="c">{{ $r['target'] }}</td>
-                            <td class="c">{{ $r['count'] }}명</td>
-                            <td class="c">{{ $r['sent'] }}</td>
-                        </tr>
-                    @empty
-                        <tr><td colspan="5" class="nt-empty">발송한 공지가 없습니다.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+        <div id="grid-notices"></div>
+        <p class="nt-listhint">
+            보낸 공지는 <strong>고칠 수 없습니다</strong> — 받는 사람에게는 이미 나갔으므로,
+            여기 적힌 것과 실제로 받은 내용이 달라지면 안 됩니다. 내용을 바로잡으려면 새 공지를 보내세요.
+        </p>
     </div>
 
     <style>
+        .nt-listhint{font-size:12px;color:var(--mv2-text-faint);margin:10px 2px 0;line-height:1.7;}
         .nt-ok{background:#E7F3F1;border:1px solid #B9E0D9;color:#12695F;padding:12px 15px;border-radius:10px;margin-bottom:16px;font-size:14px;}
         .nt-form{max-width:820px;background:#fff;border:1px solid var(--mv2-border-default);border-radius:var(--mv2-r-lg);padding:20px;box-shadow:0 1px 2px rgba(15,23,42,.04);}
         .nt-field{margin-bottom:15px;}
@@ -161,14 +141,28 @@
         .nt-worker__meta{font-size:11px;color:var(--mv2-text-muted);}
         .nt-noapp{font-size:10px;font-weight:700;background:#FEF3C7;color:#8a6d00;border-radius:100px;padding:2px 8px;margin-left:auto;}
 
-        .nt-wrap{border:1px solid var(--mv2-border-default);border-radius:var(--mv2-r-lg);overflow:hidden;background:#fff;}
-        .nt-table{width:100%;border-collapse:collapse;font-size:var(--mv2-fz-sm);}
-        .nt-table th{text-align:left;background:var(--mv2-slate-25);color:var(--mv2-text-muted);font-weight:700;font-size:var(--mv2-fz-xs);padding:11px 14px;border-bottom:1px solid var(--mv2-border-soft);}
-        .nt-table td{padding:11px 14px;border-bottom:1px solid var(--mv2-border-soft);}
-        .nt-table td.c{text-align:center;}
-        .nt-who{display:block;font-size:11px;color:var(--mv2-text-faint);margin-top:3px;}
-        .nt-empty{text-align:center;color:var(--mv2-text-faint);padding:30px 0;}
     </style>
+@endsection
+
+@section('wwgrid')
+<script>
+    // 보낸 공지는 **읽기 전용**이다. 받는 사람에게는 이미 나갔으므로 여기 적힌 것과
+    // 실제로 받은 내용이 달라지면 안 된다. 그래서 [신규 행]·[변경 저장] 을 두지 않는다.
+    wwConsole({
+        el: 'grid-notices',
+        title: '공지사항',
+        data: @json($rows, JSON_UNESCAPED_UNICODE),
+        columns: [
+            { header: '번호', name: 'id', width: 60, align: 'center', sortable: true },
+            { header: '제목', name: 'title', width: 300, sortable: true },
+            { header: '대상', name: 'target', width: 170, align: 'center', sortable: true },
+            { header: '수신', name: 'count_label', width: 80, align: 'center', sortable: true },
+            // 골라 보낸 공지만 이름이 남는다. 나머지는 건수로 충분하다.
+            { header: '받은 사람', name: 'who', width: 280 },
+            { header: '발송일시', name: 'sent', width: 150, align: 'center', sortable: true },
+        ],
+    });
+</script>
 @endsection
 
 @section('script')

@@ -246,6 +246,12 @@ class WorkerExitController extends Controller
             'created_by' => $e->creator?->name ?? '—',
             'note' => $e->note,
             'ticket_id' => $e->support_ticket_id,
+            // 표에는 참/거짓이 아니라 읽을 글자가 필요하다 (엑셀로도 그대로 나간다).
+            'days_label' => $e->daysUnreachable() === null ? '-' : $e->daysUnreachable().'일',
+            'reported_label' => $e->reported ? '신고함' : '',
+            'occurred_cell' => ($e->occurred_on?->toDateString() ?? '-').' ('.$e->type->occurredLabel().')',
+            // 편집기가 없는 칸이라 눌러도 셀이 열리지 않는다 → 상세를 여는 자리로 쓴다.
+            'detail' => '상세 ▸',
         ];
     }
 

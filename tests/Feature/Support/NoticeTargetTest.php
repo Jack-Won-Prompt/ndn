@@ -170,3 +170,13 @@ it('발송 화면에 다섯 가지 대상이 모두 나온다', function () {
     // 앱을 안 깐 근로자는 푸시를 못 받는다 — 고르기 전에 드러나야 한다.
     expect($html)->toContain('앱 미설치');
 });
+
+it('발송 이력이 표로 그려진다', function () {
+    sendNotice(['title' => '표에 보일 공지'])->assertRedirect();
+
+    $html = actingAs($this->admin)->get(url('admin/screen/notices'))->assertOk()->getContent();
+
+    expect($html)->toContain('grid-notices')
+        ->and($html)->toContain('wwConsole(')
+        ->and($html)->toContain('표에 보일 공지');
+});
