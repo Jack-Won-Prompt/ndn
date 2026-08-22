@@ -49,6 +49,7 @@
      *   savePayload {object}  저장 요청에 함께 보낼 값 (돌려받을 목록의 모양 등)
      *   importPayload {object|func} 엑셀 업로드에 함께 보낼 값 (기본값·시트 이름 등)
      *   deleteWarning {string} 삭제 확인창에 덧붙일 경고 (딸린 자료가 함께 사라질 때)
+     *   onSaved     {func}    저장 뒤 (rows, grid) => void — 화면이 들고 있는 원본 목록 갱신용
      *   onRowDblClick {func}  읽기전용 상세 팝업 등 (row) => void
      *   rowCheckbox {bool}    행 체크박스 강제 표시 (읽기전용 목록에서 골라 처리할 때)
      *   buttons     {Array}   추가 툴바 버튼 [{ label, primary, onClick(grid) }]
@@ -135,6 +136,9 @@
                 .then(function (res) {
                     if (res.ok) {
                         if (Array.isArray(res.j.rows)) grid.setData(res.j.rows);
+                        // 저장하면 표가 서버 자료로 통째로 바뀐다. 화면이 그 목록을
+                        // 따로 들고 있다면(검색 원본 등) 여기서 함께 갱신해야 한다.
+                        if (typeof cfg.onSaved === 'function') cfg.onSaved(res.j.rows || [], grid);
                         ndnToast(res.j.message || '저장했습니다.', { type: 'success' });
                     } else {
                         ndnToast(res.j.message || '저장하지 못했습니다.', { type: 'error', title: '저장 실패' });

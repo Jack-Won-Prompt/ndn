@@ -6,7 +6,8 @@
         <div>
             <h1 class="screen__title">근로자</h1>
             <p class="screen__sub">
-                <strong>편집 후 [변경 저장]</strong> · <strong>번호 열 더블클릭</strong>으로 상세(입국·생활점검 이력) ·
+                <strong>편집 후 [변경 저장]</strong> · <strong>[상세 ▸]</strong> 칸으로 상세(입국·생활점검 이력) ·
+                <strong>이름으로 찾기</strong>로 목록을 좁힐 수 있습니다 ·
                 엑셀 업로드는 <strong>번호 또는 여권번호가 같으면 수정</strong>, 없으면 새로 등록합니다 ·
                 여권번호·생년월일·연락처·이메일이 함께 보이며 <strong>열람 기록이 남습니다(§7-6)</strong> ·
                 근로 기간은 <strong>체류 예정 기간</strong>으로, 농가별 배정 기간과는 다릅니다
@@ -44,13 +45,32 @@
             </label>
             <span class="wk-imp__h">파일에 해당 칸이 있으면 파일 값이 우선합니다.</span>
         </div>
+        <div class="wk-find">
+            <input type="search" id="wk-search" placeholder="이름으로 찾기 (여권번호·연락처·이메일·비고도 함께 찾습니다)"
+                   autocomplete="off" spellcheck="false">
+            <button type="button" id="wk-clear" class="wk-find__x" hidden>지우기</button>
+            <span class="wk-find__n" id="wk-count"></span>
+        </div>
         <div id="grid-workers"></div>
     </div>
     <div data-tabpane="detail" hidden>
-        <div id="wk-detail" class="dtl"><div class="dtl-empty">목록에서 <b>번호 열</b>을 더블클릭하면 상세(입국·점검·개인 서류)가 표시됩니다.</div></div>
+        <div id="wk-detail" class="dtl"><div class="dtl-empty">목록에서 <b>[상세 ▸]</b> 칸을 누르면 상세(입국·점검·개인 서류)가 표시됩니다.</div></div>
     </div>
 
     <style>
+        /* 이름으로 찾기 — 표 바로 위 */
+        .wk-find { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .wk-find input[type=search] { flex: 0 0 380px; max-width: 60%; font-family: inherit;
+            font-size: var(--mv2-fz-sm); padding: 8px 12px;
+            border: 1px solid var(--mv2-border-default); border-radius: var(--mv2-r-sm); }
+        .wk-find input[type=search]:focus { outline: none; border-color: var(--mv2-primary-500);
+            box-shadow: 0 0 0 3px rgba(30,156,146,.15); }
+        .wk-find__x { font-family: inherit; font-size: var(--mv2-fz-xs); font-weight: 700;
+            background: #fff; border: 1px solid var(--mv2-border-default);
+            border-radius: var(--mv2-r-sm); padding: 7px 12px; cursor: pointer; }
+        .wk-find__x[hidden] { display: none; }
+        .wk-find__n { font-size: var(--mv2-fz-xs); color: var(--mv2-text-muted); font-weight: 700; }
+
         /* 엑셀 업로드 기본값 줄 — 표 바로 위, 툴바와 한 덩어리로 보이게 */
         .wk-imp { display: flex; align-items: center; flex-wrap: wrap; gap: 12px;
             padding: 10px 12px; margin-bottom: 10px;
@@ -292,7 +312,10 @@
             .catch(function () { ndnToast('상세를 불러오지 못했습니다.', { type: 'error' }); });
     }
 
-    wwConsole({
+    // 찾기의 원본. 표는 걸러진 목록을 들고 있으므로 원본을 따로 둔다.
+    var WK_ROWS = @json($rows, JSON_UNESCAPED_UNICODE);
+
+    var wkGrid = wwConsole({
         el: 'grid-workers',
         editable: true,
         title: '근로자',
@@ -309,21 +332,30 @@
         // 사람을 지우면 배정도 함께 정리된다 — 농가 자리가 실제로 비어야 한다.
         deleteWarning: '삭제하면 그 사람의 배정이 취소되어 농가 자리가 비고, 후보자·온보딩·정착 신청·민원·서류도 함께 정리됩니다.',
         newRow: { nationality: 'BD', city_id: null, locale: 'bn', status: 'active' },
-        data: @json($rows, JSON_UNESCAPED_UNICODE),
-        // 칸이 열한 개다. 폭을 줄여 1500px 안팎이면 한 화면에 들어오게 맞췄고,
+        data: WK_ROWS,
+        // 저장하면 표가 서버 자료로 통째로 바뀐다. 찾기 원본도 함께 갱신하지 않으면
+        // 다음 검색이 옛 목록을 뒤진다.
+        onSaved: function (rows) { WK_ROWS = rows; wkApplyFilter(); },
+        // 칸이 많다. 폭을 줄여 1500px 안팎이면 한 화면에 들어오게 맞췄고,
         // 그보다 좁으면 표를 옆으로 밀어 본다(가로 스크롤바를 눈에 띄게 해 두었다).
         columns: [
-            { header: '번호', name: 'id', width: 56, align: 'center', sortable: true },
+            // 번호(id) 대신 성별을 둔다 — 목록에서 번호를 보고 할 일이 없다.
+            // 상세는 맨 오른쪽 [상세 ▸] 칸으로 연다.
+            { header: '성별', name: 'gender', width: 66, editor: 'combo', align: 'center', sortable: true,
+              options: [{value:'male',label:'남'},{value:'female',label:'여'}] },
             { header: '이름', name: 'name', width: 150, editor: 'text', sortable: true },
             { header: '국적', name: 'nationality', width: 76, editor: 'combo', align: 'center',
               options: [{value:'BD',label:'방글라'},{value:'LA',label:'라오스'},{value:'LK',label:'스리랑카'},{value:'VN',label:'베트남'}] },
             // 지원 지자체 — 가입 시 근로자가 고른 지역. 이전 가입자는 여기서 채운다.
             { header: '지원 지역', name: 'city_id', width: 110, editor: 'combo', align: 'center',
               options: @json($cityOptions, JSON_UNESCAPED_UNICODE) },
-            { header: '언어', name: 'locale', width: 84, editor: 'combo', align: 'center',
-              options: [{value:'ko',label:'한국어'},{value:'bn',label:'벵골어'},{value:'lo',label:'라오어'},{value:'si',label:'싱할라어'},{value:'vi',label:'베트남어'},{value:'ne',label:'네팔어'},{value:'ky',label:'키르기스어'}] },
-            { header: '상태', name: 'status', width: 88, editor: 'combo', align: 'center',
-              options: [{value:'pending',label:'승인 대기'},{value:'active',label:'재직'},{value:'inactive',label:'비활성'},{value:'returned',label:'귀국'},{value:'rejected',label:'가입 거절'}] },
+            // 지금 일하는 농가의 농가주. 배정에서 오는 값이라 여기서는 읽기만 한다 —
+            // 농가를 바꾸려면 [농가 매칭·배정] 에서 배정을 옮겨야 한다.
+            { header: '농가주', name: 'farm_owner', width: 130, sortable: true },
+            // 선택지는 WorkerStatus enum 한 곳에서 온다. 화면에 적어 두면 상태가 늘 때
+            // 여기만 옛 목록으로 남는다 — 실제로 '무단이탈' 이 그렇게 빠져 있었다.
+            { header: '상태', name: 'status', width: 96, editor: 'combo', align: 'center', sortable: true,
+              options: @json(App\Domains\Recruitment\Enums\WorkerStatus::options(), JSON_UNESCAPED_UNICODE) },
             // 아래 네 칸은 암호화해 보관하는 값이다(§7-1). 화면에 보인다고 DB 가 평문이 되지 않는다.
             // 이 목록을 여는 것 자체가 개인정보 열람이라 서버가 열람 기록을 남긴다(§7-6).
             { header: '연락처', name: 'phone_home_country', width: 128, editor: 'text' },
@@ -336,8 +368,82 @@
             // 이쪽은 지자체 명단으로 배정보다 먼저 들어온다.
             { header: '근로 시작', name: 'work_start_date', width: 100, editor: 'date', align: 'center' },
             { header: '근로 종료', name: 'work_end_date', width: 100, editor: 'date', align: 'center' },
+            // 시작~종료에서 계산한다. 따로 적어 두면 날짜와 어긋난 채로 남는다.
+            { header: '계약기간', name: 'contract_period', width: 100, align: 'center' },
+            { header: '상세', name: 'detail', width: 74, align: 'center' },
         ],
-        onRowDblClick: function (row) { if (row.id) openWorker(row.id); },
     });
+
+    // 편집기가 없는 칸이라 눌러도 셀이 열리지 않는다 → 상세를 여는 자리로 쓴다.
+    document.getElementById('grid-workers').addEventListener('click', function (e) {
+        var cell = e.target.closest('[data-col-name="detail"][data-row-index]');
+        if (!cell) return;
+        var row = wkGrid.getData()[parseInt(cell.getAttribute('data-row-index'), 10)];
+        if (row && row.id) openWorker(row.id);
+    });
+
+    /* ── 이름으로 찾기 ──────────────────────────────────────────────────
+     * 표를 걸러 다시 그린다. 행을 숨기는 방식은 줄 번호·건수와 어긋나고
+     * 엑셀 다운로드에 숨긴 줄까지 따라간다.
+     *
+     * 다만 setData 는 **저장하지 않은 편집을 지운다**. 고치다 말고 검색하면
+     * 적은 것이 소리 없이 사라지므로, 그럴 때는 걸러내지 않고 먼저 알린다.
+     */
+    var wkSearch = document.getElementById('wk-search');
+    var wkClear = document.getElementById('wk-clear');
+    var wkCount = document.getElementById('wk-count');
+    var wkLastQuery = '';
+
+    function wkPending() {
+        var m = wkGrid.getModifiedRows();
+        return m.updated.length + m.added.length + m.deleted.length;
+    }
+
+    function wkApplyFilter() {
+        var q = wkSearch.value.trim().toLowerCase();
+        var rows = q ? WK_ROWS.filter(function (r) {
+            // 이름이 먼저다. 나머지는 손에 든 것이 여권번호뿐일 때를 위한 것이다.
+            return [r.name, r.passport_no, r.phone_home_country, r.email, r.note]
+                .join(' ').toLowerCase().indexOf(q) !== -1;
+        }) : WK_ROWS;
+
+        wkGrid.setData(rows);
+        wkLastQuery = q;
+        wkClear.hidden = q === '';
+        wkCount.textContent = q
+            ? rows.length + '명 찾음 (전체 ' + WK_ROWS.length + '명)'
+            : '전체 ' + WK_ROWS.length + '명';
+    }
+
+    function wkTryFilter() {
+        if (wkSearch.value.trim().toLowerCase() === wkLastQuery) return;
+
+        if (wkPending()) {
+            ndnToast('저장하지 않은 변경이 있어 지금 찾으면 그 내용이 사라집니다. '
+                + '[변경 저장] 하거나 [변경 취소] 한 뒤에 찾으세요.', { type: 'info', title: '먼저 저장하세요' });
+            // 되돌려 놓는다 — 입력칸만 바뀌고 표는 그대로면 어느 쪽이 맞는지 알 수 없다.
+            wkSearch.value = wkLastQuery;
+            return;
+        }
+
+        wkApplyFilter();
+    }
+
+    var wkTimer;
+    wkSearch.addEventListener('input', function () {
+        clearTimeout(wkTimer);
+        wkTimer = setTimeout(wkTryFilter, 200);
+    });
+    wkSearch.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { clearTimeout(wkTimer); wkTryFilter(); }
+        if (e.key === 'Escape') { wkSearch.value = ''; clearTimeout(wkTimer); wkTryFilter(); }
+    });
+    wkClear.addEventListener('click', function () {
+        wkSearch.value = '';
+        wkTryFilter();
+        wkSearch.focus();
+    });
+
+    wkApplyFilter();
 </script>
 @endsection

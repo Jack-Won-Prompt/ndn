@@ -6,6 +6,7 @@ use App\Domains\Demand\Models\City;
 use App\Domains\Demand\Models\Farm;
 use App\Domains\Matching\Enums\PlacementStatus;
 use App\Domains\Matching\Models\Placement;
+use App\Domains\Recruitment\Enums\WorkerStatus;
 use App\Domains\Recruitment\Models\Worker;
 use App\Domains\Support\Models\SupportTicket;
 use App\Http\Controllers\Admin\MatchingController;
@@ -491,4 +492,112 @@ it('근로 기간은 배정 기간과 따로 간다', function () {
 
     expect($worker->fresh()->work_end_date->toDateString())->toBe('2026-12-06')
         ->and($worker->placements()->first()->end_date->toDateString())->toBe('2026-07-06');
+});
+
+it('목록에 성별·농가주·계약기간이 함께 온다', function () {
+    $farm = Farm::factory()->create(['name' => '정민희 농가']);
+    $worker = Worker::factory()->create([
+        'gender' => 'female',
+        'work_start_date' => '2026-02-24',
+        'work_end_date' => '2026-10-23',
+    ]);
+    Placement::factory()->create([
+        'worker_id' => $worker->id,
+        'farm_id' => $farm->id,
+        'status' => PlacementStatus::Confirmed,
+    ]);
+
+    actingAs($this->admin);
+    $row = collect(WorkerGridController::rows())->firstWhere('id', $worker->id);
+
+    expect($row['gender'])->toBe('female')
+        ->and($row['farm_owner'])->toBe('정민희 농가')
+        // 종료일까지 일하므로 하루를 더해 센다 (2/24~10/23 = 8개월).
+        ->and($row['contract_period'])->toBe('8개월');
+});
+
+it('계약기간은 날짜에서 계산한다', function () {
+    // 따로 적어 두면 날짜와 어긋난 채로 남는다.
+    $cases = [
+        ['2026-04-07', '2026-07-06', '3개월'],
+        ['2026-02-24', '2026-07-23', '5개월'],
+        ['2026-02-24', '2026-10-23', '8개월'],
+        // 달로 딱 떨어지지 않으면 남은 날짜를 붙인다 — 반올림하면 계약이 달라진다.
+        ['2026-04-07', '2026-07-10', '3개월 4일'],
+        ['2026-04-07', '2026-04-16', '10일'],
+    ];
+
+    foreach ($cases as [$start, $end, $expected]) {
+        $w = Worker::factory()->create(['work_start_date' => $start, 'work_end_date' => $end]);
+
+        actingAs($this->admin);
+        $row = collect(WorkerGridController::rows())->firstWhere('id', $w->id);
+
+        expect($row['contract_period'])->toBe($expected);
+    }
+});
+
+it('배정이 없으면 농가주는 비어 있다', function () {
+    $worker = Worker::factory()->create();
+
+    actingAs($this->admin);
+
+    expect(collect(WorkerGridController::rows())->firstWhere('id', $worker->id)['farm_owner'])->toBe('');
+});
+
+it('취소된 배정은 농가주로 세지 않는다', function () {
+    // 빠진 사람이 그 농가 소속으로 계속 보이면 안 된다.
+    $farm = Farm::factory()->create(['name' => '옛 농가']);
+    $worker = Worker::factory()->create();
+    Placement::factory()->create([
+        'worker_id' => $worker->id,
+        'farm_id' => $farm->id,
+        'status' => PlacementStatus::Cancelled,
+    ]);
+
+    actingAs($this->admin);
+
+    expect(collect(WorkerGridController::rows())->firstWhere('id', $worker->id)['farm_owner'])->toBe('');
+});
+
+it('새로 늘린 상태를 저장할 수 있다', function () {
+    // 화면에 선택지를 적어 두던 탓에 '무단이탈' 이 목록에서 빠져 있었다.
+    foreach (['reentered', 'absconded', 'deported', 'transferred', 'extended'] as $status) {
+        $w = Worker::factory()->create();
+
+        saveWorkers([], [['current' => [
+            'id' => $w->id,
+            'name' => $w->name,
+            'nationality' => $w->nationality,
+            'locale' => $w->locale,
+            'status' => $status,
+        ]]])->assertOk();
+
+        expect($w->fresh()->status->value)->toBe($status);
+    }
+});
+
+it('상태 선택지는 enum 한 곳에서 온다', function () {
+    $html = actingAs($this->admin)->get(url('admin/screen/workers'))->assertOk()->getContent();
+
+    foreach (WorkerStatus::cases() as $case) {
+        expect($html)->toContain($case->label());
+    }
+});
+
+it('일하는 중인 상태는 앱에 로그인할 수 있다', function () {
+    // 기간을 연장한 사람이 로그인하지 못하면 그 사람만 앱이 멈춘다.
+    expect(WorkerStatus::Extended->canLogin())->toBeTrue()
+        ->and(WorkerStatus::Reentered->canLogin())->toBeTrue()
+        ->and(WorkerStatus::Transferred->canLogin())->toBeTrue()
+        ->and(WorkerStatus::Absconded->canLogin())->toBeFalse()
+        ->and(WorkerStatus::Deported->canLogin())->toBeFalse()
+        ->and(WorkerStatus::Returned->canLogin())->toBeFalse();
+});
+
+it('이름으로 찾는 칸이 화면에 있다', function () {
+    $html = actingAs($this->admin)->get(url('admin/screen/workers'))->assertOk()->getContent();
+
+    expect($html)->toContain('wk-search')
+        ->and($html)->toContain('이름으로 찾기');
 });

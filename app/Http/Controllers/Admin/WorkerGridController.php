@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Domains\Demand\Models\City;
+use App\Domains\Matching\Enums\PlacementStatus;
 use App\Domains\Recruitment\Actions\DeleteWorkerAction;
 use App\Domains\Recruitment\Enums\Nationality;
 use App\Domains\Recruitment\Models\Worker;
@@ -65,13 +66,55 @@ class WorkerGridController extends Controller
             // 체류·근로 예정 기간. 배정 기간과 다르다 — 아래 workPeriod() 주석 참고.
             'work_start_date' => $w->work_start_date?->toDateString(),
             'work_end_date' => $w->work_end_date?->toDateString(),
+            'gender' => $w->gender?->value,
+            // 지금 일하는 농가의 농가주. 배정(placements)에서 온다 — 근로자 자신이
+            // 들고 있는 값이 아니라 배정 결과라 여기서는 읽기만 한다.
+            'farm_owner' => $w->placements->first()?->farm?->name ?? '',
+            // 시작~종료를 개월수로. 명단이 '3개월' 로 오고 보고서도 그렇게 적는다.
+            'contract_period' => self::periodLabel($w),
+            // 편집기가 없는 칸이라 눌러도 셀이 열리지 않는다 → 상세를 여는 버튼으로 쓴다.
+            'detail' => '상세 ▸',
         ];
+    }
+
+    /**
+     * 계약기간을 사람이 읽는 한 마디로.
+     *
+     * 시작·종료 두 칸을 나란히 두면 몇 달짜리인지 매번 세어 봐야 한다. 명단도
+     * 보고서도 '3개월' 로 말하므로 그 말로 함께 보여 준다.
+     * 달로 딱 떨어지지 않으면 남은 날짜를 붙인다 — 반올림하면 계약이 달라진다.
+     */
+    private static function periodLabel(Worker $w): string
+    {
+        if ($w->work_start_date === null || $w->work_end_date === null) {
+            return '';
+        }
+
+        // 종료일까지 일하므로 하루를 더해 센다 (2/24~7/23 = 5개월).
+        // Carbon 3 의 diff* 는 소수를 돌려준다. 그대로 두면 '3.129개월' 이 찍힌다.
+        $end = $w->work_end_date->copy()->addDay();
+        $months = (int) $w->work_start_date->diffInMonths($end);
+        $days = (int) $w->work_start_date->copy()->addMonthsNoOverflow($months)->diffInDays($end);
+
+        return match (true) {
+            $months > 0 && $days > 0 => "{$months}개월 {$days}일",
+            $months > 0 => "{$months}개월",
+            default => "{$days}일",
+        };
     }
 
     /** @return array<int, array<string,mixed>> */
     public static function rows(): array
     {
-        $workers = Worker::latest('id')->limit(self::MAX_ROWS)->get();
+        // 농가주는 배정 → 농가를 타고 온다. 함께 읽지 않으면 행마다 조회가 나간다(§11).
+        $workers = Worker::query()
+            ->with(['placements' => fn ($q) => $q
+                ->whereIn('status', [PlacementStatus::Proposed->value, PlacementStatus::Confirmed->value])
+                ->latest('id')->with('farm:id,name'),
+            ])
+            ->latest('id')
+            ->limit(self::MAX_ROWS)
+            ->get();
 
         self::logAccess($workers->pluck('id')->all());
 
